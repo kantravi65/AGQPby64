@@ -1,0 +1,25 @@
+# Ignore local packages, builds, and configuration files from Docker contexts
+node_modules/
+dist/
+build/
+out/
+.next/
+.nuxt/
+
+# Ignore cache files
+.git/
+.npm/
+.eslintcache
+*.tsbuildinfo
+
+# Ignore environment config and local DBs
+.env
+.env.local
+.env.*.local
+*.db
+*.sqlite
+
+# OS and Editor configurations
+.DS_Store
+.vscode/
+.idea/

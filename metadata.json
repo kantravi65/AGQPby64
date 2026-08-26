@@ -1,0 +1,15 @@
+{
+  "name": "QPby64",
+  "description": "Imported from GitHub: myslv409-debug/OTSNGG",
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone",
+    "camera",
+    "display-capture",
+    "clipboard-read",
+    "clipboard-write"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
