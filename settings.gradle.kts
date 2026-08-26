@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "OTSby64"
+rootProject.name = "QPby64"
 include(":app")
