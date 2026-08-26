@@ -1246,7 +1246,15 @@ fun PdfPageSetupDialog(
 
     var mainTitle by remember { mutableStateOf(paper.title.ifBlank { "GEN TEST: FLT ENG" }) }
     var subTitle by remember { mutableStateOf("TECH II") }
-    var paperCode by remember { mutableStateOf("QP-178566") }
+        val initialPaperCode = remember {
+        val startDate = java.time.LocalDate.of(2008, 12, 31)
+        val currentDate = java.time.LocalDate.now()
+        val period = java.time.Period.between(startDate, currentDate)
+        val formattedDate = String.format("%02d%02d%02d", period.years, period.months, period.days)
+        val randomNum = kotlin.random.Random.nextInt(10, 100)
+        "RYQP-$formattedDate-$randomNum"
+    }
+    var paperCode by remember { mutableStateOf(initialPaperCode) }
     var dateStr by remember { mutableStateOf("2026-08-05") }
     var sectionHeading by remember { mutableStateOf("MULTIPLE CHOICE QUESTIONS (MCQ)") }
     var totalMarksText by remember {

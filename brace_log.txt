@@ -1,0 +1,1970 @@
+L1: Open=0, Close=0, Bal=0, line=package com.example.ui.screens
+L2: Open=0, Close=0, Bal=0, line=
+L3: Open=0, Close=0, Bal=0, line=import android.net.Uri
+L4: Open=0, Close=0, Bal=0, line=import android.widget.Toast
+L5: Open=0, Close=0, Bal=0, line=import androidx.activity.compose.rememberLauncherForActivityResult
+L6: Open=0, Close=0, Bal=0, line=import androidx.activity.result.contract.ActivityResultContracts
+L7: Open=0, Close=0, Bal=0, line=import androidx.compose.foundation.background
+L8: Open=0, Close=0, Bal=0, line=import androidx.compose.foundation.layout.*
+L9: Open=0, Close=0, Bal=0, line=import androidx.compose.foundation.lazy.LazyColumn
+L10: Open=0, Close=0, Bal=0, line=import androidx.compose.foundation.lazy.items
+L11: Open=0, Close=0, Bal=0, line=import androidx.compose.foundation.shape.CircleShape
+L12: Open=0, Close=0, Bal=0, line=import androidx.compose.foundation.shape.RoundedCornerShape
+L13: Open=0, Close=0, Bal=0, line=import androidx.compose.material.icons.Icons
+L14: Open=0, Close=0, Bal=0, line=import androidx.compose.material.icons.filled.*
+L15: Open=0, Close=0, Bal=0, line=import androidx.compose.material3.*
+L16: Open=0, Close=0, Bal=0, line=import androidx.compose.runtime.*
+L17: Open=0, Close=0, Bal=0, line=import androidx.compose.ui.Alignment
+L18: Open=0, Close=0, Bal=0, line=import androidx.compose.ui.Modifier
+L19: Open=0, Close=0, Bal=0, line=import androidx.compose.ui.draw.clip
+L20: Open=0, Close=0, Bal=0, line=import androidx.compose.ui.graphics.Color
+L21: Open=0, Close=0, Bal=0, line=import androidx.compose.ui.platform.LocalContext
+L22: Open=0, Close=0, Bal=0, line=import androidx.compose.ui.text.font.FontWeight
+L23: Open=0, Close=0, Bal=0, line=import androidx.compose.ui.text.style.TextAlign
+L24: Open=0, Close=0, Bal=0, line=import androidx.compose.ui.text.input.PasswordVisualTransformation
+L25: Open=0, Close=0, Bal=0, line=import androidx.compose.ui.unit.dp
+L26: Open=0, Close=0, Bal=0, line=import androidx.compose.ui.unit.sp
+L27: Open=0, Close=0, Bal=0, line=import com.example.ui.viewmodel.OtsViewModel
+L28: Open=0, Close=0, Bal=0, line=import com.example.util.NetworkStorageManager
+L29: Open=0, Close=0, Bal=0, line=import com.example.util.GoogleDriveSyncManager
+L30: Open=0, Close=0, Bal=0, line=import com.example.util.GoogleSignInHelper
+L31: Open=0, Close=0, Bal=0, line=import com.example.util.SettingsManager
+L32: Open=0, Close=0, Bal=0, line=import kotlinx.coroutines.launch
+L33: Open=0, Close=0, Bal=0, line=import org.json.JSONArray
+L34: Open=0, Close=0, Bal=0, line=
+L35: Open=0, Close=0, Bal=0, line=@OptIn(ExperimentalMaterial3Api::class)
+L36: Open=0, Close=0, Bal=0, line=@Composable
+L37: Open=0, Close=0, Bal=0, line=fun SettingsScreen(
+L38: Open=0, Close=0, Bal=0, line=viewModel: OtsViewModel,
+L39: Open=0, Close=0, Bal=0, line=settingsManager: SettingsManager,
+L40: Open=0, Close=0, Bal=0, line=onLockAppNow: () -> Unit,
+L41: Open=1, Close=1, Bal=0, line=onGoogleSignOut: () -> Unit = {}
+L42: Open=2, Close=1, Bal=1, line=) {
+L43: Open=2, Close=1, Bal=1, line=val context = LocalContext.current
+L44: Open=2, Close=1, Bal=1, line=val scope = rememberCoroutineScope()
+L45: Open=2, Close=1, Bal=1, line=
+L46: Open=3, Close=2, Bal=1, line=var showChangePinDialog by remember { mutableStateOf(false) }
+L47: Open=4, Close=3, Bal=1, line=var showRecycleBinDialog by remember { mutableStateOf(false) }
+L48: Open=4, Close=3, Bal=1, line=
+L49: Open=4, Close=3, Bal=1, line=LazyColumn(
+L50: Open=4, Close=3, Bal=1, line=modifier = Modifier
+L51: Open=4, Close=3, Bal=1, line=.fillMaxSize()
+L52: Open=4, Close=3, Bal=1, line=.padding(16.dp),
+L53: Open=4, Close=3, Bal=1, line=verticalArrangement = Arrangement.spacedBy(16.dp)
+L54: Open=5, Close=3, Bal=2, line=) {
+L55: Open=6, Close=3, Bal=3, line=item {
+L56: Open=6, Close=3, Bal=3, line=Text(
+L57: Open=6, Close=3, Bal=3, line=text = "Settings & Backup",
+L58: Open=6, Close=3, Bal=3, line=style = MaterialTheme.typography.headlineMedium,
+L59: Open=6, Close=3, Bal=3, line=fontWeight = FontWeight.Bold
+L60: Open=6, Close=3, Bal=3, line=)
+L61: Open=6, Close=4, Bal=2, line=}
+L62: Open=6, Close=4, Bal=2, line=
+L63: Open=6, Close=4, Bal=2, line=// --- 1. USER PROFILE & ACCOUNT ---
+L64: Open=7, Close=4, Bal=3, line=item {
+L65: Open=7, Close=4, Bal=3, line=SettingsCategory(
+L66: Open=7, Close=4, Bal=3, line=title = "User Profile & Institution Credentials",
+L67: Open=8, Close=4, Bal=4, line=icon = {
+L68: Open=9, Close=4, Bal=5, line=if (settingsManager.isGoogleSignedIn && settingsManager.googlePhotoUrl.isNotBlank()) {
+L69: Open=9, Close=4, Bal=5, line=coil.compose.AsyncImage(
+L70: Open=9, Close=4, Bal=5, line=model = settingsManager.googlePhotoUrl,
+L71: Open=9, Close=4, Bal=5, line=contentDescription = "Profile Picture",
+L72: Open=9, Close=4, Bal=5, line=contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+L73: Open=9, Close=4, Bal=5, line=modifier = Modifier
+L74: Open=9, Close=4, Bal=5, line=.size(24.dp)
+L75: Open=9, Close=4, Bal=5, line=.clip(CircleShape)
+L76: Open=9, Close=4, Bal=5, line=)
+L77: Open=10, Close=5, Bal=5, line=} else {
+L78: Open=10, Close=5, Bal=5, line=Icon(
+L79: Open=10, Close=5, Bal=5, line=imageVector = Icons.Default.Person,
+L80: Open=10, Close=5, Bal=5, line=contentDescription = null,
+L81: Open=10, Close=5, Bal=5, line=tint = MaterialTheme.colorScheme.primary
+L82: Open=10, Close=5, Bal=5, line=)
+L83: Open=10, Close=6, Bal=4, line=}
+L84: Open=10, Close=7, Bal=3, line=}
+L85: Open=11, Close=7, Bal=4, line=) {
+L86: Open=12, Close=8, Bal=4, line=var name by remember { mutableStateOf(settingsManager.userName) }
+L87: Open=13, Close=9, Bal=4, line=var role by remember { mutableStateOf(settingsManager.userRole) }
+L88: Open=14, Close=10, Bal=4, line=var inst by remember { mutableStateOf(settingsManager.userInstitution) }
+L89: Open=15, Close=11, Bal=4, line=var email by remember { mutableStateOf(settingsManager.userEmail) }
+L90: Open=15, Close=11, Bal=4, line=
+L91: Open=15, Close=11, Bal=4, line=OutlinedTextField(
+L92: Open=15, Close=11, Bal=4, line=value = name,
+L93: Open=16, Close=12, Bal=4, line=onValueChange = { name = it; settingsManager.userName = it },
+L94: Open=17, Close=13, Bal=4, line=label = { Text("Examiner / Author Name") },
+L95: Open=17, Close=13, Bal=4, line=modifier = Modifier.fillMaxWidth(),
+L96: Open=17, Close=13, Bal=4, line=singleLine = true
+L97: Open=17, Close=13, Bal=4, line=)
+L98: Open=17, Close=13, Bal=4, line=OutlinedTextField(
+L99: Open=17, Close=13, Bal=4, line=value = role,
+L100: Open=18, Close=14, Bal=4, line=onValueChange = { role = it; settingsManager.userRole = it },
+L101: Open=19, Close=15, Bal=4, line=label = { Text("Designation / Role") },
+L102: Open=19, Close=15, Bal=4, line=modifier = Modifier.fillMaxWidth(),
+L103: Open=19, Close=15, Bal=4, line=singleLine = true
+L104: Open=19, Close=15, Bal=4, line=)
+L105: Open=19, Close=15, Bal=4, line=OutlinedTextField(
+L106: Open=19, Close=15, Bal=4, line=value = inst,
+L107: Open=20, Close=16, Bal=4, line=onValueChange = { inst = it; settingsManager.userInstitution = it },
+L108: Open=21, Close=17, Bal=4, line=label = { Text("Institution / Department") },
+L109: Open=21, Close=17, Bal=4, line=modifier = Modifier.fillMaxWidth(),
+L110: Open=21, Close=17, Bal=4, line=singleLine = true
+L111: Open=21, Close=17, Bal=4, line=)
+L112: Open=21, Close=17, Bal=4, line=OutlinedTextField(
+L113: Open=21, Close=17, Bal=4, line=value = email,
+L114: Open=22, Close=18, Bal=4, line=onValueChange = { email = it; settingsManager.userEmail = it },
+L115: Open=23, Close=19, Bal=4, line=label = { Text("Contact Email Address") },
+L116: Open=23, Close=19, Bal=4, line=modifier = Modifier.fillMaxWidth(),
+L117: Open=23, Close=19, Bal=4, line=singleLine = true
+L118: Open=23, Close=19, Bal=4, line=)
+L119: Open=23, Close=19, Bal=4, line=
+L120: Open=23, Close=19, Bal=4, line=Button(
+L121: Open=23, Close=19, Bal=4, line=onClick = onGoogleSignOut,
+L122: Open=23, Close=19, Bal=4, line=modifier = Modifier.fillMaxWidth(),
+L123: Open=23, Close=19, Bal=4, line=colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+L124: Open=24, Close=19, Bal=5, line=) {
+L125: Open=24, Close=19, Bal=5, line=Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+L126: Open=24, Close=19, Bal=5, line=Spacer(modifier = Modifier.width(8.dp))
+L127: Open=24, Close=19, Bal=5, line=Text("Logout / Sign Out")
+L128: Open=24, Close=20, Bal=4, line=}
+L129: Open=24, Close=21, Bal=3, line=}
+L130: Open=24, Close=22, Bal=2, line=}
+L131: Open=24, Close=22, Bal=2, line=
+L132: Open=24, Close=22, Bal=2, line=// --- 2. APP LOCK & BIOMETRIC SECURITY ---
+L133: Open=25, Close=22, Bal=3, line=item {
+L134: Open=25, Close=22, Bal=3, line=Card(
+L135: Open=25, Close=22, Bal=3, line=shape = RoundedCornerShape(16.dp),
+L136: Open=25, Close=22, Bal=3, line=colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+L137: Open=25, Close=22, Bal=3, line=modifier = Modifier.fillMaxWidth()
+L138: Open=26, Close=22, Bal=4, line=) {
+L139: Open=26, Close=22, Bal=4, line=Column(
+L140: Open=26, Close=22, Bal=4, line=modifier = Modifier.padding(16.dp),
+L141: Open=26, Close=22, Bal=4, line=verticalArrangement = Arrangement.spacedBy(12.dp)
+L142: Open=27, Close=22, Bal=5, line=) {
+L143: Open=28, Close=22, Bal=6, line=Row(verticalAlignment = Alignment.CenterVertically) {
+L144: Open=28, Close=22, Bal=6, line=Icon(
+L145: Open=28, Close=22, Bal=6, line=imageVector = Icons.Default.Lock,
+L146: Open=28, Close=22, Bal=6, line=contentDescription = null,
+L147: Open=28, Close=22, Bal=6, line=tint = MaterialTheme.colorScheme.primary,
+L148: Open=28, Close=22, Bal=6, line=modifier = Modifier.padding(end = 8.dp)
+L149: Open=28, Close=22, Bal=6, line=)
+L150: Open=28, Close=22, Bal=6, line=Text(
+L151: Open=28, Close=22, Bal=6, line=text = "App Lock & Security Settings",
+L152: Open=28, Close=22, Bal=6, line=style = MaterialTheme.typography.titleMedium,
+L153: Open=28, Close=22, Bal=6, line=fontWeight = FontWeight.Bold
+L154: Open=28, Close=22, Bal=6, line=)
+L155: Open=28, Close=23, Bal=5, line=}
+L156: Open=28, Close=23, Bal=5, line=HorizontalDivider()
+L157: Open=28, Close=23, Bal=5, line=
+L158: Open=29, Close=24, Bal=5, line=var isAppLockEnabled by remember { mutableStateOf(settingsManager.isAppLockEnabled) }
+L159: Open=30, Close=25, Bal=5, line=var isBiometricEnabled by remember { mutableStateOf(settingsManager.isBiometricEnabled) }
+L160: Open=31, Close=26, Bal=5, line=var lockOnBg by remember { mutableStateOf(settingsManager.lockOnBackground) }
+L161: Open=31, Close=26, Bal=5, line=
+L162: Open=31, Close=26, Bal=5, line=Row(
+L163: Open=31, Close=26, Bal=5, line=modifier = Modifier.fillMaxWidth(),
+L164: Open=31, Close=26, Bal=5, line=horizontalArrangement = Arrangement.SpaceBetween,
+L165: Open=31, Close=26, Bal=5, line=verticalAlignment = Alignment.CenterVertically
+L166: Open=32, Close=26, Bal=6, line=) {
+L167: Open=33, Close=26, Bal=7, line=Column(modifier = Modifier.weight(1f)) {
+L168: Open=33, Close=26, Bal=7, line=Text("Enable App PIN Lock", fontWeight = FontWeight.SemiBold)
+L169: Open=33, Close=26, Bal=7, line=Text(
+L170: Open=33, Close=26, Bal=7, line="Protect question banks with security PIN code",
+L171: Open=33, Close=26, Bal=7, line=style = MaterialTheme.typography.bodySmall,
+L172: Open=33, Close=26, Bal=7, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L173: Open=33, Close=26, Bal=7, line=)
+L174: Open=33, Close=27, Bal=6, line=}
+L175: Open=33, Close=27, Bal=6, line=Switch(
+L176: Open=33, Close=27, Bal=6, line=checked = isAppLockEnabled,
+L177: Open=34, Close=27, Bal=7, line=onCheckedChange = {
+L178: Open=34, Close=27, Bal=7, line=isAppLockEnabled = it
+L179: Open=34, Close=27, Bal=7, line=settingsManager.isAppLockEnabled = it
+L180: Open=34, Close=28, Bal=6, line=}
+L181: Open=34, Close=28, Bal=6, line=)
+L182: Open=34, Close=29, Bal=5, line=}
+L183: Open=34, Close=29, Bal=5, line=
+L184: Open=34, Close=29, Bal=5, line=Row(
+L185: Open=34, Close=29, Bal=5, line=modifier = Modifier.fillMaxWidth(),
+L186: Open=34, Close=29, Bal=5, line=horizontalArrangement = Arrangement.SpaceBetween,
+L187: Open=34, Close=29, Bal=5, line=verticalAlignment = Alignment.CenterVertically
+L188: Open=35, Close=29, Bal=6, line=) {
+L189: Open=36, Close=29, Bal=7, line=Column(modifier = Modifier.weight(1f)) {
+L190: Open=36, Close=29, Bal=7, line=Text("Biometric / Fingerprint Unlock", fontWeight = FontWeight.SemiBold)
+L191: Open=36, Close=29, Bal=7, line=Text(
+L192: Open=36, Close=29, Bal=7, line="Unlock quickly using device fingerprint or face recognition",
+L193: Open=36, Close=29, Bal=7, line=style = MaterialTheme.typography.bodySmall,
+L194: Open=36, Close=29, Bal=7, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L195: Open=36, Close=29, Bal=7, line=)
+L196: Open=36, Close=30, Bal=6, line=}
+L197: Open=36, Close=30, Bal=6, line=Switch(
+L198: Open=36, Close=30, Bal=6, line=checked = isBiometricEnabled,
+L199: Open=37, Close=30, Bal=7, line=onCheckedChange = {
+L200: Open=37, Close=30, Bal=7, line=isBiometricEnabled = it
+L201: Open=37, Close=30, Bal=7, line=settingsManager.isBiometricEnabled = it
+L202: Open=37, Close=31, Bal=6, line=}
+L203: Open=37, Close=31, Bal=6, line=)
+L204: Open=37, Close=32, Bal=5, line=}
+L205: Open=37, Close=32, Bal=5, line=
+L206: Open=37, Close=32, Bal=5, line=Row(
+L207: Open=37, Close=32, Bal=5, line=modifier = Modifier.fillMaxWidth(),
+L208: Open=37, Close=32, Bal=5, line=horizontalArrangement = Arrangement.SpaceBetween,
+L209: Open=37, Close=32, Bal=5, line=verticalAlignment = Alignment.CenterVertically
+L210: Open=38, Close=32, Bal=6, line=) {
+L211: Open=39, Close=32, Bal=7, line=Column(modifier = Modifier.weight(1f)) {
+L212: Open=39, Close=32, Bal=7, line=Text("Lock Immediately on Background", fontWeight = FontWeight.SemiBold)
+L213: Open=39, Close=32, Bal=7, line=Text(
+L214: Open=39, Close=32, Bal=7, line="Require PIN code when resuming application",
+L215: Open=39, Close=32, Bal=7, line=style = MaterialTheme.typography.bodySmall,
+L216: Open=39, Close=32, Bal=7, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L217: Open=39, Close=32, Bal=7, line=)
+L218: Open=39, Close=33, Bal=6, line=}
+L219: Open=39, Close=33, Bal=6, line=Switch(
+L220: Open=39, Close=33, Bal=6, line=checked = lockOnBg,
+L221: Open=40, Close=33, Bal=7, line=onCheckedChange = {
+L222: Open=40, Close=33, Bal=7, line=lockOnBg = it
+L223: Open=40, Close=33, Bal=7, line=settingsManager.lockOnBackground = it
+L224: Open=40, Close=34, Bal=6, line=}
+L225: Open=40, Close=34, Bal=6, line=)
+L226: Open=40, Close=35, Bal=5, line=}
+L227: Open=40, Close=35, Bal=5, line=
+L228: Open=40, Close=35, Bal=5, line=HorizontalDivider()
+L229: Open=40, Close=35, Bal=5, line=
+L230: Open=40, Close=35, Bal=5, line=Row(
+L231: Open=40, Close=35, Bal=5, line=modifier = Modifier.fillMaxWidth(),
+L232: Open=40, Close=35, Bal=5, line=horizontalArrangement = Arrangement.spacedBy(8.dp)
+L233: Open=41, Close=35, Bal=6, line=) {
+L234: Open=41, Close=35, Bal=6, line=OutlinedButton(
+L235: Open=42, Close=36, Bal=6, line=onClick = { showChangePinDialog = true },
+L236: Open=42, Close=36, Bal=6, line=modifier = Modifier.weight(1f)
+L237: Open=43, Close=36, Bal=7, line=) {
+L238: Open=43, Close=36, Bal=7, line=Icon(Icons.Default.Key, contentDescription = null, modifier = Modifier.size(16.dp))
+L239: Open=43, Close=36, Bal=7, line=Spacer(modifier = Modifier.width(4.dp))
+L240: Open=43, Close=36, Bal=7, line=Text("Change PIN Code")
+L241: Open=43, Close=37, Bal=6, line=}
+L242: Open=43, Close=37, Bal=6, line=
+L243: Open=43, Close=37, Bal=6, line=Button(
+L244: Open=43, Close=37, Bal=6, line=onClick = onLockAppNow,
+L245: Open=43, Close=37, Bal=6, line=modifier = Modifier.weight(1f)
+L246: Open=44, Close=37, Bal=7, line=) {
+L247: Open=44, Close=37, Bal=7, line=Icon(Icons.Default.LockClock, contentDescription = null, modifier = Modifier.size(16.dp))
+L248: Open=44, Close=37, Bal=7, line=Spacer(modifier = Modifier.width(4.dp))
+L249: Open=44, Close=37, Bal=7, line=Text("Lock App Now")
+L250: Open=44, Close=38, Bal=6, line=}
+L251: Open=44, Close=39, Bal=5, line=}
+L252: Open=44, Close=40, Bal=4, line=}
+L253: Open=44, Close=40, Bal=4, line=// --- 3. GOOGLE DRIVE SYNC & BACKUP ---
+L254: Open=45, Close=40, Bal=5, line=item {
+L255: Open=45, Close=40, Bal=5, line=Card(
+L256: Open=45, Close=40, Bal=5, line=shape = RoundedCornerShape(16.dp),
+L257: Open=45, Close=40, Bal=5, line=colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+L258: Open=45, Close=40, Bal=5, line=modifier = Modifier.fillMaxWidth()
+L259: Open=46, Close=40, Bal=6, line=) {
+L260: Open=46, Close=40, Bal=6, line=Column(
+L261: Open=46, Close=40, Bal=6, line=modifier = Modifier.padding(16.dp),
+L262: Open=46, Close=40, Bal=6, line=verticalArrangement = Arrangement.spacedBy(12.dp)
+L263: Open=47, Close=40, Bal=7, line=) {
+L264: Open=48, Close=40, Bal=8, line=Row(verticalAlignment = Alignment.CenterVertically) {
+L265: Open=48, Close=40, Bal=8, line=Icon(
+L266: Open=48, Close=40, Bal=8, line=imageVector = Icons.Default.CloudSync,
+L267: Open=48, Close=40, Bal=8, line=contentDescription = null,
+L268: Open=48, Close=40, Bal=8, line=tint = MaterialTheme.colorScheme.primary,
+L269: Open=48, Close=40, Bal=8, line=modifier = Modifier.padding(end = 8.dp)
+L270: Open=48, Close=40, Bal=8, line=)
+L271: Open=48, Close=40, Bal=8, line=Text(
+L272: Open=48, Close=40, Bal=8, line=text = "Google Drive Cloud Backup & Sync",
+L273: Open=48, Close=40, Bal=8, line=style = MaterialTheme.typography.titleMedium,
+L274: Open=48, Close=40, Bal=8, line=fontWeight = FontWeight.Bold
+L275: Open=48, Close=40, Bal=8, line=)
+L276: Open=48, Close=41, Bal=7, line=}
+L277: Open=48, Close=41, Bal=7, line=HorizontalDivider()
+L278: Open=48, Close=41, Bal=7, line=
+L279: Open=49, Close=42, Bal=7, line=var drivePath by remember { mutableStateOf(settingsManager.googleDriveBackupPath) }
+L280: Open=50, Close=43, Bal=7, line=var isSyncing by remember { mutableStateOf(false) }
+L281: Open=51, Close=44, Bal=7, line=var showDriveFolderPicker by remember { mutableStateOf(false) }
+L282: Open=51, Close=44, Bal=7, line=
+L283: Open=51, Close=44, Bal=7, line=Text(
+L284: Open=51, Close=44, Bal=7, line=text = "Backup your entire question bank securely to Google Drive. Specify your preferred backup folder location below:",
+L285: Open=51, Close=44, Bal=7, line=style = MaterialTheme.typography.bodySmall,
+L286: Open=51, Close=44, Bal=7, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L287: Open=51, Close=44, Bal=7, line=)
+L288: Open=51, Close=44, Bal=7, line=
+L289: Open=51, Close=44, Bal=7, line=Row(
+L290: Open=51, Close=44, Bal=7, line=verticalAlignment = Alignment.CenterVertically,
+L291: Open=51, Close=44, Bal=7, line=horizontalArrangement = Arrangement.spacedBy(8.dp),
+L292: Open=51, Close=44, Bal=7, line=modifier = Modifier.fillMaxWidth()
+L293: Open=52, Close=44, Bal=8, line=) {
+L294: Open=52, Close=44, Bal=8, line=OutlinedTextField(
+L295: Open=52, Close=44, Bal=8, line=value = drivePath,
+L296: Open=53, Close=44, Bal=9, line=onValueChange = {
+L297: Open=53, Close=44, Bal=9, line=drivePath = it
+L298: Open=53, Close=44, Bal=9, line=settingsManager.googleDriveBackupPath = it
+L299: Open=53, Close=45, Bal=8, line=},
+L300: Open=54, Close=46, Bal=8, line=label = { Text("Google Drive Backup Location") },
+L301: Open=55, Close=47, Bal=8, line=placeholder = { Text("My Drive/QuestionBank_Backup/backup.json") },
+L302: Open=55, Close=47, Bal=8, line=modifier = Modifier.weight(1f),
+L303: Open=55, Close=47, Bal=8, line=singleLine = true,
+L304: Open=56, Close=47, Bal=9, line=leadingIcon = {
+L305: Open=56, Close=47, Bal=9, line=Icon(Icons.Default.Folder, contentDescription = null)
+L306: Open=56, Close=48, Bal=8, line=}
+L307: Open=56, Close=48, Bal=8, line=)
+L308: Open=57, Close=48, Bal=9, line=IconButton(onClick = {
+L309: Open=58, Close=48, Bal=10, line=if (settingsManager.isGoogleSignedIn) {
+L310: Open=58, Close=48, Bal=10, line=showDriveFolderPicker = true
+L311: Open=59, Close=49, Bal=10, line=} else {
+L312: Open=59, Close=49, Bal=10, line=Toast.makeText(context, "Please sign in with Google first", Toast.LENGTH_SHORT).show()
+L313: Open=59, Close=50, Bal=9, line=}
+L314: Open=60, Close=51, Bal=9, line=}) {
+L315: Open=60, Close=51, Bal=9, line=Icon(Icons.Default.FolderOpen, contentDescription = "Browse Google Drive")
+L316: Open=60, Close=52, Bal=8, line=}
+L317: Open=60, Close=53, Bal=7, line=}
+L318: Open=60, Close=53, Bal=7, line=
+L319: Open=61, Close=53, Bal=8, line=if (showDriveFolderPicker) {
+L320: Open=61, Close=53, Bal=8, line=GoogleDriveFolderPickerDialog(
+L321: Open=62, Close=54, Bal=8, line=onDismiss = { showDriveFolderPicker = false },
+L322: Open=63, Close=54, Bal=9, line=onSelect = { fullPath, folderId ->
+L323: Open=63, Close=54, Bal=9, line=drivePath = fullPath
+L324: Open=63, Close=54, Bal=9, line=settingsManager.googleDriveBackupPath = fullPath
+L325: Open=63, Close=54, Bal=9, line=showDriveFolderPicker = false
+L326: Open=63, Close=55, Bal=8, line=},
+L327: Open=63, Close=55, Bal=8, line=coroutineScope = scope
+L328: Open=63, Close=55, Bal=8, line=)
+L329: Open=63, Close=56, Bal=7, line=}
+L330: Open=63, Close=56, Bal=7, line=
+L331: Open=63, Close=56, Bal=7, line=Row(
+L332: Open=63, Close=56, Bal=7, line=modifier = Modifier.fillMaxWidth(),
+L333: Open=63, Close=56, Bal=7, line=horizontalArrangement = Arrangement.spacedBy(8.dp)
+L334: Open=64, Close=56, Bal=8, line=) {
+L335: Open=64, Close=56, Bal=8, line=Button(
+L336: Open=65, Close=56, Bal=9, line=onClick = {
+L337: Open=65, Close=56, Bal=9, line=isSyncing = true
+L338: Open=66, Close=56, Bal=10, line=GoogleDriveSyncManager.backupToDrive(context, viewModel, settingsManager) { success, msg ->
+L339: Open=66, Close=56, Bal=10, line=isSyncing = false
+L340: Open=66, Close=56, Bal=10, line=Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+L341: Open=66, Close=57, Bal=9, line=}
+L342: Open=66, Close=58, Bal=8, line=},
+L343: Open=66, Close=58, Bal=8, line=enabled = !isSyncing,
+L344: Open=66, Close=58, Bal=8, line=modifier = Modifier.weight(1f)
+L345: Open=67, Close=58, Bal=9, line=) {
+L346: Open=67, Close=58, Bal=9, line=Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(16.dp))
+L347: Open=67, Close=58, Bal=9, line=Spacer(modifier = Modifier.width(4.dp))
+L348: Open=67, Close=58, Bal=9, line=Text("Backup to Drive")
+L349: Open=67, Close=59, Bal=8, line=}
+L350: Open=67, Close=59, Bal=8, line=
+L351: Open=67, Close=59, Bal=8, line=OutlinedButton(
+L352: Open=68, Close=59, Bal=9, line=onClick = {
+L353: Open=68, Close=59, Bal=9, line=isSyncing = true
+L354: Open=69, Close=59, Bal=10, line=GoogleDriveSyncManager.restoreFromDrive(context, viewModel, settingsManager) { success, msg ->
+L355: Open=69, Close=59, Bal=10, line=isSyncing = false
+L356: Open=69, Close=59, Bal=10, line=Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+L357: Open=69, Close=60, Bal=9, line=}
+L358: Open=69, Close=61, Bal=8, line=},
+L359: Open=69, Close=61, Bal=8, line=enabled = !isSyncing,
+L360: Open=69, Close=61, Bal=8, line=modifier = Modifier.weight(1f)
+L361: Open=70, Close=61, Bal=9, line=) {
+L362: Open=70, Close=61, Bal=9, line=Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
+L363: Open=70, Close=61, Bal=9, line=Spacer(modifier = Modifier.width(4.dp))
+L364: Open=70, Close=61, Bal=9, line=Text("Restore")
+L365: Open=70, Close=62, Bal=8, line=}
+L366: Open=70, Close=63, Bal=7, line=}
+L367: Open=70, Close=64, Bal=6, line=}
+L368: Open=70, Close=64, Bal=6, line=// --- 3.5. OWNER WHITELIST MANAGEMENT ---
+L369: Open=71, Close=64, Bal=7, line=if (com.example.util.WhitelistManager.isOwner(settingsManager.googleAccountEmail)) {
+L370: Open=72, Close=64, Bal=8, line=item {
+L371: Open=72, Close=64, Bal=8, line=Card(
+L372: Open=72, Close=64, Bal=8, line=shape = RoundedCornerShape(16.dp),
+L373: Open=72, Close=64, Bal=8, line=colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+L374: Open=72, Close=64, Bal=8, line=modifier = Modifier.fillMaxWidth()
+L375: Open=73, Close=64, Bal=9, line=) {
+L376: Open=73, Close=64, Bal=9, line=Column(
+L377: Open=73, Close=64, Bal=9, line=modifier = Modifier.padding(16.dp),
+L378: Open=73, Close=64, Bal=9, line=verticalArrangement = Arrangement.spacedBy(12.dp)
+L379: Open=74, Close=64, Bal=10, line=) {
+L380: Open=75, Close=64, Bal=11, line=Row(verticalAlignment = Alignment.CenterVertically) {
+L381: Open=75, Close=64, Bal=11, line=Icon(
+L382: Open=75, Close=64, Bal=11, line=imageVector = Icons.Default.Group,
+L383: Open=75, Close=64, Bal=11, line=contentDescription = null,
+L384: Open=75, Close=64, Bal=11, line=tint = MaterialTheme.colorScheme.primary,
+L385: Open=75, Close=64, Bal=11, line=modifier = Modifier.padding(end = 8.dp)
+L386: Open=75, Close=64, Bal=11, line=)
+L387: Open=75, Close=64, Bal=11, line=Text(
+L388: Open=75, Close=64, Bal=11, line=text = "Owner Whitelist Management",
+L389: Open=75, Close=64, Bal=11, line=style = MaterialTheme.typography.titleMedium,
+L390: Open=75, Close=64, Bal=11, line=fontWeight = FontWeight.Bold
+L391: Open=75, Close=64, Bal=11, line=)
+L392: Open=75, Close=65, Bal=10, line=}
+L393: Open=75, Close=65, Bal=10, line=HorizontalDivider()
+L394: Open=75, Close=65, Bal=10, line=
+L395: Open=76, Close=66, Bal=10, line=var whitelist by remember { mutableStateOf<List<String>>(emptyList()) }
+L396: Open=77, Close=67, Bal=10, line=var newEmailInput by remember { mutableStateOf("") }
+L397: Open=78, Close=68, Bal=10, line=var isLoadingWhitelist by remember { mutableStateOf(false) }
+L398: Open=79, Close=69, Bal=10, line=var isAddingEmail by remember { mutableStateOf(false) }
+L399: Open=79, Close=69, Bal=10, line=
+L400: Open=79, Close=69, Bal=10, line=// Fetch Whitelist Function
+L401: Open=80, Close=69, Bal=11, line=val refreshWhitelist: () -> Unit = {
+L402: Open=81, Close=69, Bal=12, line=scope.launch {
+L403: Open=81, Close=69, Bal=12, line=isLoadingWhitelist = true
+L404: Open=81, Close=69, Bal=12, line=whitelist = com.example.util.WhitelistManager.getWhitelist()
+L405: Open=81, Close=69, Bal=12, line=isLoadingWhitelist = false
+L406: Open=81, Close=70, Bal=11, line=}
+L407: Open=81, Close=71, Bal=10, line=}
+L408: Open=81, Close=71, Bal=10, line=
+L409: Open=81, Close=71, Bal=10, line=// Load Whitelist Initially
+L410: Open=82, Close=71, Bal=11, line=LaunchedEffect(Unit) {
+L411: Open=82, Close=71, Bal=11, line=refreshWhitelist()
+L412: Open=82, Close=72, Bal=10, line=}
+L413: Open=82, Close=72, Bal=10, line=
+L414: Open=82, Close=72, Bal=10, line=Text(
+L415: Open=82, Close=72, Bal=10, line=text = "Add and manage whitelisted users. Only emails added below can log in to the application.",
+L416: Open=82, Close=72, Bal=10, line=style = MaterialTheme.typography.bodySmall,
+L417: Open=82, Close=72, Bal=10, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L418: Open=82, Close=72, Bal=10, line=)
+L419: Open=82, Close=72, Bal=10, line=
+L420: Open=82, Close=72, Bal=10, line=Row(
+L421: Open=82, Close=72, Bal=10, line=verticalAlignment = Alignment.CenterVertically,
+L422: Open=82, Close=72, Bal=10, line=horizontalArrangement = Arrangement.spacedBy(8.dp),
+L423: Open=82, Close=72, Bal=10, line=modifier = Modifier.fillMaxWidth()
+L424: Open=83, Close=72, Bal=11, line=) {
+L425: Open=83, Close=72, Bal=11, line=OutlinedTextField(
+L426: Open=83, Close=72, Bal=11, line=value = newEmailInput,
+L427: Open=84, Close=73, Bal=11, line=onValueChange = { newEmailInput = it },
+L428: Open=85, Close=74, Bal=11, line=label = { Text("User Email Address") },
+L429: Open=86, Close=75, Bal=11, line=placeholder = { Text("user@gmail.com") },
+L430: Open=86, Close=75, Bal=11, line=modifier = Modifier.weight(1f),
+L431: Open=86, Close=75, Bal=11, line=singleLine = true,
+L432: Open=87, Close=75, Bal=12, line=leadingIcon = {
+L433: Open=87, Close=75, Bal=12, line=Icon(Icons.Default.Email, contentDescription = null)
+L434: Open=87, Close=76, Bal=11, line=}
+L435: Open=87, Close=76, Bal=11, line=)
+L436: Open=87, Close=76, Bal=11, line=
+L437: Open=87, Close=76, Bal=11, line=Button(
+L438: Open=88, Close=76, Bal=12, line=onClick = {
+L439: Open=89, Close=76, Bal=13, line=if (newEmailInput.isNotBlank()) {
+L440: Open=90, Close=76, Bal=14, line=scope.launch {
+L441: Open=90, Close=76, Bal=14, line=isAddingEmail = true
+L442: Open=90, Close=76, Bal=14, line=val success = com.example.util.WhitelistManager.addEmailToWhitelist(newEmailInput.trim())
+L443: Open=90, Close=76, Bal=14, line=isAddingEmail = false
+L444: Open=91, Close=76, Bal=15, line=if (success) {
+L445: Open=91, Close=76, Bal=15, line=Toast.makeText(context, "Added successfully", Toast.LENGTH_SHORT).show()
+L446: Open=91, Close=76, Bal=15, line=newEmailInput = ""
+L447: Open=91, Close=76, Bal=15, line=refreshWhitelist()
+L448: Open=92, Close=77, Bal=15, line=} else {
+L449: Open=92, Close=77, Bal=15, line=Toast.makeText(context, "Failed to add email", Toast.LENGTH_SHORT).show()
+L450: Open=92, Close=78, Bal=14, line=}
+L451: Open=92, Close=79, Bal=13, line=}
+L452: Open=92, Close=80, Bal=12, line=}
+L453: Open=92, Close=81, Bal=11, line=},
+L454: Open=92, Close=81, Bal=11, line=enabled = !isAddingEmail && newEmailInput.isNotBlank(),
+L455: Open=92, Close=81, Bal=11, line=shape = RoundedCornerShape(12.dp)
+L456: Open=93, Close=81, Bal=12, line=) {
+L457: Open=94, Close=81, Bal=13, line=if (isAddingEmail) {
+L458: Open=94, Close=81, Bal=13, line=CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary)
+L459: Open=95, Close=82, Bal=13, line=} else {
+L460: Open=95, Close=82, Bal=13, line=Text("Add")
+L461: Open=95, Close=83, Bal=12, line=}
+L462: Open=95, Close=84, Bal=11, line=}
+L463: Open=95, Close=85, Bal=10, line=}
+L464: Open=95, Close=85, Bal=10, line=
+L465: Open=95, Close=85, Bal=10, line=Spacer(modifier = Modifier.height(4.dp))
+L466: Open=95, Close=85, Bal=10, line=
+L467: Open=95, Close=85, Bal=10, line=Text(
+L468: Open=95, Close=85, Bal=10, line=text = "Whitelisted Users:",
+L469: Open=95, Close=85, Bal=10, line=style = MaterialTheme.typography.labelMedium,
+L470: Open=95, Close=85, Bal=10, line=fontWeight = FontWeight.Bold,
+L471: Open=95, Close=85, Bal=10, line=color = MaterialTheme.colorScheme.primary
+L472: Open=95, Close=85, Bal=10, line=)
+L473: Open=95, Close=85, Bal=10, line=
+L474: Open=96, Close=85, Bal=11, line=if (isLoadingWhitelist) {
+L475: Open=96, Close=85, Bal=11, line=Box(
+L476: Open=96, Close=85, Bal=11, line=modifier = Modifier.fillMaxWidth().padding(16.dp),
+L477: Open=96, Close=85, Bal=11, line=contentAlignment = Alignment.Center
+L478: Open=97, Close=85, Bal=12, line=) {
+L479: Open=97, Close=85, Bal=12, line=CircularProgressIndicator()
+L480: Open=97, Close=86, Bal=11, line=}
+L481: Open=98, Close=87, Bal=11, line=} else if (whitelist.isEmpty()) {
+L482: Open=98, Close=87, Bal=11, line=Text(
+L483: Open=98, Close=87, Bal=11, line=text = "No external users whitelisted yet.",
+L484: Open=98, Close=87, Bal=11, line=style = MaterialTheme.typography.bodySmall,
+L485: Open=98, Close=87, Bal=11, line=color = MaterialTheme.colorScheme.outline,
+L486: Open=98, Close=87, Bal=11, line=modifier = Modifier.padding(vertical = 8.dp)
+L487: Open=98, Close=87, Bal=11, line=)
+L488: Open=99, Close=88, Bal=11, line=} else {
+L489: Open=99, Close=88, Bal=11, line=Column(
+L490: Open=99, Close=88, Bal=11, line=verticalArrangement = Arrangement.spacedBy(8.dp),
+L491: Open=99, Close=88, Bal=11, line=modifier = Modifier.fillMaxWidth()
+L492: Open=100, Close=88, Bal=12, line=) {
+L493: Open=101, Close=88, Bal=13, line=whitelist.forEach { email ->
+L494: Open=102, Close=89, Bal=13, line=var isDeletingUser by remember { mutableStateOf(false) }
+L495: Open=102, Close=89, Bal=13, line=Row(
+L496: Open=102, Close=89, Bal=13, line=modifier = Modifier
+L497: Open=102, Close=89, Bal=13, line=.fillMaxWidth()
+L498: Open=102, Close=89, Bal=13, line=.background(
+L499: Open=102, Close=89, Bal=13, line=color = MaterialTheme.colorScheme.surfaceContainer,
+L500: Open=102, Close=89, Bal=13, line=shape = RoundedCornerShape(8.dp)
+L501: Open=102, Close=89, Bal=13, line=)
+L502: Open=102, Close=89, Bal=13, line=.padding(horizontal = 12.dp, vertical = 8.dp),
+L503: Open=102, Close=89, Bal=13, line=horizontalArrangement = Arrangement.SpaceBetween,
+L504: Open=102, Close=89, Bal=13, line=verticalAlignment = Alignment.CenterVertically
+L505: Open=103, Close=89, Bal=14, line=) {
+L506: Open=103, Close=89, Bal=14, line=Row(
+L507: Open=103, Close=89, Bal=14, line=verticalAlignment = Alignment.CenterVertically,
+L508: Open=103, Close=89, Bal=14, line=modifier = Modifier.weight(1f)
+L509: Open=104, Close=89, Bal=15, line=) {
+L510: Open=104, Close=89, Bal=15, line=Icon(
+L511: Open=104, Close=89, Bal=15, line=imageVector = Icons.Default.Person,
+L512: Open=104, Close=89, Bal=15, line=contentDescription = null,
+L513: Open=104, Close=89, Bal=15, line=tint = MaterialTheme.colorScheme.onSurfaceVariant,
+L514: Open=104, Close=89, Bal=15, line=modifier = Modifier.size(18.dp)
+L515: Open=104, Close=89, Bal=15, line=)
+L516: Open=104, Close=89, Bal=15, line=Spacer(modifier = Modifier.width(8.dp))
+L517: Open=104, Close=89, Bal=15, line=Text(
+L518: Open=104, Close=89, Bal=15, line=text = email,
+L519: Open=104, Close=89, Bal=15, line=style = MaterialTheme.typography.bodyMedium,
+L520: Open=104, Close=89, Bal=15, line=color = MaterialTheme.colorScheme.onSurface
+L521: Open=104, Close=89, Bal=15, line=)
+L522: Open=104, Close=90, Bal=14, line=}
+L523: Open=104, Close=90, Bal=14, line=
+L524: Open=104, Close=90, Bal=14, line=IconButton(
+L525: Open=105, Close=90, Bal=15, line=onClick = {
+L526: Open=106, Close=90, Bal=16, line=scope.launch {
+L527: Open=106, Close=90, Bal=16, line=isDeletingUser = true
+L528: Open=106, Close=90, Bal=16, line=val success = com.example.util.WhitelistManager.removeEmailFromWhitelist(email)
+L529: Open=106, Close=90, Bal=16, line=isDeletingUser = false
+L530: Open=107, Close=90, Bal=17, line=if (success) {
+L531: Open=107, Close=90, Bal=17, line=Toast.makeText(context, "Removed successfully", Toast.LENGTH_SHORT).show()
+L532: Open=107, Close=90, Bal=17, line=refreshWhitelist()
+L533: Open=108, Close=91, Bal=17, line=} else {
+L534: Open=108, Close=91, Bal=17, line=Toast.makeText(context, "Failed to remove email", Toast.LENGTH_SHORT).show()
+L535: Open=108, Close=92, Bal=16, line=}
+L536: Open=108, Close=93, Bal=15, line=}
+L537: Open=108, Close=94, Bal=14, line=},
+L538: Open=108, Close=94, Bal=14, line=enabled = !isDeletingUser,
+L539: Open=108, Close=94, Bal=14, line=modifier = Modifier.size(24.dp)
+L540: Open=109, Close=94, Bal=15, line=) {
+L541: Open=110, Close=94, Bal=16, line=if (isDeletingUser) {
+L542: Open=110, Close=94, Bal=16, line=CircularProgressIndicator(modifier = Modifier.size(16.dp), color = MaterialTheme.colorScheme.error)
+L543: Open=111, Close=95, Bal=16, line=} else {
+L544: Open=111, Close=95, Bal=16, line=Icon(
+L545: Open=111, Close=95, Bal=16, line=imageVector = Icons.Default.Delete,
+L546: Open=111, Close=95, Bal=16, line=contentDescription = "Remove from Whitelist",
+L547: Open=111, Close=95, Bal=16, line=tint = MaterialTheme.colorScheme.error,
+L548: Open=111, Close=95, Bal=16, line=modifier = Modifier.size(20.dp)
+L549: Open=111, Close=95, Bal=16, line=)
+L550: Open=111, Close=96, Bal=15, line=}
+L551: Open=111, Close=97, Bal=14, line=}
+L552: Open=111, Close=98, Bal=13, line=}
+L553: Open=111, Close=99, Bal=12, line=}
+L554: Open=111, Close=100, Bal=11, line=}
+L555: Open=111, Close=101, Bal=10, line=}
+L556: Open=111, Close=102, Bal=9, line=}
+L557: Open=111, Close=103, Bal=8, line=}
+L558: Open=111, Close=103, Bal=8, line=// --- 4. EXAM & PRINT DEFAULTS ---
+L559: Open=112, Close=103, Bal=9, line=item {
+L560: Open=112, Close=103, Bal=9, line=Card(
+L561: Open=112, Close=103, Bal=9, line=shape = RoundedCornerShape(16.dp),
+L562: Open=112, Close=103, Bal=9, line=colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+L563: Open=112, Close=103, Bal=9, line=modifier = Modifier.fillMaxWidth()
+L564: Open=113, Close=103, Bal=10, line=) {
+L565: Open=113, Close=103, Bal=10, line=Column(
+L566: Open=113, Close=103, Bal=10, line=modifier = Modifier.padding(16.dp),
+L567: Open=113, Close=103, Bal=10, line=verticalArrangement = Arrangement.spacedBy(12.dp)
+L568: Open=114, Close=103, Bal=11, line=) {
+L569: Open=115, Close=103, Bal=12, line=Row(verticalAlignment = Alignment.CenterVertically) {
+L570: Open=115, Close=103, Bal=12, line=Icon(
+L571: Open=115, Close=103, Bal=12, line=imageVector = Icons.Default.Description,
+L572: Open=115, Close=103, Bal=12, line=contentDescription = null,
+L573: Open=115, Close=103, Bal=12, line=tint = MaterialTheme.colorScheme.primary,
+L574: Open=115, Close=103, Bal=12, line=modifier = Modifier.padding(end = 8.dp)
+L575: Open=115, Close=103, Bal=12, line=)
+L576: Open=115, Close=103, Bal=12, line=Text(
+L577: Open=115, Close=103, Bal=12, line=text = "Exam Paper & Watermark Defaults",
+L578: Open=115, Close=103, Bal=12, line=style = MaterialTheme.typography.titleMedium,
+L579: Open=115, Close=103, Bal=12, line=fontWeight = FontWeight.Bold
+L580: Open=115, Close=103, Bal=12, line=)
+L581: Open=115, Close=104, Bal=11, line=}
+L582: Open=115, Close=104, Bal=11, line=HorizontalDivider()
+L583: Open=115, Close=104, Bal=11, line=
+L584: Open=116, Close=105, Bal=11, line=var defaultInst by remember { mutableStateOf(settingsManager.defaultInstitute) }
+L585: Open=117, Close=106, Bal=11, line=var defaultCode by remember { mutableStateOf(settingsManager.defaultPaperCode) }
+L586: Open=117, Close=106, Bal=11, line=
+L587: Open=117, Close=106, Bal=11, line=OutlinedTextField(
+L588: Open=117, Close=106, Bal=11, line=value = defaultInst,
+L589: Open=118, Close=107, Bal=11, line=onValueChange = { defaultInst = it; settingsManager.defaultInstitute = it },
+L590: Open=119, Close=108, Bal=11, line=label = { Text("Default Header / Institution Title") },
+L591: Open=119, Close=108, Bal=11, line=modifier = Modifier.fillMaxWidth(),
+L592: Open=119, Close=108, Bal=11, line=singleLine = true
+L593: Open=119, Close=108, Bal=11, line=)
+L594: Open=119, Close=108, Bal=11, line=
+L595: Open=119, Close=108, Bal=11, line=OutlinedTextField(
+L596: Open=119, Close=108, Bal=11, line=value = defaultCode,
+L597: Open=120, Close=109, Bal=11, line=onValueChange = { defaultCode = it; settingsManager.defaultPaperCode = it },
+L598: Open=121, Close=110, Bal=11, line=label = { Text("Default Paper Code") },
+L599: Open=121, Close=110, Bal=11, line=modifier = Modifier.fillMaxWidth(),
+L600: Open=121, Close=110, Bal=11, line=singleLine = true
+L601: Open=121, Close=110, Bal=11, line=)
+L602: Open=121, Close=110, Bal=11, line=
+L603: Open=121, Close=110, Bal=11, line=HorizontalDivider()
+L604: Open=121, Close=110, Bal=11, line=
+L605: Open=122, Close=111, Bal=11, line=var watermarkEnabled by remember { mutableStateOf(settingsManager.watermarkEnabled) }
+L606: Open=123, Close=112, Bal=11, line=var watermarkText by remember { mutableStateOf(settingsManager.watermarkText) }
+L607: Open=124, Close=113, Bal=11, line=var isCursive by remember { mutableStateOf(settingsManager.watermarkIsCursive) }
+L608: Open=125, Close=114, Bal=11, line=var size by remember { mutableStateOf(settingsManager.watermarkSize) }
+L609: Open=126, Close=115, Bal=11, line=var opacity by remember { mutableStateOf(settingsManager.watermarkOpacity) }
+L610: Open=127, Close=116, Bal=11, line=var angle by remember { mutableStateOf(settingsManager.watermarkAngle) }
+L611: Open=127, Close=116, Bal=11, line=
+L612: Open=127, Close=116, Bal=11, line=Row(
+L613: Open=127, Close=116, Bal=11, line=modifier = Modifier.fillMaxWidth(),
+L614: Open=127, Close=116, Bal=11, line=horizontalArrangement = Arrangement.SpaceBetween,
+L615: Open=127, Close=116, Bal=11, line=verticalAlignment = Alignment.CenterVertically
+L616: Open=128, Close=116, Bal=12, line=) {
+L617: Open=129, Close=116, Bal=13, line=Column(modifier = Modifier.weight(1f)) {
+L618: Open=129, Close=116, Bal=13, line=Text("Permanent PDF Security Watermark", fontWeight = FontWeight.SemiBold)
+L619: Open=129, Close=116, Bal=13, line=Text(
+L620: Open=129, Close=116, Bal=13, line="Embeds non-removable security watermarks on generated question paper PDFs.",
+L621: Open=129, Close=116, Bal=13, line=style = MaterialTheme.typography.bodySmall,
+L622: Open=129, Close=116, Bal=13, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L623: Open=129, Close=116, Bal=13, line=)
+L624: Open=129, Close=117, Bal=12, line=}
+L625: Open=129, Close=117, Bal=12, line=Switch(
+L626: Open=129, Close=117, Bal=12, line=checked = watermarkEnabled,
+L627: Open=130, Close=117, Bal=13, line=onCheckedChange = {
+L628: Open=130, Close=117, Bal=13, line=watermarkEnabled = it
+L629: Open=130, Close=117, Bal=13, line=settingsManager.watermarkEnabled = it
+L630: Open=130, Close=118, Bal=12, line=}
+L631: Open=130, Close=118, Bal=12, line=)
+L632: Open=130, Close=119, Bal=11, line=}
+L633: Open=130, Close=119, Bal=11, line=
+L634: Open=131, Close=119, Bal=12, line=if (watermarkEnabled) {
+L635: Open=131, Close=119, Bal=12, line=OutlinedTextField(
+L636: Open=131, Close=119, Bal=12, line=value = watermarkText,
+L637: Open=132, Close=120, Bal=12, line=onValueChange = { watermarkText = it; settingsManager.watermarkText = it },
+L638: Open=133, Close=121, Bal=12, line=label = { Text("Watermark Text") },
+L639: Open=133, Close=121, Bal=12, line=modifier = Modifier.fillMaxWidth(),
+L640: Open=133, Close=121, Bal=12, line=singleLine = true
+L641: Open=133, Close=121, Bal=12, line=)
+L642: Open=133, Close=121, Bal=12, line=
+L643: Open=133, Close=121, Bal=12, line=Row(
+L644: Open=133, Close=121, Bal=12, line=modifier = Modifier.fillMaxWidth(),
+L645: Open=133, Close=121, Bal=12, line=horizontalArrangement = Arrangement.SpaceBetween,
+L646: Open=133, Close=121, Bal=12, line=verticalAlignment = Alignment.CenterVertically
+L647: Open=134, Close=121, Bal=13, line=) {
+L648: Open=134, Close=121, Bal=13, line=Text("Cursive / Calligraphy Font Style", style = MaterialTheme.typography.bodyMedium)
+L649: Open=134, Close=121, Bal=13, line=Switch(
+L650: Open=134, Close=121, Bal=13, line=checked = isCursive,
+L651: Open=135, Close=121, Bal=14, line=onCheckedChange = {
+L652: Open=135, Close=121, Bal=14, line=isCursive = it
+L653: Open=135, Close=121, Bal=14, line=settingsManager.watermarkIsCursive = it
+L654: Open=135, Close=122, Bal=13, line=}
+L655: Open=135, Close=122, Bal=13, line=)
+L656: Open=135, Close=123, Bal=12, line=}
+L657: Open=135, Close=123, Bal=12, line=
+L658: Open=136, Close=124, Bal=12, line=Text("Watermark Size: ${size.toInt()} pt", style = MaterialTheme.typography.bodySmall)
+L659: Open=136, Close=124, Bal=12, line=Slider(
+L660: Open=136, Close=124, Bal=12, line=value = size,
+L661: Open=137, Close=125, Bal=12, line=onValueChange = { size = it; settingsManager.watermarkSize = it },
+L662: Open=137, Close=125, Bal=12, line=valueRange = 10f..60f
+L663: Open=137, Close=125, Bal=12, line=)
+L664: Open=137, Close=125, Bal=12, line=
+L665: Open=138, Close=126, Bal=12, line=Text("Opacity: ${(opacity * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
+L666: Open=138, Close=126, Bal=12, line=Slider(
+L667: Open=138, Close=126, Bal=12, line=value = opacity,
+L668: Open=139, Close=127, Bal=12, line=onValueChange = { opacity = it; settingsManager.watermarkOpacity = it },
+L669: Open=139, Close=127, Bal=12, line=valueRange = 0.05f..0.8f
+L670: Open=139, Close=127, Bal=12, line=)
+L671: Open=139, Close=127, Bal=12, line=
+L672: Open=140, Close=128, Bal=12, line=Text("Rotation Angle: ${angle.toInt()}°", style = MaterialTheme.typography.bodySmall)
+L673: Open=140, Close=128, Bal=12, line=Slider(
+L674: Open=140, Close=128, Bal=12, line=value = angle,
+L675: Open=141, Close=129, Bal=12, line=onValueChange = { angle = it; settingsManager.watermarkAngle = it },
+L676: Open=141, Close=129, Bal=12, line=valueRange = -90f..90f
+L677: Open=141, Close=129, Bal=12, line=)
+L678: Open=141, Close=130, Bal=11, line=}
+L679: Open=141, Close=131, Bal=10, line=}
+L680: Open=141, Close=131, Bal=10, line=// --- 5. FTP REMOTE STORAGE INTEGRATION ---
+L681: Open=142, Close=131, Bal=11, line=item {
+L682: Open=142, Close=131, Bal=11, line=Card(
+L683: Open=142, Close=131, Bal=11, line=shape = RoundedCornerShape(16.dp),
+L684: Open=142, Close=131, Bal=11, line=colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+L685: Open=142, Close=131, Bal=11, line=modifier = Modifier.fillMaxWidth()
+L686: Open=143, Close=131, Bal=12, line=) {
+L687: Open=143, Close=131, Bal=12, line=Column(
+L688: Open=143, Close=131, Bal=12, line=modifier = Modifier.padding(16.dp),
+L689: Open=143, Close=131, Bal=12, line=verticalArrangement = Arrangement.spacedBy(12.dp)
+L690: Open=144, Close=131, Bal=13, line=) {
+L691: Open=145, Close=132, Bal=13, line=var isFtpConnectionValid by remember { mutableStateOf(settingsManager.isFtpConnectionValid) }
+L692: Open=146, Close=132, Bal=14, line=Row(verticalAlignment = Alignment.CenterVertically) {
+L693: Open=146, Close=132, Bal=14, line=Icon(
+L694: Open=146, Close=132, Bal=14, line=imageVector = Icons.Default.Dns,
+L695: Open=146, Close=132, Bal=14, line=contentDescription = null,
+L696: Open=146, Close=132, Bal=14, line=tint = MaterialTheme.colorScheme.primary,
+L697: Open=146, Close=132, Bal=14, line=modifier = Modifier.padding(end = 8.dp)
+L698: Open=146, Close=132, Bal=14, line=)
+L699: Open=146, Close=132, Bal=14, line=Text(
+L700: Open=146, Close=132, Bal=14, line=text = "FTP Remote Storage Integration",
+L701: Open=146, Close=132, Bal=14, line=style = MaterialTheme.typography.titleMedium,
+L702: Open=146, Close=132, Bal=14, line=fontWeight = FontWeight.Bold,
+L703: Open=146, Close=132, Bal=14, line=modifier = Modifier.weight(1f)
+L704: Open=146, Close=132, Bal=14, line=)
+L705: Open=147, Close=132, Bal=15, line=if (isFtpConnectionValid) {
+L706: Open=147, Close=132, Bal=15, line=Icon(
+L707: Open=147, Close=132, Bal=15, line=imageVector = Icons.Default.CheckCircle,
+L708: Open=147, Close=132, Bal=15, line=contentDescription = "Valid Connection",
+L709: Open=147, Close=132, Bal=15, line=tint = Color(0xFF2E7D32),
+L710: Open=147, Close=132, Bal=15, line=modifier = Modifier.size(20.dp)
+L711: Open=147, Close=132, Bal=15, line=)
+L712: Open=147, Close=133, Bal=14, line=}
+L713: Open=147, Close=134, Bal=13, line=}
+L714: Open=147, Close=134, Bal=13, line=HorizontalDivider()
+L715: Open=147, Close=134, Bal=13, line=
+L716: Open=148, Close=135, Bal=13, line=var ftpHost by remember { mutableStateOf(settingsManager.ftpHost) }
+L717: Open=149, Close=136, Bal=13, line=var ftpPort by remember { mutableStateOf(settingsManager.ftpPort.toString()) }
+L718: Open=150, Close=137, Bal=13, line=var ftpUser by remember { mutableStateOf(settingsManager.ftpUser) }
+L719: Open=151, Close=138, Bal=13, line=var ftpPass by remember { mutableStateOf(settingsManager.ftpPass) }
+L720: Open=152, Close=139, Bal=13, line=var ftpRemoteDir by remember { mutableStateOf(settingsManager.ftpRemoteDir) }
+L721: Open=153, Close=140, Bal=13, line=var ftpUsePassive by remember { mutableStateOf(settingsManager.ftpUsePassive) }
+L722: Open=154, Close=141, Bal=13, line=var ftpUseFtps by remember { mutableStateOf(settingsManager.ftpUseFtps) }
+L723: Open=154, Close=141, Bal=13, line=
+L724: Open=155, Close=142, Bal=13, line=var isFtpOperating by remember { mutableStateOf(false) }
+L725: Open=156, Close=143, Bal=13, line=var ftpStatusMessage by remember { mutableStateOf("") }
+L726: Open=156, Close=143, Bal=13, line=
+L727: Open=156, Close=143, Bal=13, line=Text(
+L728: Open=156, Close=143, Bal=13, line=text = "Link a remote FTP/FTPS or SMB server for centralized backup (Auto-detects smb:// or ftp:// prefixes):",
+L729: Open=156, Close=143, Bal=13, line=style = MaterialTheme.typography.bodySmall,
+L730: Open=156, Close=143, Bal=13, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L731: Open=156, Close=143, Bal=13, line=)
+L732: Open=156, Close=143, Bal=13, line=
+L733: Open=157, Close=143, Bal=14, line=Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+L734: Open=157, Close=143, Bal=14, line=OutlinedTextField(
+L735: Open=157, Close=143, Bal=14, line=value = ftpHost,
+L736: Open=158, Close=143, Bal=15, line=onValueChange = {
+L737: Open=158, Close=143, Bal=15, line=ftpHost = it
+L738: Open=158, Close=143, Bal=15, line=settingsManager.ftpHost = it
+L739: Open=158, Close=143, Bal=15, line=settingsManager.isFtpConnectionValid = false
+L740: Open=158, Close=143, Bal=15, line=isFtpConnectionValid = false
+L741: Open=158, Close=144, Bal=14, line=},
+L742: Open=159, Close=145, Bal=14, line=label = { Text("Host/IP (prefix smb:// or ftp://)") },
+L743: Open=159, Close=145, Bal=14, line=modifier = Modifier.weight(2f),
+L744: Open=159, Close=145, Bal=14, line=singleLine = true
+L745: Open=159, Close=145, Bal=14, line=)
+L746: Open=159, Close=145, Bal=14, line=OutlinedTextField(
+L747: Open=159, Close=145, Bal=14, line=value = ftpPort,
+L748: Open=160, Close=145, Bal=15, line=onValueChange = {
+L749: Open=160, Close=145, Bal=15, line=ftpPort = it
+L750: Open=160, Close=145, Bal=15, line=settingsManager.ftpPort = it.toIntOrNull() ?: 21
+L751: Open=160, Close=145, Bal=15, line=settingsManager.isFtpConnectionValid = false
+L752: Open=160, Close=145, Bal=15, line=isFtpConnectionValid = false
+L753: Open=160, Close=146, Bal=14, line=},
+L754: Open=161, Close=147, Bal=14, line=label = { Text("Port") },
+L755: Open=161, Close=147, Bal=14, line=modifier = Modifier.weight(1f),
+L756: Open=161, Close=147, Bal=14, line=singleLine = true
+L757: Open=161, Close=147, Bal=14, line=)
+L758: Open=161, Close=148, Bal=13, line=}
+L759: Open=161, Close=148, Bal=13, line=
+L760: Open=162, Close=148, Bal=14, line=Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+L761: Open=162, Close=148, Bal=14, line=OutlinedTextField(
+L762: Open=162, Close=148, Bal=14, line=value = ftpUser,
+L763: Open=163, Close=148, Bal=15, line=onValueChange = {
+L764: Open=163, Close=148, Bal=15, line=ftpUser = it
+L765: Open=163, Close=148, Bal=15, line=settingsManager.ftpUser = it
+L766: Open=163, Close=148, Bal=15, line=settingsManager.isFtpConnectionValid = false
+L767: Open=163, Close=148, Bal=15, line=isFtpConnectionValid = false
+L768: Open=163, Close=149, Bal=14, line=},
+L769: Open=164, Close=150, Bal=14, line=label = { Text("Username") },
+L770: Open=164, Close=150, Bal=14, line=modifier = Modifier.weight(1f),
+L771: Open=164, Close=150, Bal=14, line=singleLine = true
+L772: Open=164, Close=150, Bal=14, line=)
+L773: Open=164, Close=150, Bal=14, line=OutlinedTextField(
+L774: Open=164, Close=150, Bal=14, line=value = ftpPass,
+L775: Open=165, Close=150, Bal=15, line=onValueChange = {
+L776: Open=165, Close=150, Bal=15, line=ftpPass = it
+L777: Open=165, Close=150, Bal=15, line=settingsManager.ftpPass = it
+L778: Open=165, Close=150, Bal=15, line=settingsManager.isFtpConnectionValid = false
+L779: Open=165, Close=150, Bal=15, line=isFtpConnectionValid = false
+L780: Open=165, Close=151, Bal=14, line=},
+L781: Open=166, Close=152, Bal=14, line=label = { Text("Password") },
+L782: Open=166, Close=152, Bal=14, line=visualTransformation = PasswordVisualTransformation(),
+L783: Open=166, Close=152, Bal=14, line=modifier = Modifier.weight(1f),
+L784: Open=166, Close=152, Bal=14, line=singleLine = true
+L785: Open=166, Close=152, Bal=14, line=)
+L786: Open=166, Close=153, Bal=13, line=}
+L787: Open=166, Close=153, Bal=13, line=
+L788: Open=167, Close=154, Bal=13, line=var showFolderPicker by remember { mutableStateOf(false) }
+L789: Open=167, Close=154, Bal=13, line=
+L790: Open=168, Close=154, Bal=14, line=Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+L791: Open=168, Close=154, Bal=14, line=OutlinedTextField(
+L792: Open=168, Close=154, Bal=14, line=value = ftpRemoteDir,
+L793: Open=169, Close=155, Bal=14, line=onValueChange = { ftpRemoteDir = it; settingsManager.ftpRemoteDir = it },
+L794: Open=170, Close=156, Bal=14, line=label = { Text("Remote Server Directory Folder") },
+L795: Open=170, Close=156, Bal=14, line=modifier = Modifier.weight(1f),
+L796: Open=170, Close=156, Bal=14, line=singleLine = true
+L797: Open=170, Close=156, Bal=14, line=)
+L798: Open=171, Close=156, Bal=15, line=IconButton(onClick = {
+L799: Open=172, Close=156, Bal=16, line=if (ftpHost.isNotBlank()) {
+L800: Open=172, Close=156, Bal=16, line=showFolderPicker = true
+L801: Open=173, Close=157, Bal=16, line=} else {
+L802: Open=173, Close=157, Bal=16, line=Toast.makeText(context, "Please enter Server Host first", Toast.LENGTH_SHORT).show()
+L803: Open=173, Close=158, Bal=15, line=}
+L804: Open=174, Close=159, Bal=15, line=}) {
+L805: Open=174, Close=159, Bal=15, line=Icon(Icons.Default.FolderOpen, contentDescription = "Browse")
+L806: Open=174, Close=160, Bal=14, line=}
+L807: Open=174, Close=161, Bal=13, line=}
+L808: Open=174, Close=161, Bal=13, line=
+L809: Open=175, Close=161, Bal=14, line=if (showFolderPicker) {
+L810: Open=175, Close=161, Bal=14, line=RemoteFolderPickerDialog(
+L811: Open=175, Close=161, Bal=14, line=initialDir = ftpRemoteDir,
+L812: Open=176, Close=162, Bal=14, line=onDismiss = { showFolderPicker = false },
+L813: Open=177, Close=162, Bal=15, line=onSelect = {
+L814: Open=177, Close=162, Bal=15, line=ftpRemoteDir = it
+L815: Open=177, Close=162, Bal=15, line=settingsManager.ftpRemoteDir = it
+L816: Open=177, Close=162, Bal=15, line=showFolderPicker = false
+L817: Open=177, Close=163, Bal=14, line=},
+L818: Open=177, Close=163, Bal=14, line=host = ftpHost,
+L819: Open=177, Close=163, Bal=14, line=port = ftpPort.toIntOrNull() ?: 21,
+L820: Open=177, Close=163, Bal=14, line=user = ftpUser,
+L821: Open=177, Close=163, Bal=14, line=pass = ftpPass,
+L822: Open=177, Close=163, Bal=14, line=usePassive = ftpUsePassive,
+L823: Open=177, Close=163, Bal=14, line=useFtps = ftpUseFtps,
+L824: Open=177, Close=163, Bal=14, line=coroutineScope = scope
+L825: Open=177, Close=163, Bal=14, line=)
+L826: Open=177, Close=164, Bal=13, line=}
+L827: Open=177, Close=164, Bal=13, line=
+L828: Open=177, Close=164, Bal=13, line=Row(
+L829: Open=177, Close=164, Bal=13, line=modifier = Modifier.fillMaxWidth(),
+L830: Open=177, Close=164, Bal=13, line=horizontalArrangement = Arrangement.spacedBy(8.dp),
+L831: Open=177, Close=164, Bal=13, line=verticalAlignment = Alignment.CenterVertically
+L832: Open=178, Close=164, Bal=14, line=) {
+L833: Open=178, Close=164, Bal=14, line=FilterChip(
+L834: Open=178, Close=164, Bal=14, line=selected = ftpUsePassive,
+L835: Open=179, Close=164, Bal=15, line=onClick = {
+L836: Open=179, Close=164, Bal=15, line=val newVal = !ftpUsePassive
+L837: Open=179, Close=164, Bal=15, line=ftpUsePassive = newVal
+L838: Open=179, Close=164, Bal=15, line=settingsManager.ftpUsePassive = newVal
+L839: Open=179, Close=165, Bal=14, line=},
+L840: Open=180, Close=166, Bal=14, line=label = { Text(if (ftpUsePassive) "Passive Mode (PASV)" else "Active Mode (PORT)") },
+L841: Open=180, Close=166, Bal=14, line=modifier = Modifier.weight(1f)
+L842: Open=180, Close=166, Bal=14, line=)
+L843: Open=180, Close=166, Bal=14, line=
+L844: Open=180, Close=166, Bal=14, line=FilterChip(
+L845: Open=180, Close=166, Bal=14, line=selected = ftpUseFtps,
+L846: Open=181, Close=166, Bal=15, line=onClick = {
+L847: Open=181, Close=166, Bal=15, line=val newFtps = !ftpUseFtps
+L848: Open=181, Close=166, Bal=15, line=ftpUseFtps = newFtps
+L849: Open=181, Close=166, Bal=15, line=settingsManager.ftpUseFtps = newFtps
+L850: Open=182, Close=166, Bal=16, line=if (newFtps && ftpPort == "21") {
+L851: Open=182, Close=166, Bal=16, line=ftpPort = "990"
+L852: Open=182, Close=166, Bal=16, line=settingsManager.ftpPort = 990
+L853: Open=182, Close=167, Bal=15, line=}
+L854: Open=182, Close=167, Bal=15, line=settingsManager.isFtpConnectionValid = false
+L855: Open=182, Close=167, Bal=15, line=isFtpConnectionValid = false
+L856: Open=182, Close=168, Bal=14, line=},
+L857: Open=183, Close=169, Bal=14, line=label = { Text(if (ftpUseFtps) "FTPS (TLS)" else "Standard FTP") },
+L858: Open=183, Close=169, Bal=14, line=modifier = Modifier.weight(1f)
+L859: Open=183, Close=169, Bal=14, line=)
+L860: Open=183, Close=170, Bal=13, line=}
+L861: Open=183, Close=170, Bal=13, line=
+L862: Open=183, Close=170, Bal=13, line=// FTP Auto Sync Settings
+L863: Open=184, Close=171, Bal=13, line=var ftpAutoSync by remember { mutableStateOf<Boolean>(settingsManager.ftpAutoSync) }
+L864: Open=185, Close=172, Bal=13, line=var autoSyncIntervalMins by remember { mutableStateOf<Int>(settingsManager.autoSyncIntervalMins) }
+L865: Open=186, Close=173, Bal=13, line=var showIntervalDropdown by remember { mutableStateOf(false) }
+L866: Open=186, Close=173, Bal=13, line=
+L867: Open=186, Close=173, Bal=13, line=Row(
+L868: Open=186, Close=173, Bal=13, line=modifier = Modifier.fillMaxWidth(),
+L869: Open=186, Close=173, Bal=13, line=horizontalArrangement = Arrangement.SpaceBetween,
+L870: Open=186, Close=173, Bal=13, line=verticalAlignment = Alignment.CenterVertically
+L871: Open=187, Close=173, Bal=14, line=) {
+L872: Open=188, Close=173, Bal=15, line=Column(modifier = Modifier.weight(1f)) {
+L873: Open=188, Close=173, Bal=15, line=Text("FTP/Cloud Auto Backup", fontWeight = FontWeight.SemiBold)
+L874: Open=188, Close=173, Bal=15, line=Text(
+L875: Open=188, Close=173, Bal=15, line="Automatically sync database in background",
+L876: Open=188, Close=173, Bal=15, line=style = MaterialTheme.typography.bodySmall,
+L877: Open=188, Close=173, Bal=15, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L878: Open=188, Close=173, Bal=15, line=)
+L879: Open=188, Close=174, Bal=14, line=}
+L880: Open=188, Close=174, Bal=14, line=Switch(
+L881: Open=188, Close=174, Bal=14, line=checked = ftpAutoSync,
+L882: Open=189, Close=174, Bal=15, line=onCheckedChange = {
+L883: Open=189, Close=174, Bal=15, line=ftpAutoSync = it
+L884: Open=189, Close=174, Bal=15, line=settingsManager.ftpAutoSync = it
+L885: Open=189, Close=174, Bal=15, line=viewModel.startAutoSyncLoop()
+L886: Open=189, Close=175, Bal=14, line=},
+L887: Open=189, Close=175, Bal=14, line=enabled = isFtpConnectionValid
+L888: Open=189, Close=175, Bal=14, line=)
+L889: Open=189, Close=176, Bal=13, line=}
+L890: Open=189, Close=176, Bal=13, line=
+L891: Open=190, Close=176, Bal=14, line=if (ftpAutoSync) {
+L892: Open=190, Close=176, Bal=14, line=Row(
+L893: Open=190, Close=176, Bal=14, line=modifier = Modifier.fillMaxWidth(),
+L894: Open=190, Close=176, Bal=14, line=horizontalArrangement = Arrangement.SpaceBetween,
+L895: Open=190, Close=176, Bal=14, line=verticalAlignment = Alignment.CenterVertically
+L896: Open=191, Close=176, Bal=15, line=) {
+L897: Open=191, Close=176, Bal=15, line=Text("Sync Interval", fontWeight = FontWeight.Medium)
+L898: Open=192, Close=176, Bal=16, line=Box {
+L899: Open=194, Close=177, Bal=17, line=OutlinedButton(onClick = { showIntervalDropdown = true }) {
+L900: Open=194, Close=177, Bal=17, line=Text("$autoSyncIntervalMins Minutes")
+L901: Open=194, Close=177, Bal=17, line=Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+L902: Open=194, Close=178, Bal=16, line=}
+L903: Open=194, Close=178, Bal=16, line=DropdownMenu(
+L904: Open=194, Close=178, Bal=16, line=expanded = showIntervalDropdown,
+L905: Open=195, Close=179, Bal=16, line=onDismissRequest = { showIntervalDropdown = false }
+L906: Open=196, Close=179, Bal=17, line=) {
+L907: Open=197, Close=179, Bal=18, line=listOf(1, 5, 15, 30, 60, 120).forEach { mins ->
+L908: Open=197, Close=179, Bal=18, line=DropdownMenuItem(
+L909: Open=198, Close=180, Bal=18, line=text = { Text("$mins Minutes") },
+L910: Open=199, Close=180, Bal=19, line=onClick = {
+L911: Open=199, Close=180, Bal=19, line=autoSyncIntervalMins = mins
+L912: Open=199, Close=180, Bal=19, line=settingsManager.autoSyncIntervalMins = mins
+L913: Open=199, Close=180, Bal=19, line=showIntervalDropdown = false
+L914: Open=199, Close=180, Bal=19, line=viewModel.startAutoSyncLoop()
+L915: Open=199, Close=181, Bal=18, line=}
+L916: Open=199, Close=181, Bal=18, line=)
+L917: Open=199, Close=182, Bal=17, line=}
+L918: Open=199, Close=183, Bal=16, line=}
+L919: Open=199, Close=184, Bal=15, line=}
+L920: Open=199, Close=185, Bal=14, line=}
+L921: Open=199, Close=186, Bal=13, line=}
+L922: Open=199, Close=186, Bal=13, line=
+L923: Open=200, Close=186, Bal=14, line=if (isFtpOperating || ftpStatusMessage.isNotBlank()) {
+L924: Open=200, Close=186, Bal=14, line=Row(
+L925: Open=200, Close=186, Bal=14, line=verticalAlignment = Alignment.CenterVertically,
+L926: Open=200, Close=186, Bal=14, line=horizontalArrangement = Arrangement.spacedBy(8.dp),
+L927: Open=200, Close=186, Bal=14, line=modifier = Modifier
+L928: Open=200, Close=186, Bal=14, line=.fillMaxWidth()
+L929: Open=200, Close=186, Bal=14, line=.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+L930: Open=200, Close=186, Bal=14, line=.padding(8.dp)
+L931: Open=201, Close=186, Bal=15, line=) {
+L932: Open=202, Close=186, Bal=16, line=if (isFtpOperating) {
+L933: Open=202, Close=186, Bal=16, line=CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+L934: Open=203, Close=187, Bal=16, line=} else {
+L935: Open=203, Close=187, Bal=16, line=Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+L936: Open=203, Close=188, Bal=15, line=}
+L937: Open=203, Close=188, Bal=15, line=Text(
+L938: Open=203, Close=188, Bal=15, line=text = ftpStatusMessage,
+L939: Open=203, Close=188, Bal=15, line=style = MaterialTheme.typography.bodySmall,
+L940: Open=203, Close=188, Bal=15, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L941: Open=203, Close=188, Bal=15, line=)
+L942: Open=203, Close=189, Bal=14, line=}
+L943: Open=203, Close=190, Bal=13, line=}
+L944: Open=203, Close=190, Bal=13, line=
+L945: Open=203, Close=190, Bal=13, line=Row(
+L946: Open=203, Close=190, Bal=13, line=modifier = Modifier.fillMaxWidth(),
+L947: Open=203, Close=190, Bal=13, line=horizontalArrangement = Arrangement.spacedBy(6.dp)
+L948: Open=204, Close=190, Bal=14, line=) {
+L949: Open=204, Close=190, Bal=14, line=OutlinedButton(
+L950: Open=205, Close=190, Bal=15, line=onClick = {
+L951: Open=206, Close=190, Bal=16, line=if (ftpHost.isBlank()) {
+L952: Open=206, Close=190, Bal=16, line=Toast.makeText(context, "Please enter Server Host IP or domain", Toast.LENGTH_SHORT).show()
+L953: Open=206, Close=190, Bal=16, line=return@OutlinedButton
+L954: Open=206, Close=191, Bal=15, line=}
+L955: Open=206, Close=191, Bal=15, line=isFtpOperating = true
+L956: Open=206, Close=191, Bal=15, line=ftpStatusMessage = "Testing connection..."
+L957: Open=207, Close=191, Bal=16, line=scope.launch {
+L958: Open=207, Close=191, Bal=16, line=val res = NetworkStorageManager.testConnection(
+L959: Open=207, Close=191, Bal=16, line=host = ftpHost.trim(),
+L960: Open=207, Close=191, Bal=16, line=port = ftpPort.toIntOrNull() ?: 21,
+L961: Open=207, Close=191, Bal=16, line=user = ftpUser.trim(),
+L962: Open=207, Close=191, Bal=16, line=pass = ftpPass,
+L963: Open=207, Close=191, Bal=16, line=remoteDir = ftpRemoteDir.trim(),
+L964: Open=207, Close=191, Bal=16, line=usePassive = ftpUsePassive,
+L965: Open=207, Close=191, Bal=16, line=useFtps = ftpUseFtps
+L966: Open=207, Close=191, Bal=16, line=)
+L967: Open=207, Close=191, Bal=16, line=isFtpOperating = false
+L968: Open=207, Close=191, Bal=16, line=res.fold(
+L969: Open=208, Close=191, Bal=17, line=onSuccess = { msg ->
+L970: Open=208, Close=191, Bal=17, line=ftpStatusMessage = "Connected to $ftpHost"
+L971: Open=208, Close=191, Bal=17, line=settingsManager.isFtpConnectionValid = true
+L972: Open=208, Close=191, Bal=17, line=isFtpConnectionValid = true
+L973: Open=208, Close=191, Bal=17, line=Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+L974: Open=208, Close=192, Bal=16, line=},
+L975: Open=209, Close=192, Bal=17, line=onFailure = { err ->
+L976: Open=210, Close=193, Bal=17, line=ftpStatusMessage = "Connection Error: ${err.message}"
+L977: Open=210, Close=193, Bal=17, line=settingsManager.isFtpConnectionValid = false
+L978: Open=210, Close=193, Bal=17, line=isFtpConnectionValid = false
+L979: Open=210, Close=193, Bal=17, line=Toast.makeText(context, err.message ?: "Connection Error", Toast.LENGTH_LONG).show()
+L980: Open=210, Close=194, Bal=16, line=}
+L981: Open=210, Close=194, Bal=16, line=)
+L982: Open=210, Close=195, Bal=15, line=}
+L983: Open=210, Close=196, Bal=14, line=},
+L984: Open=210, Close=196, Bal=14, line=modifier = Modifier.weight(1f),
+L985: Open=210, Close=196, Bal=14, line=enabled = !isFtpOperating,
+L986: Open=210, Close=196, Bal=14, line=contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
+L987: Open=211, Close=196, Bal=15, line=) {
+L988: Open=211, Close=196, Bal=15, line=Icon(Icons.Default.CloudDone, contentDescription = null, modifier = Modifier.size(14.dp))
+L989: Open=211, Close=196, Bal=15, line=Spacer(modifier = Modifier.width(2.dp))
+L990: Open=211, Close=196, Bal=15, line=Text("Test Link", fontSize = 12.sp)
+L991: Open=211, Close=197, Bal=14, line=}
+L992: Open=211, Close=197, Bal=14, line=
+L993: Open=211, Close=197, Bal=14, line=Button(
+L994: Open=212, Close=197, Bal=15, line=onClick = {
+L995: Open=213, Close=197, Bal=16, line=if (ftpHost.isBlank()) {
+L996: Open=213, Close=197, Bal=16, line=Toast.makeText(context, "Please enter Server Host", Toast.LENGTH_SHORT).show()
+L997: Open=213, Close=197, Bal=16, line=return@Button
+L998: Open=213, Close=198, Bal=15, line=}
+L999: Open=213, Close=198, Bal=15, line=isFtpOperating = true
+L1000: Open=213, Close=198, Bal=15, line=ftpStatusMessage = "Uploading database..."
+L1001: Open=214, Close=198, Bal=16, line=scope.launch {
+L1002: Open=214, Close=198, Bal=16, line=val jsonPayload = viewModel.exportQuestionsToJson()
+L1003: Open=214, Close=198, Bal=16, line=val res = NetworkStorageManager.uploadJson(
+L1004: Open=214, Close=198, Bal=16, line=host = ftpHost.trim(),
+L1005: Open=214, Close=198, Bal=16, line=port = ftpPort.toIntOrNull() ?: 21,
+L1006: Open=214, Close=198, Bal=16, line=user = ftpUser.trim(),
+L1007: Open=214, Close=198, Bal=16, line=pass = ftpPass,
+L1008: Open=214, Close=198, Bal=16, line=remoteDir = ftpRemoteDir.trim(),
+L1009: Open=214, Close=198, Bal=16, line=fileName = "ots_question_bank_backup.json",
+L1010: Open=214, Close=198, Bal=16, line=jsonContent = jsonPayload,
+L1011: Open=214, Close=198, Bal=16, line=usePassive = ftpUsePassive,
+L1012: Open=214, Close=198, Bal=16, line=useFtps = ftpUseFtps
+L1013: Open=214, Close=198, Bal=16, line=)
+L1014: Open=214, Close=198, Bal=16, line=isFtpOperating = false
+L1015: Open=214, Close=198, Bal=16, line=res.fold(
+L1016: Open=215, Close=198, Bal=17, line=onSuccess = { msg ->
+L1017: Open=215, Close=198, Bal=17, line=settingsManager.ftpLastSyncTime = System.currentTimeMillis()
+L1018: Open=215, Close=198, Bal=17, line=ftpStatusMessage = "Synced to remote folder: $ftpRemoteDir"
+L1019: Open=215, Close=198, Bal=17, line=Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+L1020: Open=215, Close=199, Bal=16, line=},
+L1021: Open=216, Close=199, Bal=17, line=onFailure = { err ->
+L1022: Open=217, Close=200, Bal=17, line=ftpStatusMessage = "Upload Failed: ${err.message}"
+L1023: Open=217, Close=200, Bal=17, line=Toast.makeText(context, err.message ?: "Sync Failed", Toast.LENGTH_LONG).show()
+L1024: Open=217, Close=201, Bal=16, line=}
+L1025: Open=217, Close=201, Bal=16, line=)
+L1026: Open=217, Close=202, Bal=15, line=}
+L1027: Open=217, Close=203, Bal=14, line=},
+L1028: Open=217, Close=203, Bal=14, line=modifier = Modifier.weight(1.1f),
+L1029: Open=217, Close=203, Bal=14, line=enabled = !isFtpOperating,
+L1030: Open=217, Close=203, Bal=14, line=colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
+L1031: Open=217, Close=203, Bal=14, line=contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
+L1032: Open=218, Close=203, Bal=15, line=) {
+L1033: Open=218, Close=203, Bal=15, line=Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(14.dp))
+L1034: Open=218, Close=203, Bal=15, line=Spacer(modifier = Modifier.width(2.dp))
+L1035: Open=218, Close=203, Bal=15, line=Text("Sync To Remote", fontSize = 12.sp)
+L1036: Open=218, Close=204, Bal=14, line=}
+L1037: Open=218, Close=204, Bal=14, line=
+L1038: Open=218, Close=204, Bal=14, line=OutlinedButton(
+L1039: Open=219, Close=204, Bal=15, line=onClick = {
+L1040: Open=220, Close=204, Bal=16, line=if (ftpHost.isBlank()) {
+L1041: Open=220, Close=204, Bal=16, line=Toast.makeText(context, "Please enter Server Host", Toast.LENGTH_SHORT).show()
+L1042: Open=220, Close=204, Bal=16, line=return@OutlinedButton
+L1043: Open=220, Close=205, Bal=15, line=}
+L1044: Open=220, Close=205, Bal=15, line=isFtpOperating = true
+L1045: Open=220, Close=205, Bal=15, line=ftpStatusMessage = "Downloading backup..."
+L1046: Open=221, Close=205, Bal=16, line=scope.launch {
+L1047: Open=221, Close=205, Bal=16, line=val res = NetworkStorageManager.downloadLatestJson(
+L1048: Open=221, Close=205, Bal=16, line=host = ftpHost.trim(),
+L1049: Open=221, Close=205, Bal=16, line=port = ftpPort.toIntOrNull() ?: 21,
+L1050: Open=221, Close=205, Bal=16, line=user = ftpUser.trim(),
+L1051: Open=221, Close=205, Bal=16, line=pass = ftpPass,
+L1052: Open=221, Close=205, Bal=16, line=remoteDir = ftpRemoteDir.trim(),
+L1053: Open=221, Close=205, Bal=16, line=fileName = "ots_question_bank_backup.json",
+L1054: Open=221, Close=205, Bal=16, line=usePassive = ftpUsePassive,
+L1055: Open=221, Close=205, Bal=16, line=useFtps = ftpUseFtps
+L1056: Open=221, Close=205, Bal=16, line=)
+L1057: Open=221, Close=205, Bal=16, line=isFtpOperating = false
+L1058: Open=221, Close=205, Bal=16, line=res.fold(
+L1059: Open=222, Close=205, Bal=17, line=onSuccess = { jsonContent ->
+L1060: Open=222, Close=205, Bal=17, line=val importRes = viewModel.importQuestionsFromJson(jsonContent)
+L1061: Open=223, Close=205, Bal=18, line=if (importRes.first) {
+L1062: Open=224, Close=206, Bal=18, line=ftpStatusMessage = "Restored ${importRes.second} items"
+L1063: Open=225, Close=207, Bal=18, line=Toast.makeText(context, "Restored ${importRes.second} items from remote server!", Toast.LENGTH_LONG).show()
+L1064: Open=226, Close=208, Bal=18, line=} else {
+L1065: Open=226, Close=208, Bal=18, line=ftpStatusMessage = "Parse Error"
+L1066: Open=226, Close=208, Bal=18, line=Toast.makeText(context, "Invalid JSON data on remote server", Toast.LENGTH_LONG).show()
+L1067: Open=226, Close=209, Bal=17, line=}
+L1068: Open=226, Close=210, Bal=16, line=},
+L1069: Open=227, Close=210, Bal=17, line=onFailure = { err ->
+L1070: Open=228, Close=211, Bal=17, line=ftpStatusMessage = "Download Failed: ${err.message}"
+L1071: Open=228, Close=211, Bal=17, line=Toast.makeText(context, err.message ?: "Download Failed", Toast.LENGTH_LONG).show()
+L1072: Open=228, Close=212, Bal=16, line=}
+L1073: Open=228, Close=212, Bal=16, line=)
+L1074: Open=228, Close=213, Bal=15, line=}
+L1075: Open=228, Close=214, Bal=14, line=},
+L1076: Open=228, Close=214, Bal=14, line=modifier = Modifier.weight(1f),
+L1077: Open=228, Close=214, Bal=14, line=enabled = !isFtpOperating,
+L1078: Open=228, Close=214, Bal=14, line=contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
+L1079: Open=229, Close=214, Bal=15, line=) {
+L1080: Open=229, Close=214, Bal=15, line=Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(14.dp))
+L1081: Open=229, Close=214, Bal=15, line=Spacer(modifier = Modifier.width(2.dp))
+L1082: Open=229, Close=214, Bal=15, line=Text("Restore", fontSize = 12.sp)
+L1083: Open=229, Close=215, Bal=14, line=}
+L1084: Open=229, Close=216, Bal=13, line=}
+L1085: Open=229, Close=217, Bal=12, line=}
+L1086: Open=229, Close=217, Bal=12, line=// --- 6. LOCAL DEVICE STORAGE EXPORT / IMPORT ---
+L1087: Open=230, Close=217, Bal=13, line=item {
+L1088: Open=230, Close=217, Bal=13, line=Card(
+L1089: Open=230, Close=217, Bal=13, line=shape = RoundedCornerShape(16.dp),
+L1090: Open=230, Close=217, Bal=13, line=colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+L1091: Open=230, Close=217, Bal=13, line=modifier = Modifier.fillMaxWidth()
+L1092: Open=231, Close=217, Bal=14, line=) {
+L1093: Open=231, Close=217, Bal=14, line=Column(
+L1094: Open=231, Close=217, Bal=14, line=modifier = Modifier.padding(16.dp),
+L1095: Open=231, Close=217, Bal=14, line=verticalArrangement = Arrangement.spacedBy(12.dp)
+L1096: Open=232, Close=217, Bal=15, line=) {
+L1097: Open=233, Close=217, Bal=16, line=Row(verticalAlignment = Alignment.CenterVertically) {
+L1098: Open=233, Close=217, Bal=16, line=Icon(
+L1099: Open=233, Close=217, Bal=16, line=imageVector = Icons.Default.Save,
+L1100: Open=233, Close=217, Bal=16, line=contentDescription = null,
+L1101: Open=233, Close=217, Bal=16, line=tint = MaterialTheme.colorScheme.primary,
+L1102: Open=233, Close=217, Bal=16, line=modifier = Modifier.padding(end = 8.dp)
+L1103: Open=233, Close=217, Bal=16, line=)
+L1104: Open=233, Close=217, Bal=16, line=Text(
+L1105: Open=233, Close=217, Bal=16, line=text = "Local Device Export & Backup",
+L1106: Open=233, Close=217, Bal=16, line=style = MaterialTheme.typography.titleMedium,
+L1107: Open=233, Close=217, Bal=16, line=fontWeight = FontWeight.Bold
+L1108: Open=233, Close=217, Bal=16, line=)
+L1109: Open=233, Close=218, Bal=15, line=}
+L1110: Open=233, Close=218, Bal=15, line=HorizontalDivider()
+L1111: Open=233, Close=218, Bal=15, line=
+L1112: Open=233, Close=218, Bal=15, line=Text(
+L1113: Open=233, Close=218, Bal=15, line=text = "Export your question bank to a standard JSON file on your local device storage (e.g. Downloads folder) or import an existing backup file.",
+L1114: Open=233, Close=218, Bal=15, line=style = MaterialTheme.typography.bodySmall,
+L1115: Open=233, Close=218, Bal=15, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L1116: Open=233, Close=218, Bal=15, line=)
+L1117: Open=233, Close=218, Bal=15, line=
+L1118: Open=233, Close=218, Bal=15, line=val exportLauncher = rememberLauncherForActivityResult(
+L1119: Open=233, Close=218, Bal=15, line=contract = ActivityResultContracts.CreateDocument("application/json")
+L1120: Open=234, Close=218, Bal=16, line=) { uri: Uri? ->
+L1121: Open=235, Close=218, Bal=17, line=if (uri != null) {
+L1122: Open=236, Close=218, Bal=18, line=scope.launch {
+L1123: Open=237, Close=218, Bal=19, line=try {
+L1124: Open=237, Close=218, Bal=19, line=val json = viewModel.exportQuestionsToJson()
+L1125: Open=238, Close=218, Bal=20, line=context.contentResolver.openOutputStream(uri)?.use { os ->
+L1126: Open=238, Close=218, Bal=20, line=os.write(json.toByteArray(Charsets.UTF_8))
+L1127: Open=238, Close=219, Bal=19, line=}
+L1128: Open=238, Close=219, Bal=19, line=Toast.makeText(context, "Backup exported successfully", Toast.LENGTH_LONG).show()
+L1129: Open=239, Close=220, Bal=19, line=} catch (e: Exception) {
+L1130: Open=240, Close=221, Bal=19, line=Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
+L1131: Open=240, Close=222, Bal=18, line=}
+L1132: Open=240, Close=223, Bal=17, line=}
+L1133: Open=240, Close=224, Bal=16, line=}
+L1134: Open=240, Close=225, Bal=15, line=}
+L1135: Open=240, Close=225, Bal=15, line=
+L1136: Open=240, Close=225, Bal=15, line=val importLauncher = rememberLauncherForActivityResult(
+L1137: Open=240, Close=225, Bal=15, line=contract = ActivityResultContracts.OpenDocument()
+L1138: Open=241, Close=225, Bal=16, line=) { uri: Uri? ->
+L1139: Open=242, Close=225, Bal=17, line=if (uri != null) {
+L1140: Open=243, Close=225, Bal=18, line=scope.launch {
+L1141: Open=244, Close=225, Bal=19, line=try {
+L1142: Open=245, Close=226, Bal=19, line=val json = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+L1143: Open=246, Close=226, Bal=20, line=if (json != null && json.isNotBlank()) {
+L1144: Open=246, Close=226, Bal=20, line=val res = viewModel.importQuestionsFromJson(json)
+L1145: Open=247, Close=226, Bal=21, line=if (res.first) {
+L1146: Open=248, Close=227, Bal=21, line=Toast.makeText(context, "Successfully imported ${res.second} items!", Toast.LENGTH_LONG).show()
+L1147: Open=249, Close=228, Bal=21, line=} else {
+L1148: Open=249, Close=228, Bal=21, line=Toast.makeText(context, "Failed to parse backup file", Toast.LENGTH_LONG).show()
+L1149: Open=249, Close=229, Bal=20, line=}
+L1150: Open=249, Close=230, Bal=19, line=}
+L1151: Open=250, Close=231, Bal=19, line=} catch (e: Exception) {
+L1152: Open=251, Close=232, Bal=19, line=Toast.makeText(context, "Import failed: ${e.message}", Toast.LENGTH_LONG).show()
+L1153: Open=251, Close=233, Bal=18, line=}
+L1154: Open=251, Close=234, Bal=17, line=}
+L1155: Open=251, Close=235, Bal=16, line=}
+L1156: Open=251, Close=236, Bal=15, line=}
+L1157: Open=251, Close=236, Bal=15, line=
+L1158: Open=251, Close=236, Bal=15, line=Row(
+L1159: Open=251, Close=236, Bal=15, line=modifier = Modifier.fillMaxWidth(),
+L1160: Open=251, Close=236, Bal=15, line=horizontalArrangement = Arrangement.spacedBy(8.dp)
+L1161: Open=252, Close=236, Bal=16, line=) {
+L1162: Open=252, Close=236, Bal=16, line=OutlinedButton(
+L1163: Open=253, Close=237, Bal=16, line=onClick = { exportLauncher.launch("ots_question_bank_backup.json") },
+L1164: Open=253, Close=237, Bal=16, line=modifier = Modifier.weight(1f)
+L1165: Open=254, Close=237, Bal=17, line=) {
+L1166: Open=254, Close=237, Bal=17, line=Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+L1167: Open=254, Close=237, Bal=17, line=Spacer(modifier = Modifier.width(4.dp))
+L1168: Open=254, Close=237, Bal=17, line=Text("Export Backup")
+L1169: Open=254, Close=238, Bal=16, line=}
+L1170: Open=254, Close=238, Bal=16, line=
+L1171: Open=254, Close=238, Bal=16, line=Button(
+L1172: Open=255, Close=239, Bal=16, line=onClick = { importLauncher.launch(arrayOf("application/json", "*/*")) },
+L1173: Open=255, Close=239, Bal=16, line=modifier = Modifier.weight(1f)
+L1174: Open=256, Close=239, Bal=17, line=) {
+L1175: Open=256, Close=239, Bal=17, line=Icon(Icons.Default.Restore, contentDescription = null, modifier = Modifier.size(16.dp))
+L1176: Open=256, Close=239, Bal=17, line=Spacer(modifier = Modifier.width(4.dp))
+L1177: Open=256, Close=239, Bal=17, line=Text("Import Backup")
+L1178: Open=256, Close=240, Bal=16, line=}
+L1179: Open=256, Close=241, Bal=15, line=}
+L1180: Open=256, Close=242, Bal=14, line=}
+L1181: Open=256, Close=242, Bal=14, line=// --- 7. DATA RECOVERY & TRASH / RECYCLE BIN ---
+L1182: Open=257, Close=242, Bal=15, line=item {
+L1183: Open=257, Close=242, Bal=15, line=Card(
+L1184: Open=257, Close=242, Bal=15, line=shape = RoundedCornerShape(16.dp),
+L1185: Open=257, Close=242, Bal=15, line=colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+L1186: Open=257, Close=242, Bal=15, line=modifier = Modifier.fillMaxWidth()
+L1187: Open=258, Close=242, Bal=16, line=) {
+L1188: Open=258, Close=242, Bal=16, line=Column(
+L1189: Open=258, Close=242, Bal=16, line=modifier = Modifier.padding(16.dp),
+L1190: Open=258, Close=242, Bal=16, line=verticalArrangement = Arrangement.spacedBy(12.dp)
+L1191: Open=259, Close=242, Bal=17, line=) {
+L1192: Open=260, Close=242, Bal=18, line=Row(verticalAlignment = Alignment.CenterVertically) {
+L1193: Open=260, Close=242, Bal=18, line=Icon(
+L1194: Open=260, Close=242, Bal=18, line=imageVector = Icons.Default.DeleteSweep,
+L1195: Open=260, Close=242, Bal=18, line=contentDescription = null,
+L1196: Open=260, Close=242, Bal=18, line=tint = MaterialTheme.colorScheme.primary,
+L1197: Open=260, Close=242, Bal=18, line=modifier = Modifier.padding(end = 8.dp)
+L1198: Open=260, Close=242, Bal=18, line=)
+L1199: Open=260, Close=242, Bal=18, line=Text(
+L1200: Open=260, Close=242, Bal=18, line=text = "Data Recovery & Undo Trash",
+L1201: Open=260, Close=242, Bal=18, line=style = MaterialTheme.typography.titleMedium,
+L1202: Open=260, Close=242, Bal=18, line=fontWeight = FontWeight.Bold
+L1203: Open=260, Close=242, Bal=18, line=)
+L1204: Open=260, Close=243, Bal=17, line=}
+L1205: Open=260, Close=243, Bal=17, line=HorizontalDivider()
+L1206: Open=260, Close=243, Bal=17, line=
+L1207: Open=261, Close=243, Bal=18, line=val recycleBinCount = remember(settingsManager.recycleBinJson) {
+L1208: Open=262, Close=243, Bal=19, line=try {
+L1209: Open=262, Close=243, Bal=19, line=JSONArray(settingsManager.recycleBinJson).length()
+L1210: Open=263, Close=244, Bal=19, line=} catch (_: Exception) {
+L1211: Open=263, Close=244, Bal=19, line=0
+L1212: Open=263, Close=245, Bal=18, line=}
+L1213: Open=263, Close=246, Bal=17, line=}
+L1214: Open=263, Close=246, Bal=17, line=
+L1215: Open=263, Close=246, Bal=17, line=Text(
+L1216: Open=263, Close=246, Bal=17, line=text = "If questions or test papers were deleted by mistake, use the options below to restore deleted items or revert to the last auto-snapshot point.",
+L1217: Open=263, Close=246, Bal=17, line=style = MaterialTheme.typography.bodySmall,
+L1218: Open=263, Close=246, Bal=17, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L1219: Open=263, Close=246, Bal=17, line=)
+L1220: Open=263, Close=246, Bal=17, line=
+L1221: Open=263, Close=246, Bal=17, line=Row(
+L1222: Open=263, Close=246, Bal=17, line=modifier = Modifier.fillMaxWidth(),
+L1223: Open=263, Close=246, Bal=17, line=horizontalArrangement = Arrangement.spacedBy(8.dp)
+L1224: Open=264, Close=246, Bal=18, line=) {
+L1225: Open=264, Close=246, Bal=18, line=OutlinedButton(
+L1226: Open=265, Close=246, Bal=19, line=onClick = {
+L1227: Open=266, Close=246, Bal=20, line=viewModel.restoreSnapshotPoint(settingsManager) { success, count ->
+L1228: Open=267, Close=246, Bal=21, line=if (success) {
+L1229: Open=267, Close=246, Bal=21, line=Toast.makeText(context, "Restored $count questions from auto-snapshot point!", Toast.LENGTH_LONG).show()
+L1230: Open=268, Close=247, Bal=21, line=} else {
+L1231: Open=268, Close=247, Bal=21, line=Toast.makeText(context, "No snapshot point available.", Toast.LENGTH_SHORT).show()
+L1232: Open=268, Close=248, Bal=20, line=}
+L1233: Open=268, Close=249, Bal=19, line=}
+L1234: Open=268, Close=250, Bal=18, line=},
+L1235: Open=268, Close=250, Bal=18, line=modifier = Modifier.weight(1f)
+L1236: Open=269, Close=250, Bal=19, line=) {
+L1237: Open=269, Close=250, Bal=19, line=Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(16.dp))
+L1238: Open=269, Close=250, Bal=19, line=Spacer(modifier = Modifier.width(4.dp))
+L1239: Open=269, Close=250, Bal=19, line=Text("Restore Snapshot")
+L1240: Open=269, Close=251, Bal=18, line=}
+L1241: Open=269, Close=251, Bal=18, line=
+L1242: Open=269, Close=251, Bal=18, line=Button(
+L1243: Open=270, Close=252, Bal=18, line=onClick = { showRecycleBinDialog = true },
+L1244: Open=270, Close=252, Bal=18, line=modifier = Modifier.weight(1f)
+L1245: Open=271, Close=252, Bal=19, line=) {
+L1246: Open=271, Close=252, Bal=19, line=Icon(Icons.Default.RestoreFromTrash, contentDescription = null, modifier = Modifier.size(16.dp))
+L1247: Open=271, Close=252, Bal=19, line=Spacer(modifier = Modifier.width(4.dp))
+L1248: Open=271, Close=252, Bal=19, line=Text("View Trash ($recycleBinCount)")
+L1249: Open=271, Close=253, Bal=18, line=}
+L1250: Open=271, Close=254, Bal=17, line=}
+L1251: Open=271, Close=255, Bal=16, line=}
+L1252: Open=271, Close=255, Bal=16, line=// --- 8. CLEAN UNINSTALL & REINSTALL DATA PRESERVATION ---
+L1253: Open=272, Close=255, Bal=17, line=item {
+L1254: Open=272, Close=255, Bal=17, line=Card(
+L1255: Open=272, Close=255, Bal=17, line=shape = RoundedCornerShape(16.dp),
+L1256: Open=272, Close=255, Bal=17, line=colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+L1257: Open=272, Close=255, Bal=17, line=modifier = Modifier.fillMaxWidth()
+L1258: Open=273, Close=255, Bal=18, line=) {
+L1259: Open=273, Close=255, Bal=18, line=Column(
+L1260: Open=273, Close=255, Bal=18, line=modifier = Modifier.padding(16.dp),
+L1261: Open=273, Close=255, Bal=18, line=verticalArrangement = Arrangement.spacedBy(12.dp)
+L1262: Open=274, Close=255, Bal=19, line=) {
+L1263: Open=275, Close=255, Bal=20, line=Row(verticalAlignment = Alignment.CenterVertically) {
+L1264: Open=275, Close=255, Bal=20, line=Icon(
+L1265: Open=275, Close=255, Bal=20, line=imageVector = Icons.Default.CleaningServices,
+L1266: Open=275, Close=255, Bal=20, line=contentDescription = null,
+L1267: Open=275, Close=255, Bal=20, line=tint = MaterialTheme.colorScheme.primary,
+L1268: Open=275, Close=255, Bal=20, line=modifier = Modifier.padding(end = 8.dp)
+L1269: Open=275, Close=255, Bal=20, line=)
+L1270: Open=275, Close=255, Bal=20, line=Text(
+L1271: Open=275, Close=255, Bal=20, line=text = "Clean Uninstall & Cloud Preservation Policy",
+L1272: Open=275, Close=255, Bal=20, line=style = MaterialTheme.typography.titleMedium,
+L1273: Open=275, Close=255, Bal=20, line=fontWeight = FontWeight.Bold
+L1274: Open=275, Close=255, Bal=20, line=)
+L1275: Open=275, Close=256, Bal=19, line=}
+L1276: Open=275, Close=256, Bal=19, line=HorizontalDivider()
+L1277: Open=275, Close=256, Bal=19, line=
+L1278: Open=275, Close=256, Bal=19, line=Text(
+L1279: Open=275, Close=256, Bal=19, line=text = "Clean Uninstall Policy:\n" +
+L1280: Open=275, Close=256, Bal=19, line="• Local App Data Cleanup: When you uninstall this application, Android completely cleans and removes local app databases and internal cached files from the device storage.\n\n" +
+L1281: Open=275, Close=256, Bal=19, line="• Google Drive Preservation: Your cloud backups stored in Google Drive remain 100% intact and untouched in your cloud account.\n\n" +
+L1282: Open=275, Close=256, Bal=19, line="• Next Install Recovery: When you reinstall the app on any Android device, simply sign into Google Drive and tap 'Restore' under Google Drive Cloud Sync to immediately recover your entire question bank and configuration.",
+L1283: Open=275, Close=256, Bal=19, line=style = MaterialTheme.typography.bodySmall,
+L1284: Open=275, Close=256, Bal=19, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L1285: Open=275, Close=256, Bal=19, line=)
+L1286: Open=275, Close=257, Bal=18, line=}
+L1287: Open=275, Close=258, Bal=17, line=}
+L1288: Open=275, Close=258, Bal=17, line=
+L1289: Open=275, Close=258, Bal=17, line=// --- 9. APP UPDATE ---
+L1290: Open=276, Close=258, Bal=18, line=item {
+L1291: Open=276, Close=258, Bal=18, line=Card(
+L1292: Open=276, Close=258, Bal=18, line=shape = RoundedCornerShape(16.dp),
+L1293: Open=276, Close=258, Bal=18, line=colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+L1294: Open=276, Close=258, Bal=18, line=modifier = Modifier.fillMaxWidth()
+L1295: Open=277, Close=258, Bal=19, line=) {
+L1296: Open=277, Close=258, Bal=19, line=Column(
+L1297: Open=277, Close=258, Bal=19, line=modifier = Modifier.padding(16.dp),
+L1298: Open=277, Close=258, Bal=19, line=verticalArrangement = Arrangement.spacedBy(12.dp)
+L1299: Open=278, Close=258, Bal=20, line=) {
+L1300: Open=279, Close=258, Bal=21, line=Row(verticalAlignment = Alignment.CenterVertically) {
+L1301: Open=279, Close=258, Bal=21, line=Icon(
+L1302: Open=279, Close=258, Bal=21, line=imageVector = Icons.Default.SystemUpdate,
+L1303: Open=279, Close=258, Bal=21, line=contentDescription = null,
+L1304: Open=279, Close=258, Bal=21, line=tint = MaterialTheme.colorScheme.primary,
+L1305: Open=279, Close=258, Bal=21, line=modifier = Modifier.padding(end = 8.dp)
+L1306: Open=279, Close=258, Bal=21, line=)
+L1307: Open=279, Close=258, Bal=21, line=Text(
+L1308: Open=279, Close=258, Bal=21, line=text = "App Update",
+L1309: Open=279, Close=258, Bal=21, line=style = MaterialTheme.typography.titleMedium,
+L1310: Open=279, Close=258, Bal=21, line=fontWeight = FontWeight.Bold
+L1311: Open=279, Close=258, Bal=21, line=)
+L1312: Open=279, Close=259, Bal=20, line=}
+L1313: Open=279, Close=259, Bal=20, line=HorizontalDivider()
+L1314: Open=279, Close=259, Bal=20, line=
+L1315: Open=280, Close=260, Bal=20, line=var updateStatus by remember { mutableStateOf("") }
+L1316: Open=280, Close=260, Bal=20, line=
+L1317: Open=280, Close=260, Bal=20, line=Text(
+L1318: Open=280, Close=260, Bal=20, line=text = "Check for and download the latest application update from the configured GitHub repository.",
+L1319: Open=280, Close=260, Bal=20, line=style = MaterialTheme.typography.bodySmall,
+L1320: Open=280, Close=260, Bal=20, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L1321: Open=280, Close=260, Bal=20, line=)
+L1322: Open=280, Close=260, Bal=20, line=
+L1323: Open=281, Close=260, Bal=21, line=if (updateStatus.isNotBlank()) {
+L1324: Open=281, Close=260, Bal=21, line=Text(
+L1325: Open=281, Close=260, Bal=21, line=text = updateStatus,
+L1326: Open=281, Close=260, Bal=21, line=style = MaterialTheme.typography.labelMedium,
+L1327: Open=281, Close=260, Bal=21, line=color = MaterialTheme.colorScheme.primary,
+L1328: Open=281, Close=260, Bal=21, line=modifier = Modifier.padding(vertical = 4.dp)
+L1329: Open=281, Close=260, Bal=21, line=)
+L1330: Open=281, Close=261, Bal=20, line=}
+L1331: Open=281, Close=261, Bal=20, line=
+L1332: Open=281, Close=261, Bal=20, line=Button(
+L1333: Open=282, Close=261, Bal=21, line=onClick = {
+L1334: Open=283, Close=261, Bal=22, line=scope.launch {
+L1335: Open=284, Close=261, Bal=23, line=com.example.util.AppUpdater.checkForUpdatesAndInstall(context) { status ->
+L1336: Open=284, Close=261, Bal=23, line=updateStatus = status
+L1337: Open=284, Close=262, Bal=22, line=}
+L1338: Open=284, Close=263, Bal=21, line=}
+L1339: Open=284, Close=264, Bal=20, line=},
+L1340: Open=284, Close=264, Bal=20, line=modifier = Modifier.fillMaxWidth(),
+L1341: Open=284, Close=264, Bal=20, line=enabled = updateStatus.isBlank()
+L1342: Open=285, Close=264, Bal=21, line=) {
+L1343: Open=286, Close=264, Bal=22, line=if (updateStatus.isNotBlank()) {
+L1344: Open=286, Close=264, Bal=22, line=CircularProgressIndicator(
+L1345: Open=286, Close=264, Bal=22, line=modifier = Modifier.size(16.dp),
+L1346: Open=286, Close=264, Bal=22, line=color = MaterialTheme.colorScheme.onPrimary,
+L1347: Open=286, Close=264, Bal=22, line=strokeWidth = 2.dp
+L1348: Open=286, Close=264, Bal=22, line=)
+L1349: Open=286, Close=264, Bal=22, line=Spacer(modifier = Modifier.width(8.dp))
+L1350: Open=286, Close=265, Bal=21, line=}
+L1351: Open=286, Close=265, Bal=21, line=Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+L1352: Open=286, Close=265, Bal=21, line=Spacer(modifier = Modifier.width(8.dp))
+L1353: Open=286, Close=265, Bal=21, line=Text(if (updateStatus.isNotBlank()) "Downloading..." else "Check for Updates")
+L1354: Open=286, Close=266, Bal=20, line=}
+L1355: Open=286, Close=267, Bal=19, line=}
+L1356: Open=286, Close=267, Bal=19, line=// --- 10. ABOUT DEVELOPER ---
+L1357: Open=287, Close=267, Bal=20, line=item {
+L1358: Open=287, Close=267, Bal=20, line=Card(
+L1359: Open=287, Close=267, Bal=20, line=shape = RoundedCornerShape(16.dp),
+L1360: Open=287, Close=267, Bal=20, line=colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+L1361: Open=287, Close=267, Bal=20, line=modifier = Modifier.fillMaxWidth()
+L1362: Open=288, Close=267, Bal=21, line=) {
+L1363: Open=288, Close=267, Bal=21, line=Column(
+L1364: Open=288, Close=267, Bal=21, line=modifier = Modifier.padding(16.dp),
+L1365: Open=288, Close=267, Bal=21, line=verticalArrangement = Arrangement.spacedBy(12.dp)
+L1366: Open=289, Close=267, Bal=22, line=) {
+L1367: Open=290, Close=267, Bal=23, line=Row(verticalAlignment = Alignment.CenterVertically) {
+L1368: Open=290, Close=267, Bal=23, line=Icon(
+L1369: Open=290, Close=267, Bal=23, line=imageVector = Icons.Default.Info,
+L1370: Open=290, Close=267, Bal=23, line=contentDescription = null,
+L1371: Open=290, Close=267, Bal=23, line=tint = MaterialTheme.colorScheme.primary,
+L1372: Open=290, Close=267, Bal=23, line=modifier = Modifier.padding(end = 8.dp)
+L1373: Open=290, Close=267, Bal=23, line=)
+L1374: Open=290, Close=267, Bal=23, line=Text(
+L1375: Open=290, Close=267, Bal=23, line=text = "About",
+L1376: Open=290, Close=267, Bal=23, line=style = MaterialTheme.typography.titleMedium,
+L1377: Open=290, Close=267, Bal=23, line=fontWeight = FontWeight.Bold
+L1378: Open=290, Close=267, Bal=23, line=)
+L1379: Open=290, Close=268, Bal=22, line=}
+L1380: Open=290, Close=268, Bal=22, line=HorizontalDivider()
+L1381: Open=290, Close=268, Bal=22, line=
+L1382: Open=290, Close=268, Bal=22, line=Text(
+L1383: Open=290, Close=268, Bal=22, line=text = "developed by Ravikant, email - myslv409@gmail.com, contact me for any suggestion or feedback",
+L1384: Open=290, Close=268, Bal=22, line=style = MaterialTheme.typography.bodyMedium,
+L1385: Open=290, Close=268, Bal=22, line=fontWeight = FontWeight.Medium,
+L1386: Open=290, Close=268, Bal=22, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L1387: Open=290, Close=268, Bal=22, line=)
+L1388: Open=290, Close=269, Bal=21, line=}
+L1389: Open=290, Close=270, Bal=20, line=}
+L1390: Open=290, Close=271, Bal=19, line=}
+L1391: Open=290, Close=271, Bal=19, line=
+L1392: Open=291, Close=271, Bal=20, line=if (showChangePinDialog) {
+L1393: Open=291, Close=271, Bal=20, line=ChangePinDialog(
+L1394: Open=291, Close=271, Bal=20, line=currentPin = settingsManager.pinCode,
+L1395: Open=292, Close=272, Bal=20, line=onDismiss = { showChangePinDialog = false },
+L1396: Open=293, Close=272, Bal=21, line=onPinChanged = { newPin ->
+L1397: Open=293, Close=272, Bal=21, line=settingsManager.pinCode = newPin
+L1398: Open=293, Close=272, Bal=21, line=settingsManager.isAppLockEnabled = true
+L1399: Open=293, Close=272, Bal=21, line=showChangePinDialog = false
+L1400: Open=293, Close=272, Bal=21, line=Toast.makeText(context, "PIN code updated successfully!", Toast.LENGTH_SHORT).show()
+L1401: Open=293, Close=273, Bal=20, line=}
+L1402: Open=293, Close=273, Bal=20, line=)
+L1403: Open=293, Close=274, Bal=19, line=}
+L1404: Open=293, Close=274, Bal=19, line=
+L1405: Open=294, Close=274, Bal=20, line=if (showRecycleBinDialog) {
+L1406: Open=294, Close=274, Bal=20, line=RecycleBinDialog(
+L1407: Open=294, Close=274, Bal=20, line=settingsManager = settingsManager,
+L1408: Open=294, Close=274, Bal=20, line=viewModel = viewModel,
+L1409: Open=295, Close=275, Bal=20, line=onDismiss = { showRecycleBinDialog = false }
+L1410: Open=295, Close=275, Bal=20, line=)
+L1411: Open=295, Close=276, Bal=19, line=}
+L1412: Open=295, Close=277, Bal=18, line=}
+L1413: Open=295, Close=277, Bal=18, line=
+L1414: Open=295, Close=277, Bal=18, line=@Composable
+L1415: Open=295, Close=277, Bal=18, line=fun ChangePinDialog(
+L1416: Open=295, Close=277, Bal=18, line=currentPin: String,
+L1417: Open=295, Close=277, Bal=18, line=onDismiss: () -> Unit,
+L1418: Open=295, Close=277, Bal=18, line=onPinChanged: (String) -> Unit
+L1419: Open=296, Close=277, Bal=19, line=) {
+L1420: Open=297, Close=278, Bal=19, line=var oldPinInput by remember { mutableStateOf("") }
+L1421: Open=298, Close=279, Bal=19, line=var newPin by remember { mutableStateOf("") }
+L1422: Open=299, Close=280, Bal=19, line=var confirmPin by remember { mutableStateOf("") }
+L1423: Open=300, Close=281, Bal=19, line=var errorText by remember { mutableStateOf("") }
+L1424: Open=300, Close=281, Bal=19, line=
+L1425: Open=300, Close=281, Bal=19, line=AlertDialog(
+L1426: Open=300, Close=281, Bal=19, line=onDismissRequest = onDismiss,
+L1427: Open=301, Close=282, Bal=19, line=title = { Text("Change App Lock PIN") },
+L1428: Open=302, Close=282, Bal=20, line=text = {
+L1429: Open=303, Close=282, Bal=21, line=Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+L1430: Open=304, Close=282, Bal=22, line=if (currentPin.isNotBlank()) {
+L1431: Open=304, Close=282, Bal=22, line=OutlinedTextField(
+L1432: Open=304, Close=282, Bal=22, line=value = oldPinInput,
+L1433: Open=305, Close=283, Bal=22, line=onValueChange = { oldPinInput = it },
+L1434: Open=306, Close=284, Bal=22, line=label = { Text("Current PIN") },
+L1435: Open=306, Close=284, Bal=22, line=visualTransformation = PasswordVisualTransformation(),
+L1436: Open=306, Close=284, Bal=22, line=singleLine = true,
+L1437: Open=306, Close=284, Bal=22, line=modifier = Modifier.fillMaxWidth()
+L1438: Open=306, Close=284, Bal=22, line=)
+L1439: Open=306, Close=285, Bal=21, line=}
+L1440: Open=306, Close=285, Bal=21, line=OutlinedTextField(
+L1441: Open=306, Close=285, Bal=21, line=value = newPin,
+L1442: Open=307, Close=286, Bal=21, line=onValueChange = { newPin = it },
+L1443: Open=308, Close=287, Bal=21, line=label = { Text("New 4-Digit PIN") },
+L1444: Open=308, Close=287, Bal=21, line=visualTransformation = PasswordVisualTransformation(),
+L1445: Open=308, Close=287, Bal=21, line=singleLine = true,
+L1446: Open=308, Close=287, Bal=21, line=modifier = Modifier.fillMaxWidth()
+L1447: Open=308, Close=287, Bal=21, line=)
+L1448: Open=308, Close=287, Bal=21, line=OutlinedTextField(
+L1449: Open=308, Close=287, Bal=21, line=value = confirmPin,
+L1450: Open=309, Close=288, Bal=21, line=onValueChange = { confirmPin = it },
+L1451: Open=310, Close=289, Bal=21, line=label = { Text("Confirm New PIN") },
+L1452: Open=310, Close=289, Bal=21, line=visualTransformation = PasswordVisualTransformation(),
+L1453: Open=310, Close=289, Bal=21, line=singleLine = true,
+L1454: Open=310, Close=289, Bal=21, line=modifier = Modifier.fillMaxWidth()
+L1455: Open=310, Close=289, Bal=21, line=)
+L1456: Open=310, Close=289, Bal=21, line=
+L1457: Open=311, Close=289, Bal=22, line=if (errorText.isNotBlank()) {
+L1458: Open=311, Close=289, Bal=22, line=Text(
+L1459: Open=311, Close=289, Bal=22, line=text = errorText,
+L1460: Open=311, Close=289, Bal=22, line=color = MaterialTheme.colorScheme.error,
+L1461: Open=311, Close=289, Bal=22, line=style = MaterialTheme.typography.bodySmall
+L1462: Open=311, Close=289, Bal=22, line=)
+L1463: Open=311, Close=290, Bal=21, line=}
+L1464: Open=311, Close=291, Bal=20, line=}
+L1465: Open=311, Close=292, Bal=19, line=},
+L1466: Open=312, Close=292, Bal=20, line=confirmButton = {
+L1467: Open=312, Close=292, Bal=20, line=Button(
+L1468: Open=313, Close=292, Bal=21, line=onClick = {
+L1469: Open=314, Close=292, Bal=22, line=if (currentPin.isNotBlank() && oldPinInput != currentPin) {
+L1470: Open=314, Close=292, Bal=22, line=errorText = "Current PIN is incorrect."
+L1471: Open=315, Close=293, Bal=22, line=} else if (newPin.length < 4) {
+L1472: Open=315, Close=293, Bal=22, line=errorText = "New PIN must be 4 digits long."
+L1473: Open=316, Close=294, Bal=22, line=} else if (newPin != confirmPin) {
+L1474: Open=316, Close=294, Bal=22, line=errorText = "New PIN and confirmation PIN do not match."
+L1475: Open=317, Close=295, Bal=22, line=} else {
+L1476: Open=317, Close=295, Bal=22, line=onPinChanged(newPin)
+L1477: Open=317, Close=296, Bal=21, line=}
+L1478: Open=317, Close=297, Bal=20, line=}
+L1479: Open=318, Close=297, Bal=21, line=) {
+L1480: Open=318, Close=297, Bal=21, line=Text("Save PIN")
+L1481: Open=318, Close=298, Bal=20, line=}
+L1482: Open=318, Close=299, Bal=19, line=},
+L1483: Open=319, Close=299, Bal=20, line=dismissButton = {
+L1484: Open=320, Close=299, Bal=21, line=TextButton(onClick = onDismiss) {
+L1485: Open=320, Close=299, Bal=21, line=Text("Cancel")
+L1486: Open=320, Close=300, Bal=20, line=}
+L1487: Open=320, Close=301, Bal=19, line=}
+L1488: Open=320, Close=301, Bal=19, line=)
+L1489: Open=320, Close=302, Bal=18, line=}
+L1490: Open=320, Close=302, Bal=18, line=
+L1491: Open=320, Close=302, Bal=18, line=@Composable
+L1492: Open=320, Close=302, Bal=18, line=fun RecycleBinDialog(
+L1493: Open=320, Close=302, Bal=18, line=settingsManager: SettingsManager,
+L1494: Open=320, Close=302, Bal=18, line=viewModel: OtsViewModel,
+L1495: Open=320, Close=302, Bal=18, line=onDismiss: () -> Unit
+L1496: Open=321, Close=302, Bal=19, line=) {
+L1497: Open=321, Close=302, Bal=19, line=val context = LocalContext.current
+L1498: Open=321, Close=302, Bal=19, line=
+L1499: Open=322, Close=302, Bal=20, line=val binItems = remember(settingsManager.recycleBinJson) {
+L1500: Open=322, Close=302, Bal=20, line=val list = mutableListOf<Triple<String, String, String>>() // ID, Title, Subject
+L1501: Open=323, Close=302, Bal=21, line=try {
+L1502: Open=323, Close=302, Bal=21, line=val jsonArr = JSONArray(settingsManager.recycleBinJson)
+L1503: Open=324, Close=302, Bal=22, line=for (i in 0 until jsonArr.length()) {
+L1504: Open=324, Close=302, Bal=22, line=val obj = jsonArr.getJSONObject(i)
+L1505: Open=324, Close=302, Bal=22, line=val id = obj.optString("id", "")
+L1506: Open=324, Close=302, Bal=22, line=val text = obj.optString("questionText", "Question Item").take(60)
+L1507: Open=324, Close=302, Bal=22, line=val subject = obj.optString("subject", "General")
+L1508: Open=324, Close=302, Bal=22, line=list.add(Triple(id, text, subject))
+L1509: Open=324, Close=303, Bal=21, line=}
+L1510: Open=325, Close=305, Bal=20, line=} catch (_: Exception) {}
+L1511: Open=325, Close=305, Bal=20, line=list
+L1512: Open=325, Close=306, Bal=19, line=}
+L1513: Open=325, Close=306, Bal=19, line=
+L1514: Open=325, Close=306, Bal=19, line=AlertDialog(
+L1515: Open=325, Close=306, Bal=19, line=onDismissRequest = onDismiss,
+L1516: Open=327, Close=308, Bal=19, line=title = { Text("Recycle Bin / Deleted Items (${binItems.size})") },
+L1517: Open=328, Close=308, Bal=20, line=text = {
+L1518: Open=329, Close=308, Bal=21, line=if (binItems.isEmpty()) {
+L1519: Open=329, Close=308, Bal=21, line=Text("Trash bin is empty. No deleted questions stored.")
+L1520: Open=330, Close=309, Bal=21, line=} else {
+L1521: Open=330, Close=309, Bal=21, line=LazyColumn(
+L1522: Open=330, Close=309, Bal=21, line=modifier = Modifier
+L1523: Open=330, Close=309, Bal=21, line=.fillMaxWidth()
+L1524: Open=330, Close=309, Bal=21, line=.heightIn(max = 300.dp),
+L1525: Open=330, Close=309, Bal=21, line=verticalArrangement = Arrangement.spacedBy(8.dp)
+L1526: Open=331, Close=309, Bal=22, line=) {
+L1527: Open=332, Close=309, Bal=23, line=items(binItems) { item ->
+L1528: Open=332, Close=309, Bal=23, line=Card(
+L1529: Open=332, Close=309, Bal=23, line=colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+L1530: Open=332, Close=309, Bal=23, line=shape = RoundedCornerShape(10.dp),
+L1531: Open=332, Close=309, Bal=23, line=modifier = Modifier.fillMaxWidth()
+L1532: Open=333, Close=309, Bal=24, line=) {
+L1533: Open=333, Close=309, Bal=24, line=Row(
+L1534: Open=333, Close=309, Bal=24, line=modifier = Modifier
+L1535: Open=333, Close=309, Bal=24, line=.fillMaxWidth()
+L1536: Open=333, Close=309, Bal=24, line=.padding(8.dp),
+L1537: Open=333, Close=309, Bal=24, line=horizontalArrangement = Arrangement.SpaceBetween,
+L1538: Open=333, Close=309, Bal=24, line=verticalAlignment = Alignment.CenterVertically
+L1539: Open=334, Close=309, Bal=25, line=) {
+L1540: Open=335, Close=309, Bal=26, line=Column(modifier = Modifier.weight(1f)) {
+L1541: Open=335, Close=309, Bal=26, line=Text(
+L1542: Open=335, Close=309, Bal=26, line=text = item.second,
+L1543: Open=335, Close=309, Bal=26, line=fontWeight = FontWeight.SemiBold,
+L1544: Open=335, Close=309, Bal=26, line=style = MaterialTheme.typography.bodySmall
+L1545: Open=335, Close=309, Bal=26, line=)
+L1546: Open=335, Close=309, Bal=26, line=Text(
+L1547: Open=336, Close=310, Bal=26, line=text = "Subject: ${item.third}",
+L1548: Open=336, Close=310, Bal=26, line=style = MaterialTheme.typography.labelSmall,
+L1549: Open=336, Close=310, Bal=26, line=color = MaterialTheme.colorScheme.onSurfaceVariant
+L1550: Open=336, Close=310, Bal=26, line=)
+L1551: Open=336, Close=311, Bal=25, line=}
+L1552: Open=336, Close=311, Bal=25, line=IconButton(
+L1553: Open=337, Close=311, Bal=26, line=onClick = {
+L1554: Open=338, Close=311, Bal=27, line=viewModel.restoreSingleRecycleBinQuestion(item.first, settingsManager) { success ->
+L1555: Open=339, Close=311, Bal=28, line=if (success) {
+L1556: Open=339, Close=311, Bal=28, line=Toast.makeText(context, "Restored item to question bank!", Toast.LENGTH_SHORT).show()
+L1557: Open=339, Close=312, Bal=27, line=}
+L1558: Open=339, Close=313, Bal=26, line=}
+L1559: Open=339, Close=314, Bal=25, line=}
+L1560: Open=340, Close=314, Bal=26, line=) {
+L1561: Open=340, Close=314, Bal=26, line=Icon(Icons.Default.Restore, contentDescription = "Restore Item")
+L1562: Open=340, Close=315, Bal=25, line=}
+L1563: Open=340, Close=316, Bal=24, line=}
+L1564: Open=340, Close=317, Bal=23, line=}
+L1565: Open=340, Close=318, Bal=22, line=}
+L1566: Open=340, Close=319, Bal=21, line=}
+L1567: Open=340, Close=320, Bal=20, line=}
+L1568: Open=340, Close=321, Bal=19, line=},
+L1569: Open=341, Close=321, Bal=20, line=confirmButton = {
+L1570: Open=342, Close=321, Bal=21, line=if (binItems.isNotEmpty()) {
+L1571: Open=342, Close=321, Bal=21, line=Button(
+L1572: Open=343, Close=321, Bal=22, line=onClick = {
+L1573: Open=344, Close=321, Bal=23, line=viewModel.restoreRecycleBinItems(settingsManager) { count ->
+L1574: Open=344, Close=321, Bal=23, line=Toast.makeText(context, "Restored $count items from recycle bin!", Toast.LENGTH_LONG).show()
+L1575: Open=344, Close=321, Bal=23, line=onDismiss()
+L1576: Open=344, Close=322, Bal=22, line=}
+L1577: Open=344, Close=323, Bal=21, line=}
+L1578: Open=345, Close=323, Bal=22, line=) {
+L1579: Open=345, Close=323, Bal=22, line=Text("Restore All")
+L1580: Open=345, Close=324, Bal=21, line=}
+L1581: Open=345, Close=325, Bal=20, line=}
+L1582: Open=345, Close=326, Bal=19, line=},
+L1583: Open=346, Close=326, Bal=20, line=dismissButton = {
+L1584: Open=346, Close=326, Bal=20, line=TextButton(
+L1585: Open=347, Close=326, Bal=21, line=onClick = {
+L1586: Open=347, Close=326, Bal=21, line=settingsManager.recycleBinJson = "[]"
+L1587: Open=347, Close=326, Bal=21, line=Toast.makeText(context, "Recycle bin emptied", Toast.LENGTH_SHORT).show()
+L1588: Open=347, Close=326, Bal=21, line=onDismiss()
+L1589: Open=347, Close=327, Bal=20, line=}
+L1590: Open=348, Close=327, Bal=21, line=) {
+L1591: Open=348, Close=327, Bal=21, line=Text(if (binItems.isNotEmpty()) "Empty Bin" else "Close")
+L1592: Open=348, Close=328, Bal=20, line=}
+L1593: Open=348, Close=329, Bal=19, line=}
+L1594: Open=348, Close=329, Bal=19, line=)
+L1595: Open=348, Close=330, Bal=18, line=}
+L1596: Open=348, Close=330, Bal=18, line=
+L1597: Open=348, Close=330, Bal=18, line=
+L1598: Open=348, Close=330, Bal=18, line=
+L1599: Open=348, Close=330, Bal=18, line=@Composable
+L1600: Open=348, Close=330, Bal=18, line=fun RemoteFolderPickerDialog(
+L1601: Open=348, Close=330, Bal=18, line=initialDir: String,
+L1602: Open=348, Close=330, Bal=18, line=onDismiss: () -> Unit,
+L1603: Open=348, Close=330, Bal=18, line=onSelect: (String) -> Unit,
+L1604: Open=348, Close=330, Bal=18, line=host: String,
+L1605: Open=348, Close=330, Bal=18, line=port: Int,
+L1606: Open=348, Close=330, Bal=18, line=user: String,
+L1607: Open=348, Close=330, Bal=18, line=pass: String,
+L1608: Open=348, Close=330, Bal=18, line=usePassive: Boolean,
+L1609: Open=348, Close=330, Bal=18, line=useFtps: Boolean,
+L1610: Open=348, Close=330, Bal=18, line=coroutineScope: kotlinx.coroutines.CoroutineScope
+L1611: Open=349, Close=330, Bal=19, line=) {
+L1612: Open=350, Close=331, Bal=19, line=var currentDir by remember { mutableStateOf(initialDir.removeSuffix("/")) }
+L1613: Open=351, Close=332, Bal=19, line=var directories by remember { mutableStateOf<List<String>?>(null) }
+L1614: Open=352, Close=333, Bal=19, line=var isLoading by remember { mutableStateOf(true) }
+L1615: Open=353, Close=334, Bal=19, line=var errorMessage by remember { mutableStateOf<String?>(null) }
+L1616: Open=354, Close=335, Bal=19, line=var showCreateDialog by remember { mutableStateOf(false) }
+L1617: Open=355, Close=336, Bal=19, line=var newDirName by remember { mutableStateOf("") }
+L1618: Open=355, Close=336, Bal=19, line=val context = androidx.compose.ui.platform.LocalContext.current
+L1619: Open=355, Close=336, Bal=19, line=
+L1620: Open=356, Close=336, Bal=20, line=fun loadDirs() {
+L1621: Open=356, Close=336, Bal=20, line=isLoading = true
+L1622: Open=356, Close=336, Bal=20, line=errorMessage = null
+L1623: Open=357, Close=336, Bal=21, line=coroutineScope.launch {
+L1624: Open=357, Close=336, Bal=21, line=val res = NetworkStorageManager.listDirectories(host, port, user, pass, currentDir, usePassive, useFtps)
+L1625: Open=357, Close=336, Bal=21, line=res.fold(
+L1626: Open=358, Close=336, Bal=22, line=onSuccess = { dirs ->
+L1627: Open=358, Close=336, Bal=22, line=directories = dirs.sorted()
+L1628: Open=358, Close=336, Bal=22, line=isLoading = false
+L1629: Open=358, Close=337, Bal=21, line=},
+L1630: Open=359, Close=337, Bal=22, line=onFailure = { err ->
+L1631: Open=359, Close=337, Bal=22, line=errorMessage = err.message
+L1632: Open=359, Close=337, Bal=22, line=isLoading = false
+L1633: Open=359, Close=338, Bal=21, line=}
+L1634: Open=359, Close=338, Bal=21, line=)
+L1635: Open=359, Close=339, Bal=20, line=}
+L1636: Open=359, Close=340, Bal=19, line=}
+L1637: Open=359, Close=340, Bal=19, line=
+L1638: Open=360, Close=340, Bal=20, line=LaunchedEffect(currentDir) {
+L1639: Open=360, Close=340, Bal=20, line=loadDirs()
+L1640: Open=360, Close=341, Bal=19, line=}
+L1641: Open=360, Close=341, Bal=19, line=
+L1642: Open=360, Close=341, Bal=19, line=AlertDialog(
+L1643: Open=360, Close=341, Bal=19, line=onDismissRequest = onDismiss,
+L1644: Open=361, Close=342, Bal=19, line=title = { Text("Select Remote Folder") },
+L1645: Open=362, Close=342, Bal=20, line=text = {
+L1646: Open=363, Close=342, Bal=21, line=Column(modifier = Modifier.fillMaxWidth()) {
+L1647: Open=365, Close=344, Bal=21, line=Text("Current: /${currentDir.ifBlank { "" }}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+L1648: Open=365, Close=344, Bal=21, line=Spacer(modifier = Modifier.height(8.dp))
+L1649: Open=365, Close=344, Bal=21, line=
+L1650: Open=366, Close=344, Bal=22, line=if (currentDir.isNotBlank()) {
+L1651: Open=367, Close=344, Bal=23, line=TextButton(onClick = {
+L1652: Open=367, Close=344, Bal=23, line=val parts = currentDir.split("/")
+L1653: Open=367, Close=344, Bal=23, line=currentDir = if (parts.size > 1) parts.dropLast(1).joinToString("/") else ""
+L1654: Open=368, Close=345, Bal=23, line=}) {
+L1655: Open=368, Close=345, Bal=23, line=Icon(Icons.Default.ArrowUpward, contentDescription = "Up")
+L1656: Open=368, Close=345, Bal=23, line=Spacer(modifier = Modifier.width(8.dp))
+L1657: Open=368, Close=345, Bal=23, line=Text(".. (Up)")
+L1658: Open=368, Close=346, Bal=22, line=}
+L1659: Open=368, Close=346, Bal=22, line=HorizontalDivider()
+L1660: Open=368, Close=347, Bal=21, line=}
+L1661: Open=368, Close=347, Bal=21, line=
+L1662: Open=369, Close=347, Bal=22, line=if (isLoading) {
+L1663: Open=370, Close=347, Bal=23, line=Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+L1664: Open=370, Close=347, Bal=23, line=CircularProgressIndicator(modifier = Modifier.size(24.dp))
+L1665: Open=370, Close=348, Bal=22, line=}
+L1666: Open=371, Close=349, Bal=22, line=} else if (errorMessage != null) {
+L1667: Open=371, Close=349, Bal=22, line=Text("Error: $errorMessage", color = MaterialTheme.colorScheme.error)
+L1668: Open=372, Close=350, Bal=22, line=} else {
+L1669: Open=373, Close=350, Bal=23, line=LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
+L1670: Open=374, Close=350, Bal=24, line=items(directories ?: emptyList()) { dir ->
+L1671: Open=374, Close=350, Bal=24, line=TextButton(
+L1672: Open=375, Close=350, Bal=25, line=onClick = {
+L1673: Open=375, Close=350, Bal=25, line=currentDir = if (currentDir.isEmpty()) dir else "$currentDir/$dir"
+L1674: Open=375, Close=351, Bal=24, line=},
+L1675: Open=375, Close=351, Bal=24, line=modifier = Modifier.fillMaxWidth(),
+L1676: Open=375, Close=351, Bal=24, line=contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+L1677: Open=376, Close=351, Bal=25, line=) {
+L1678: Open=376, Close=351, Bal=25, line=Row(
+L1679: Open=376, Close=351, Bal=25, line=modifier = Modifier.fillMaxWidth(),
+L1680: Open=376, Close=351, Bal=25, line=horizontalArrangement = Arrangement.Start,
+L1681: Open=376, Close=351, Bal=25, line=verticalAlignment = Alignment.CenterVertically
+L1682: Open=377, Close=351, Bal=26, line=) {
+L1683: Open=377, Close=351, Bal=26, line=Icon(Icons.Default.Folder, contentDescription = "Folder", tint = MaterialTheme.colorScheme.primary)
+L1684: Open=377, Close=351, Bal=26, line=Spacer(modifier = Modifier.width(16.dp))
+L1685: Open=377, Close=351, Bal=26, line=Text(dir, textAlign = TextAlign.Start)
+L1686: Open=377, Close=352, Bal=25, line=}
+L1687: Open=377, Close=353, Bal=24, line=}
+L1688: Open=377, Close=354, Bal=23, line=}
+L1689: Open=378, Close=354, Bal=24, line=if (directories?.isEmpty() == true) {
+L1690: Open=379, Close=354, Bal=25, line=item {
+L1691: Open=379, Close=354, Bal=25, line=Text("No subdirectories found.", modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.outline)
+L1692: Open=379, Close=355, Bal=24, line=}
+L1693: Open=379, Close=356, Bal=23, line=}
+L1694: Open=379, Close=357, Bal=22, line=}
+L1695: Open=379, Close=358, Bal=21, line=}
+L1696: Open=379, Close=359, Bal=20, line=}
+L1697: Open=379, Close=360, Bal=19, line=},
+L1698: Open=380, Close=360, Bal=20, line=confirmButton = {
+L1699: Open=381, Close=360, Bal=21, line=Row {
+L1700: Open=383, Close=361, Bal=22, line=TextButton(onClick = { showCreateDialog = true }) {
+L1701: Open=383, Close=361, Bal=22, line=Text("New Folder")
+L1702: Open=383, Close=362, Bal=21, line=}
+L1703: Open=383, Close=362, Bal=21, line=Spacer(modifier = Modifier.weight(1f))
+L1704: Open=385, Close=363, Bal=22, line=Button(onClick = { onSelect(currentDir) }) {
+L1705: Open=385, Close=363, Bal=22, line=Text("Select This")
+L1706: Open=385, Close=364, Bal=21, line=}
+L1707: Open=385, Close=365, Bal=20, line=}
+L1708: Open=385, Close=366, Bal=19, line=},
+L1709: Open=386, Close=366, Bal=20, line=dismissButton = {
+L1710: Open=387, Close=367, Bal=20, line=TextButton(onClick = onDismiss) { Text("Cancel") }
+L1711: Open=387, Close=368, Bal=19, line=}
+L1712: Open=387, Close=368, Bal=19, line=)
+L1713: Open=387, Close=368, Bal=19, line=
+L1714: Open=388, Close=368, Bal=20, line=if (showCreateDialog) {
+L1715: Open=388, Close=368, Bal=20, line=AlertDialog(
+L1716: Open=389, Close=369, Bal=20, line=onDismissRequest = { showCreateDialog = false },
+L1717: Open=390, Close=370, Bal=20, line=title = { Text("Create Folder") },
+L1718: Open=391, Close=370, Bal=21, line=text = {
+L1719: Open=391, Close=370, Bal=21, line=OutlinedTextField(
+L1720: Open=391, Close=370, Bal=21, line=value = newDirName,
+L1721: Open=392, Close=371, Bal=21, line=onValueChange = { newDirName = it },
+L1722: Open=393, Close=372, Bal=21, line=label = { Text("Folder Name") },
+L1723: Open=393, Close=372, Bal=21, line=singleLine = true
+L1724: Open=393, Close=372, Bal=21, line=)
+L1725: Open=393, Close=373, Bal=20, line=},
+L1726: Open=394, Close=373, Bal=21, line=confirmButton = {
+L1727: Open=395, Close=373, Bal=22, line=Button(onClick = {
+L1728: Open=396, Close=373, Bal=23, line=if (newDirName.isNotBlank()) {
+L1729: Open=397, Close=373, Bal=24, line=coroutineScope.launch {
+L1730: Open=397, Close=373, Bal=24, line=val res = NetworkStorageManager.createDirectory(host, port, user, pass, currentDir, newDirName.trim(), usePassive, useFtps)
+L1731: Open=397, Close=373, Bal=24, line=res.fold(
+L1732: Open=398, Close=373, Bal=25, line=onSuccess = {
+L1733: Open=398, Close=373, Bal=25, line=showCreateDialog = false
+L1734: Open=398, Close=373, Bal=25, line=newDirName = ""
+L1735: Open=398, Close=373, Bal=25, line=loadDirs()
+L1736: Open=398, Close=374, Bal=24, line=},
+L1737: Open=399, Close=374, Bal=25, line=onFailure = { err ->
+L1738: Open=400, Close=375, Bal=25, line=Toast.makeText(context, "Error creating folder: ${err.message}", Toast.LENGTH_LONG).show()
+L1739: Open=400, Close=376, Bal=24, line=}
+L1740: Open=400, Close=376, Bal=24, line=)
+L1741: Open=400, Close=377, Bal=23, line=}
+L1742: Open=400, Close=378, Bal=22, line=}
+L1743: Open=401, Close=379, Bal=22, line=}) {
+L1744: Open=401, Close=379, Bal=22, line=Text("Create")
+L1745: Open=401, Close=380, Bal=21, line=}
+L1746: Open=401, Close=381, Bal=20, line=},
+L1747: Open=402, Close=381, Bal=21, line=dismissButton = {
+L1748: Open=404, Close=383, Bal=21, line=TextButton(onClick = { showCreateDialog = false }) { Text("Cancel") }
+L1749: Open=404, Close=384, Bal=20, line=}
+L1750: Open=404, Close=384, Bal=20, line=)
+L1751: Open=404, Close=385, Bal=19, line=}
+L1752: Open=404, Close=386, Bal=18, line=}
+L1753: Open=404, Close=386, Bal=18, line=
+L1754: Open=404, Close=386, Bal=18, line=@Composable
+L1755: Open=404, Close=386, Bal=18, line=fun GoogleDriveFolderPickerDialog(
+L1756: Open=404, Close=386, Bal=18, line=initialDirId: String = "root",
+L1757: Open=404, Close=386, Bal=18, line=onDismiss: () -> Unit,
+L1758: Open=404, Close=386, Bal=18, line=onSelect: (String, String) -> Unit,
+L1759: Open=404, Close=386, Bal=18, line=coroutineScope: kotlinx.coroutines.CoroutineScope
+L1760: Open=405, Close=386, Bal=19, line=) {
+L1761: Open=406, Close=387, Bal=19, line=var currentFolderId by remember { mutableStateOf(initialDirId) }
+L1762: Open=407, Close=388, Bal=19, line=var currentFolderName by remember { mutableStateOf("My Drive") }
+L1763: Open=408, Close=389, Bal=19, line=val historyStack = remember { mutableStateListOf<Pair<String, String>>() }
+L1764: Open=409, Close=390, Bal=19, line=var folders by remember { mutableStateOf<List<Pair<String, String>>?>(null) }
+L1765: Open=410, Close=391, Bal=19, line=var isLoading by remember { mutableStateOf(true) }
+L1766: Open=411, Close=392, Bal=19, line=var errorMessage by remember { mutableStateOf<String?>(null) }
+L1767: Open=412, Close=393, Bal=19, line=var showCreateDialog by remember { mutableStateOf(false) }
+L1768: Open=413, Close=394, Bal=19, line=var newFolderName by remember { mutableStateOf("") }
+L1769: Open=413, Close=394, Bal=19, line=val context = androidx.compose.ui.platform.LocalContext.current
+L1770: Open=413, Close=394, Bal=19, line=
+L1771: Open=414, Close=394, Bal=20, line=fun loadFolders() {
+L1772: Open=414, Close=394, Bal=20, line=isLoading = true
+L1773: Open=414, Close=394, Bal=20, line=errorMessage = null
+L1774: Open=415, Close=394, Bal=21, line=coroutineScope.launch {
+L1775: Open=415, Close=394, Bal=21, line=val res = GoogleDriveSyncManager.listDriveFolders(context, currentFolderId)
+L1776: Open=415, Close=394, Bal=21, line=res.fold(
+L1777: Open=416, Close=394, Bal=22, line=onSuccess = { folderPairs ->
+L1778: Open=417, Close=395, Bal=22, line=folders = folderPairs.sortedBy { it.second }
+L1779: Open=417, Close=395, Bal=22, line=isLoading = false
+L1780: Open=417, Close=396, Bal=21, line=},
+L1781: Open=418, Close=396, Bal=22, line=onFailure = { err ->
+L1782: Open=418, Close=396, Bal=22, line=errorMessage = err.localizedMessage ?: err.message
+L1783: Open=418, Close=396, Bal=22, line=isLoading = false
+L1784: Open=418, Close=397, Bal=21, line=}
+L1785: Open=418, Close=397, Bal=21, line=)
+L1786: Open=418, Close=398, Bal=20, line=}
+L1787: Open=418, Close=399, Bal=19, line=}
+L1788: Open=418, Close=399, Bal=19, line=
+L1789: Open=419, Close=399, Bal=20, line=LaunchedEffect(currentFolderId) {
+L1790: Open=419, Close=399, Bal=20, line=loadFolders()
+L1791: Open=419, Close=400, Bal=19, line=}
+L1792: Open=419, Close=400, Bal=19, line=
+L1793: Open=419, Close=400, Bal=19, line=AlertDialog(
+L1794: Open=419, Close=400, Bal=19, line=onDismissRequest = onDismiss,
+L1795: Open=420, Close=401, Bal=19, line=title = { Text("Select Google Drive Folder") },
+L1796: Open=421, Close=401, Bal=20, line=text = {
+L1797: Open=422, Close=401, Bal=21, line=Column(modifier = Modifier.fillMaxWidth()) {
+L1798: Open=422, Close=401, Bal=21, line=Text("Current: $currentFolderName", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+L1799: Open=422, Close=401, Bal=21, line=Spacer(modifier = Modifier.height(8.dp))
+L1800: Open=422, Close=401, Bal=21, line=
+L1801: Open=423, Close=401, Bal=22, line=if (currentFolderId != "root" || historyStack.isNotEmpty()) {
+L1802: Open=424, Close=401, Bal=23, line=TextButton(onClick = {
+L1803: Open=425, Close=401, Bal=24, line=if (historyStack.isNotEmpty()) {
+L1804: Open=425, Close=401, Bal=24, line=val prev = historyStack.removeAt(historyStack.lastIndex)
+L1805: Open=425, Close=401, Bal=24, line=currentFolderId = prev.first
+L1806: Open=425, Close=401, Bal=24, line=currentFolderName = prev.second
+L1807: Open=426, Close=402, Bal=24, line=} else {
+L1808: Open=426, Close=402, Bal=24, line=currentFolderId = "root"
+L1809: Open=426, Close=402, Bal=24, line=currentFolderName = "My Drive"
+L1810: Open=426, Close=403, Bal=23, line=}
+L1811: Open=427, Close=404, Bal=23, line=}) {
+L1812: Open=427, Close=404, Bal=23, line=Icon(Icons.Default.ArrowUpward, contentDescription = "Up")
+L1813: Open=427, Close=404, Bal=23, line=Spacer(modifier = Modifier.width(8.dp))
+L1814: Open=427, Close=404, Bal=23, line=Text(".. (Up)")
+L1815: Open=427, Close=405, Bal=22, line=}
+L1816: Open=427, Close=405, Bal=22, line=HorizontalDivider()
+L1817: Open=427, Close=406, Bal=21, line=}
+L1818: Open=427, Close=406, Bal=21, line=
+L1819: Open=428, Close=406, Bal=22, line=if (isLoading) {
+L1820: Open=429, Close=406, Bal=23, line=Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+L1821: Open=429, Close=406, Bal=23, line=CircularProgressIndicator(modifier = Modifier.size(24.dp))
+L1822: Open=429, Close=407, Bal=22, line=}
+L1823: Open=430, Close=408, Bal=22, line=} else if (errorMessage != null) {
+L1824: Open=430, Close=408, Bal=22, line=Text("Error: $errorMessage", color = MaterialTheme.colorScheme.error)
+L1825: Open=431, Close=409, Bal=22, line=} else {
+L1826: Open=432, Close=409, Bal=23, line=LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
+L1827: Open=433, Close=409, Bal=24, line=items(folders ?: emptyList()) { folder ->
+L1828: Open=433, Close=409, Bal=24, line=TextButton(
+L1829: Open=434, Close=409, Bal=25, line=onClick = {
+L1830: Open=434, Close=409, Bal=25, line=historyStack.add(Pair(currentFolderId, currentFolderName))
+L1831: Open=434, Close=409, Bal=25, line=currentFolderId = folder.first
+L1832: Open=434, Close=409, Bal=25, line=currentFolderName = folder.second
+L1833: Open=434, Close=410, Bal=24, line=},
+L1834: Open=434, Close=410, Bal=24, line=modifier = Modifier.fillMaxWidth(),
+L1835: Open=434, Close=410, Bal=24, line=contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+L1836: Open=435, Close=410, Bal=25, line=) {
+L1837: Open=435, Close=410, Bal=25, line=Row(
+L1838: Open=435, Close=410, Bal=25, line=modifier = Modifier.fillMaxWidth(),
+L1839: Open=435, Close=410, Bal=25, line=horizontalArrangement = Arrangement.Start,
+L1840: Open=435, Close=410, Bal=25, line=verticalAlignment = Alignment.CenterVertically
+L1841: Open=436, Close=410, Bal=26, line=) {
+L1842: Open=436, Close=410, Bal=26, line=Icon(Icons.Default.Folder, contentDescription = "Folder", tint = MaterialTheme.colorScheme.primary)
+L1843: Open=436, Close=410, Bal=26, line=Spacer(modifier = Modifier.width(16.dp))
+L1844: Open=436, Close=410, Bal=26, line=Text(folder.second, textAlign = TextAlign.Start)
+L1845: Open=436, Close=411, Bal=25, line=}
+L1846: Open=436, Close=412, Bal=24, line=}
+L1847: Open=436, Close=413, Bal=23, line=}
+L1848: Open=437, Close=413, Bal=24, line=if (folders?.isEmpty() == true) {
+L1849: Open=438, Close=413, Bal=25, line=item {
+L1850: Open=438, Close=413, Bal=25, line=Text("No subfolders found.", modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.outline)
+L1851: Open=438, Close=414, Bal=24, line=}
+L1852: Open=438, Close=415, Bal=23, line=}
+L1853: Open=438, Close=416, Bal=22, line=}
+L1854: Open=438, Close=417, Bal=21, line=}
+L1855: Open=438, Close=418, Bal=20, line=}
+L1856: Open=438, Close=419, Bal=19, line=},
+L1857: Open=439, Close=419, Bal=20, line=confirmButton = {
+L1858: Open=440, Close=419, Bal=21, line=Row {
+L1859: Open=442, Close=420, Bal=22, line=TextButton(onClick = { showCreateDialog = true }) {
+L1860: Open=442, Close=420, Bal=22, line=Text("New Folder")
+L1861: Open=442, Close=421, Bal=21, line=}
+L1862: Open=442, Close=421, Bal=21, line=Spacer(modifier = Modifier.weight(1f))
+L1863: Open=443, Close=421, Bal=22, line=Button(onClick = {
+L1864: Open=444, Close=422, Bal=22, line=val pathBuilder = historyStack.map { it.second }.toMutableList()
+L1865: Open=444, Close=422, Bal=22, line=pathBuilder.add(currentFolderName)
+L1866: Open=444, Close=422, Bal=22, line=val fullPath = pathBuilder.joinToString("/") + "/backup.json"
+L1867: Open=444, Close=422, Bal=22, line=onSelect(fullPath, currentFolderId)
+L1868: Open=445, Close=423, Bal=22, line=}) {
+L1869: Open=445, Close=423, Bal=22, line=Text("Select This")
+L1870: Open=445, Close=424, Bal=21, line=}
+L1871: Open=445, Close=425, Bal=20, line=}
+L1872: Open=445, Close=426, Bal=19, line=},
+L1873: Open=446, Close=426, Bal=20, line=dismissButton = {
+L1874: Open=447, Close=427, Bal=20, line=TextButton(onClick = onDismiss) { Text("Cancel") }
+L1875: Open=447, Close=428, Bal=19, line=}
+L1876: Open=447, Close=428, Bal=19, line=)
+L1877: Open=447, Close=428, Bal=19, line=
+L1878: Open=448, Close=428, Bal=20, line=if (showCreateDialog) {
+L1879: Open=448, Close=428, Bal=20, line=AlertDialog(
+L1880: Open=449, Close=429, Bal=20, line=onDismissRequest = { showCreateDialog = false },
+L1881: Open=450, Close=430, Bal=20, line=title = { Text("Create Folder") },
+L1882: Open=451, Close=430, Bal=21, line=text = {
+L1883: Open=451, Close=430, Bal=21, line=OutlinedTextField(
+L1884: Open=451, Close=430, Bal=21, line=value = newFolderName,
+L1885: Open=452, Close=431, Bal=21, line=onValueChange = { newFolderName = it },
+L1886: Open=453, Close=432, Bal=21, line=label = { Text("Folder Name") },
+L1887: Open=453, Close=432, Bal=21, line=singleLine = true
+L1888: Open=453, Close=432, Bal=21, line=)
+L1889: Open=453, Close=433, Bal=20, line=},
+L1890: Open=454, Close=433, Bal=21, line=confirmButton = {
+L1891: Open=455, Close=433, Bal=22, line=Button(onClick = {
+L1892: Open=456, Close=433, Bal=23, line=if (newFolderName.isNotBlank()) {
+L1893: Open=457, Close=433, Bal=24, line=coroutineScope.launch {
+L1894: Open=457, Close=433, Bal=24, line=val res = GoogleDriveSyncManager.createDriveFolder(context, currentFolderId, newFolderName.trim())
+L1895: Open=457, Close=433, Bal=24, line=res.fold(
+L1896: Open=458, Close=433, Bal=25, line=onSuccess = { newId ->
+L1897: Open=458, Close=433, Bal=25, line=showCreateDialog = false
+L1898: Open=458, Close=433, Bal=25, line=newFolderName = ""
+L1899: Open=458, Close=433, Bal=25, line=loadFolders()
+L1900: Open=458, Close=434, Bal=24, line=},
+L1901: Open=459, Close=434, Bal=25, line=onFailure = { err ->
+L1902: Open=460, Close=435, Bal=25, line=Toast.makeText(context, "Error: ${err.message}", Toast.LENGTH_LONG).show()
+L1903: Open=460, Close=436, Bal=24, line=}
+L1904: Open=460, Close=436, Bal=24, line=)
+L1905: Open=460, Close=437, Bal=23, line=}
+L1906: Open=460, Close=438, Bal=22, line=}
+L1907: Open=461, Close=439, Bal=22, line=}) {
+L1908: Open=461, Close=439, Bal=22, line=Text("Create")
+L1909: Open=461, Close=440, Bal=21, line=}
+L1910: Open=461, Close=441, Bal=20, line=},
+L1911: Open=462, Close=441, Bal=21, line=dismissButton = {
+L1912: Open=464, Close=443, Bal=21, line=TextButton(onClick = { showCreateDialog = false }) { Text("Cancel") }
+L1913: Open=464, Close=444, Bal=20, line=}
+L1914: Open=464, Close=444, Bal=20, line=)
+L1915: Open=464, Close=445, Bal=19, line=}
+L1916: Open=464, Close=446, Bal=18, line=}
+L1917: Open=464, Close=446, Bal=18, line=
+L1918: Open=464, Close=446, Bal=18, line=
+L1919: Open=464, Close=446, Bal=18, line=@Composable
+L1920: Open=464, Close=446, Bal=18, line=fun SettingsCategory(
+L1921: Open=464, Close=446, Bal=18, line=title: String,
+L1922: Open=464, Close=446, Bal=18, line=icon: @Composable () -> Unit,
+L1923: Open=464, Close=446, Bal=18, line=defaultExpanded: Boolean = false,
+L1924: Open=464, Close=446, Bal=18, line=containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+L1925: Open=465, Close=447, Bal=18, line=titleRightContent: @Composable () -> Unit = {},
+L1926: Open=465, Close=447, Bal=18, line=content: @Composable () -> Unit
+L1927: Open=466, Close=447, Bal=19, line=) {
+L1928: Open=467, Close=448, Bal=19, line=var expanded by remember { mutableStateOf(defaultExpanded) }
+L1929: Open=467, Close=448, Bal=19, line=Card(
+L1930: Open=467, Close=448, Bal=19, line=shape = RoundedCornerShape(16.dp),
+L1931: Open=467, Close=448, Bal=19, line=colors = CardDefaults.cardColors(containerColor = containerColor),
+L1932: Open=467, Close=448, Bal=19, line=modifier = Modifier.fillMaxWidth()
+L1933: Open=468, Close=448, Bal=20, line=) {
+L1934: Open=468, Close=448, Bal=20, line=Column(
+L1935: Open=468, Close=448, Bal=20, line=modifier = Modifier.fillMaxWidth()
+L1936: Open=469, Close=448, Bal=21, line=) {
+L1937: Open=469, Close=448, Bal=21, line=Row(
+L1938: Open=469, Close=448, Bal=21, line=verticalAlignment = Alignment.CenterVertically,
+L1939: Open=469, Close=448, Bal=21, line=modifier = Modifier
+L1940: Open=469, Close=448, Bal=21, line=.fillMaxWidth()
+L1941: Open=470, Close=449, Bal=21, line=.clickable { expanded = !expanded }
+L1942: Open=470, Close=449, Bal=21, line=.padding(16.dp)
+L1943: Open=471, Close=449, Bal=22, line=) {
+L1944: Open=471, Close=449, Bal=22, line=icon()
+L1945: Open=471, Close=449, Bal=22, line=Spacer(modifier = Modifier.width(8.dp))
+L1946: Open=471, Close=449, Bal=22, line=Text(
+L1947: Open=471, Close=449, Bal=22, line=text = title,
+L1948: Open=471, Close=449, Bal=22, line=style = MaterialTheme.typography.titleMedium,
+L1949: Open=471, Close=449, Bal=22, line=fontWeight = FontWeight.Bold,
+L1950: Open=471, Close=449, Bal=22, line=modifier = Modifier.weight(1f)
+L1951: Open=471, Close=449, Bal=22, line=)
+L1952: Open=471, Close=449, Bal=22, line=titleRightContent()
+L1953: Open=471, Close=449, Bal=22, line=Icon(
+L1954: Open=471, Close=449, Bal=22, line=imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+L1955: Open=471, Close=449, Bal=22, line=contentDescription = if (expanded) "Collapse" else "Expand"
+L1956: Open=471, Close=449, Bal=22, line=)
+L1957: Open=471, Close=450, Bal=21, line=}
+L1958: Open=472, Close=450, Bal=22, line=if (expanded) {
+L1959: Open=472, Close=450, Bal=22, line=HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+L1960: Open=472, Close=450, Bal=22, line=Column(
+L1961: Open=472, Close=450, Bal=22, line=modifier = Modifier.padding(16.dp),
+L1962: Open=472, Close=450, Bal=22, line=verticalArrangement = Arrangement.spacedBy(12.dp)
+L1963: Open=473, Close=450, Bal=23, line=) {
+L1964: Open=473, Close=450, Bal=23, line=content()
+L1965: Open=473, Close=451, Bal=22, line=}
+L1966: Open=473, Close=452, Bal=21, line=}
+L1967: Open=473, Close=453, Bal=20, line=}
+L1968: Open=473, Close=454, Bal=19, line=}
+L1969: Open=473, Close=455, Bal=18, line=}
+L1970: Open=473, Close=455, Bal=18, line=

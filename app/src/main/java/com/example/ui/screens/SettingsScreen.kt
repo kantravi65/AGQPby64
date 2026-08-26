@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -62,104 +63,79 @@ fun SettingsScreen(
 
         // --- 1. USER PROFILE & ACCOUNT ---
         item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (settingsManager.isGoogleSignedIn && settingsManager.googlePhotoUrl.isNotBlank()) {
-                            coil.compose.AsyncImage(
-                                model = settingsManager.googlePhotoUrl,
-                                contentDescription = "Profile Picture",
-                                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                                modifier = Modifier
-                                    .padding(end = 8.dp)
-                                    .size(24.dp)
-                                    .clip(CircleShape)
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
-                        }
-                        Text(
-                            text = "User Profile & Institution Credentials",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+            SettingsCategory(
+                title = "User Profile & Institution Credentials",
+                icon = {
+                    if (settingsManager.isGoogleSignedIn && settingsManager.googlePhotoUrl.isNotBlank()) {
+                        coil.compose.AsyncImage(
+                            model = settingsManager.googlePhotoUrl,
+                            contentDescription = "Profile Picture",
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                    HorizontalDivider()
+                }
+            ) {
+                var name by remember { mutableStateOf(settingsManager.userName) }
+                var role by remember { mutableStateOf(settingsManager.userRole) }
+                var inst by remember { mutableStateOf(settingsManager.userInstitution) }
+                var email by remember { mutableStateOf(settingsManager.userEmail) }
 
-                    var name by remember { mutableStateOf(settingsManager.userName) }
-                    var role by remember { mutableStateOf(settingsManager.userRole) }
-                    var inst by remember { mutableStateOf(settingsManager.userInstitution) }
-                    var email by remember { mutableStateOf(settingsManager.userEmail) }
-
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it; settingsManager.userName = it },
-                        label = { Text("Examiner / Author Name") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = role,
-                        onValueChange = { role = it; settingsManager.userRole = it },
-                        label = { Text("Designation / Role") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = inst,
-                        onValueChange = { inst = it; settingsManager.userInstitution = it },
-                        label = { Text("Institution / Department") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it; settingsManager.userEmail = it },
-                        label = { Text("Contact Email Address") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it; settingsManager.userName = it },
+                    label = { Text("Examiner / Author Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = role,
+                    onValueChange = { role = it; settingsManager.userRole = it },
+                    label = { Text("Designation / Role") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = inst,
+                    onValueChange = { inst = it; settingsManager.userInstitution = it },
+                    label = { Text("Institution / Department") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it; settingsManager.userEmail = it },
+                    label = { Text("Contact Email Address") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                Button(
+                    onClick = onGoogleSignOut,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Logout / Sign Out")
                 }
             }
         }
 
         // --- 2. APP LOCK & BIOMETRIC SECURITY ---
         item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                modifier = Modifier.fillMaxWidth()
+            SettingsCategory(
+                title = "App Lock & Security Settings",
+                icon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(
-                            text = "App Lock & Security Settings",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    HorizontalDivider()
 
                     var isAppLockEnabled by remember { mutableStateOf(settingsManager.isAppLockEnabled) }
                     var isBiometricEnabled by remember { mutableStateOf(settingsManager.isBiometricEnabled) }
@@ -254,36 +230,16 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Lock App Now")
                         }
-                    }
-                }
+                                    }
             }
         }
 
         // --- 3. GOOGLE DRIVE SYNC & BACKUP ---
         item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                modifier = Modifier.fillMaxWidth()
+            SettingsCategory(
+                title = "Google Drive Cloud Backup & Sync",
+                icon = { Icon(Icons.Default.CloudSync, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.CloudSync,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(
-                            text = "Google Drive Cloud Backup & Sync",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    HorizontalDivider()
 
                     var drivePath by remember { mutableStateOf(settingsManager.googleDriveBackupPath) }
                     var isSyncing by remember { mutableStateOf(false) }
@@ -372,37 +328,17 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Restore")
                         }
-                    }
-                }
+                                    }
             }
         }
 
         // --- 3.5. OWNER WHITELIST MANAGEMENT ---
         if (com.example.util.WhitelistManager.isOwner(settingsManager.googleAccountEmail)) {
             item {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                    modifier = Modifier.fillMaxWidth()
+                SettingsCategory(
+                    title = "Owner Whitelist Management",
+                    icon = { Icon(Icons.Default.Group, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Group,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
-                            Text(
-                                text = "Owner Whitelist Management",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        HorizontalDivider()
 
                         var whitelist by remember { mutableStateOf<List<String>>(emptyList()) }
                         var newEmailInput by remember { mutableStateOf("") }
@@ -565,39 +501,19 @@ fun SettingsScreen(
                                 }
                             }
                         }
-                    }
-                }
+                                    }
             }
         }
 
         // --- 4. EXAM & PRINT DEFAULTS ---
         item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                modifier = Modifier.fillMaxWidth()
+            SettingsCategory(
+                title = "Exam Paper & Watermark Defaults",
+                icon = { Icon(Icons.Default.Description, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Description,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(
-                            text = "Exam Paper & Watermark Defaults",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    HorizontalDivider()
 
                     var defaultInst by remember { mutableStateOf(settingsManager.defaultInstitute) }
-                    var defaultCode by remember { mutableStateOf(settingsManager.defaultPaperCode) }
+                    
 
                     OutlinedTextField(
                         value = defaultInst,
@@ -607,13 +523,7 @@ fun SettingsScreen(
                         singleLine = true
                     )
 
-                    OutlinedTextField(
-                        value = defaultCode,
-                        onValueChange = { defaultCode = it; settingsManager.defaultPaperCode = it },
-                        label = { Text("Default Paper Code") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
+
 
                     HorizontalDivider()
 
@@ -690,46 +600,27 @@ fun SettingsScreen(
                             onValueChange = { angle = it; settingsManager.watermarkAngle = it },
                             valueRange = -90f..90f
                         )
-                    }
-                }
+                                    }
             }
         }
 
         // --- 5. FTP REMOTE STORAGE INTEGRATION ---
         item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    var isFtpConnectionValid by remember { mutableStateOf(settingsManager.isFtpConnectionValid) }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+            var isFtpConnectionValid by remember { mutableStateOf(settingsManager.isFtpConnectionValid) }
+            SettingsCategory(
+                title = "FTP Remote Storage Integration",
+                icon = { Icon(Icons.Default.Dns, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                titleRightContent = {
+                    if (isFtpConnectionValid) {
                         Icon(
-                            imageVector = Icons.Default.Dns,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(end = 8.dp)
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Valid Connection",
+                            tint = Color(0xFF2E7D32),
+                            modifier = Modifier.size(20.dp).padding(end = 8.dp)
                         )
-                        Text(
-                            text = "FTP Remote Storage Integration",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f)
-                        )
-                        if (isFtpConnectionValid) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Valid Connection",
-                                tint = Color(0xFF2E7D32),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
                     }
-                    HorizontalDivider()
+                }
+            ) {
 
                     var ftpHost by remember { mutableStateOf(settingsManager.ftpHost) }
                     var ftpPort by remember { mutableStateOf(settingsManager.ftpPort.toString()) }
@@ -1099,36 +990,16 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(2.dp))
                             Text("Restore", fontSize = 12.sp)
                         }
-                    }
-                }
+                                    }
             }
         }
 
         // --- 6. LOCAL DEVICE STORAGE EXPORT / IMPORT ---
         item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                modifier = Modifier.fillMaxWidth()
+            SettingsCategory(
+                title = "Local Device Export & Backup",
+                icon = { Icon(Icons.Default.Save, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Save,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(
-                            text = "Local Device Export & Backup",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    HorizontalDivider()
 
                     Text(
                         text = "Export your question bank to a standard JSON file on your local device storage (e.g. Downloads folder) or import an existing backup file.",
@@ -1197,36 +1068,16 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Import Backup")
                         }
-                    }
-                }
+                                    }
             }
         }
 
         // --- 7. DATA RECOVERY & TRASH / RECYCLE BIN ---
         item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                modifier = Modifier.fillMaxWidth()
+            SettingsCategory(
+                title = "Data Recovery & Undo Trash",
+                icon = { Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.DeleteSweep,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(
-                            text = "Data Recovery & Undo Trash",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    HorizontalDivider()
 
                     val recycleBinCount = remember(settingsManager.recycleBinJson) {
                         try {
@@ -1271,36 +1122,17 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("View Trash ($recycleBinCount)")
                         }
-                    }
-                }
+                                    }
             }
         }
 
         // --- 8. CLEAN UNINSTALL & REINSTALL DATA PRESERVATION ---
         item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                modifier = Modifier.fillMaxWidth()
+            SettingsCategory(
+                title = "Clean Uninstall & Cloud Preservation Policy",
+                icon = { Icon(Icons.Default.CleaningServices, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.CleaningServices,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(
-                            text = "Clean Uninstall & Cloud Preservation Policy",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    HorizontalDivider()
 
                     Text(
                         text = "Clean Uninstall Policy:\n" +
@@ -1310,35 +1142,15 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                }
             }
         }
 
         // --- 9. APP UPDATE ---
         item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                modifier = Modifier.fillMaxWidth()
+            SettingsCategory(
+                title = "App Update",
+                icon = { Icon(Icons.Default.SystemUpdate, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.SystemUpdate,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(
-                            text = "App Update",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    HorizontalDivider()
 
                     var updateStatus by remember { mutableStateOf("") }
                     
@@ -1379,36 +1191,17 @@ fun SettingsScreen(
                         Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(if (updateStatus.isNotBlank()) "Downloading..." else "Check for Updates")
-                    }
-                }
+                                    }
             }
         }
 
         // --- 10. ABOUT DEVELOPER ---
         item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                modifier = Modifier.fillMaxWidth()
+            SettingsCategory(
+                title = "About",
+                icon = { Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(
-                            text = "About",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    HorizontalDivider()
 
                     Text(
                         text = "developed by Ravikant, email - myslv409@gmail.com, contact me for any suggestion or feedback",
@@ -1416,7 +1209,7 @@ fun SettingsScreen(
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                }
+                        
             }
         }
     }
@@ -1944,5 +1737,58 @@ fun GoogleDriveFolderPickerDialog(
                 TextButton(onClick = { showCreateDialog = false }) { Text("Cancel") }
             }
         )
+    }
+}
+
+
+@Composable
+fun SettingsCategory(
+    title: String,
+    icon: @Composable () -> Unit,
+    defaultExpanded: Boolean = false,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    titleRightContent: @Composable () -> Unit = {},
+    content: @Composable () -> Unit
+) {
+    var expanded by remember { mutableStateOf(defaultExpanded) }
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(16.dp)
+            ) {
+                icon()
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                titleRightContent()
+                Icon(
+                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = if (expanded) "Collapse" else "Expand"
+                )
+            }
+            if (expanded) {
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    content()
+                }
+            }
+        }
     }
 }

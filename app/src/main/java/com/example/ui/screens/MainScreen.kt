@@ -43,6 +43,23 @@ fun MainScreen(viewModel: OtsViewModel) {
     val isAppLockedFromVm by viewModel.isAppLocked.collectAsState()
     val isAppLocked = isAppLockedFromVm ?: (requiresGoogleLogin || settingsManager.isAppLockEnabled)
 
+    // Automatic Google Drive Sync
+    LaunchedEffect(settingsManager.isGoogleDriveSyncEnabled, settingsManager.autoSyncIntervalMins) {
+        if (settingsManager.isGoogleDriveSyncEnabled) {
+            while (true) {
+                kotlinx.coroutines.delay(settingsManager.autoSyncIntervalMins * 60 * 1000L)
+                com.example.util.GoogleDriveSyncManager.backupToDrive(
+                    context = context,
+                    viewModel = viewModel,
+                    settingsManager = settingsManager,
+                    onComplete = { success, msg -> 
+                        android.util.Log.d("AutoSync", "Auto sync complete: $success - $msg")
+                    }
+                )
+            }
+        }
+    }
+
     LaunchedEffect(settingsManager.isGoogleSignedIn, settingsManager.googleAccountEmail) {
         if (!settingsManager.isGoogleSignedIn || settingsManager.googleAccountEmail.isBlank()) {
             viewModel.setAppLocked(true)
@@ -269,8 +286,12 @@ fun MainScreen(viewModel: OtsViewModel) {
                             settingsManager = settingsManager,
                             onLockAppNow = { viewModel.setAppLocked(true) },
                             onGoogleSignOut = {
-                                viewModel.setAppLocked(true)
-                                currentScreen = "home"
+                                scope.launch {
+                                    com.example.util.GoogleDriveSyncManager.signOutGoogle(context, settingsManager)
+                                    com.example.util.FirebaseAuthHelper.signOut()
+                                    viewModel.setAppLocked(true)
+                                    currentScreen = "home"
+                                }
                             }
                         )
                         else -> HomeScreen(

@@ -22,6 +22,18 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Create google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+            echo "GOOGLE_SERVICES_JSON secret is empty. Please add your google-services.json content as a repository secret named GOOGLE_SERVICES_JSON."
+            echo "Falling back to a mock file for compilation purposes..."
+            echo '{"project_info":{"project_number":"1","project_id":"mock","storage_bucket":"mock.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:1:android:1","android_client_info":{"package_name":"com.aistudio.questionbank.v1.zelcbr"}},"api_key":[{"current_key":"mock"}]}]}' > app/google-services.json
+          else
+            echo "$GOOGLE_SERVICES_JSON" > app/google-services.json
+          fi
+
       - name: Generate Debug Keystore
         run: |
           keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
