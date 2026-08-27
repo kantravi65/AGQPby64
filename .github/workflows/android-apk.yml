@@ -62,12 +62,22 @@ jobs:
             mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/QPby64-debug.apk
           fi
 
+      - name: Update Latest Tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f latest
+          git push -f origin latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create GitHub Release
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
           name: Latest Release
+          make_latest: true
           draft: false
           prerelease: false
           files: |
