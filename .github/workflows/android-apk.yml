@@ -49,6 +49,7 @@ jobs:
         env:
           APP_UPDATE_REPO: ${{ secrets.APP_UPDATE_REPO }}
           APP_UPDATE_TOKEN: ${{ secrets.APP_UPDATE_TOKEN }}
+          APP_GITHUB_SHA: ${{ github.sha }}
 
       - name: Rename Release APKs
         run: |

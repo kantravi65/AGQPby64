@@ -39,11 +39,15 @@ android {
             )
             buildConfigField("String", "APP_UPDATE_REPO", "\"${System.getenv("APP_UPDATE_REPO") ?: "myslv409-debug/OTSNGG"}\"")
             buildConfigField("String", "APP_UPDATE_TOKEN", "\"${System.getenv("APP_UPDATE_TOKEN") ?: ""}\"")
+            buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
+            buildConfigField("String", "APP_GITHUB_SHA", "\"${System.getenv("APP_GITHUB_SHA") ?: ""}\"")
         }
         debug {
             signingConfig = signingConfigs.getByName("debug")
             buildConfigField("String", "APP_UPDATE_REPO", "\"${System.getenv("APP_UPDATE_REPO") ?: "myslv409-debug/OTSNGG"}\"")
             buildConfigField("String", "APP_UPDATE_TOKEN", "\"${System.getenv("APP_UPDATE_TOKEN") ?: ""}\"")
+            buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
+            buildConfigField("String", "APP_GITHUB_SHA", "\"${System.getenv("APP_GITHUB_SHA") ?: ""}\"")
         }
     }
     compileOptions {

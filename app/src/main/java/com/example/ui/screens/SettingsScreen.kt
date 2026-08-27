@@ -1172,7 +1172,7 @@ fun SettingsScreen(
                     Button(
                         onClick = {
                             scope.launch {
-                                com.example.util.AppUpdater.checkForUpdatesAndInstall(context) { status ->
+                                com.example.util.AppUpdater.checkForUpdatesAndPrompt(context, showToastIfNoUpdate = true) { status ->
                                     updateStatus = status
                                 }
                             }

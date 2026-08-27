@@ -28,6 +28,10 @@ fun MainScreen(viewModel: OtsViewModel) {
     // Screen states: "home", "quiz", "manage_bank", "build_bank", "assemble_paper", "saved_papers", "recycle_bin", "settings"
     var currentScreen by remember { mutableStateOf("home") }
 
+    LaunchedEffect(Unit) {
+        com.example.util.AppUpdater.checkForUpdatesAndPrompt(context, showToastIfNoUpdate = false)
+    }
+
     // Practice mode full screen check
     val isPracticeMode by viewModel.isPracticeMode.collectAsState()
     val isFullScreenQuiz = currentScreen == "quiz" || isPracticeMode
