@@ -113,7 +113,7 @@ fun MainScreen(viewModel: OtsViewModel) {
                             if (currentScreen == "home") {
                                 Column(verticalArrangement = Arrangement.Center) {
                                     Text(
-                                        text = "OTSby64",
+                                        text = "QPby64",
                                         fontWeight = FontWeight.Bold,
                                         style = MaterialTheme.typography.titleMedium
                                     )

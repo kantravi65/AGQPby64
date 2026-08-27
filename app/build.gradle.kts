@@ -37,9 +37,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "APP_UPDATE_REPO", "\"${System.getenv("APP_UPDATE_REPO") ?: "myslv409-debug/OTSNGG"}\"")
+            buildConfigField("String", "APP_UPDATE_TOKEN", "\"${System.getenv("APP_UPDATE_TOKEN") ?: ""}\"")
         }
         debug {
             signingConfig = signingConfigs.getByName("debug")
+            buildConfigField("String", "APP_UPDATE_REPO", "\"${System.getenv("APP_UPDATE_REPO") ?: "myslv409-debug/OTSNGG"}\"")
+            buildConfigField("String", "APP_UPDATE_TOKEN", "\"${System.getenv("APP_UPDATE_TOKEN") ?: ""}\"")
         }
     }
     compileOptions {

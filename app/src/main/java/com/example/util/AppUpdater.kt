@@ -16,18 +16,18 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object AppUpdater {
-    // Hardcoded GitHub Repo and Token as requested
-    const val APP_UPDATE_REPO = "YOUR_REPO_NAME" // format: owner/repo
-    const val APP_UPDATE_TOKEN = "YOUR_PRIVATE_TOKEN"
+    // Read from BuildConfig
+    val APP_UPDATE_REPO = com.example.BuildConfig.APP_UPDATE_REPO
+    val APP_UPDATE_TOKEN = com.example.BuildConfig.APP_UPDATE_TOKEN
 
     suspend fun checkForUpdatesAndInstall(context: Context, onProgress: (String) -> Unit) {
         withContext(Dispatchers.IO) {
             try {
                 withContext(Dispatchers.Main) { onProgress("Checking for updates...") }
                 
-                if (APP_UPDATE_REPO == "YOUR_REPO_NAME" || APP_UPDATE_TOKEN == "YOUR_PRIVATE_TOKEN") {
+                if (APP_UPDATE_REPO.isBlank()) {
                     withContext(Dispatchers.Main) { 
-                        Toast.makeText(context, "GitHub Repo and Token not configured.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "GitHub Repo not configured.", Toast.LENGTH_LONG).show()
                         onProgress("")
                     }
                     return@withContext
@@ -37,7 +37,9 @@ object AppUpdater {
                 val apiUrl = "https://api.github.com/repos/$APP_UPDATE_REPO/releases/latest"
                 val connection = URL(apiUrl).openConnection() as HttpURLConnection
                 connection.requestMethod = "GET"
-                connection.setRequestProperty("Authorization", "Bearer $APP_UPDATE_TOKEN")
+                if (APP_UPDATE_TOKEN.isNotBlank()) {
+                    connection.setRequestProperty("Authorization", "Bearer $APP_UPDATE_TOKEN")
+                }
                 connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
 
                 if (connection.responseCode != 200) {
@@ -82,7 +84,9 @@ object AppUpdater {
 
                 val downloadConnection = URL(downloadUrl).openConnection() as HttpURLConnection
                 downloadConnection.requestMethod = "GET"
-                downloadConnection.setRequestProperty("Authorization", "Bearer $APP_UPDATE_TOKEN")
+                if (APP_UPDATE_TOKEN.isNotBlank()) {
+                    downloadConnection.setRequestProperty("Authorization", "Bearer $APP_UPDATE_TOKEN")
+                }
                 downloadConnection.setRequestProperty("Accept", "application/octet-stream")
 
                 if (downloadConnection.responseCode != 200) {
