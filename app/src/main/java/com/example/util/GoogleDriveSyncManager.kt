@@ -89,7 +89,7 @@ object GoogleDriveSyncManager {
                 val token = com.google.android.gms.auth.GoogleAuthUtil.getToken(
                     context,
                     lastAcc.account!!,
-                    "oauth2:https://www.googleapis.com/auth/drive.file"
+                    "oauth2:https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly"
                 )
                 
                 val jsonPayload = viewModel.exportQuestionsToJson()
@@ -157,12 +157,26 @@ object GoogleDriveSyncManager {
                     val itemCount = viewModel.questions.value.size
                     val acc = lastAcc.email ?: "Unknown"
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                        onComplete(true, "Cloud Backup Successful! Saved $itemCount items ($sizeKb KB) to real Google Drive ($acc).")
+                        onComplete(true, "Cloud Backup Successful! Saved $itemCount items ($sizeKb KB) to Google Drive ($acc).")
                     }
                 } else {
-                    val errorStream = conn.errorStream?.bufferedReader()?.use { it.readText() }
+                    val errorStream = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                    if (responseCode == 401 || responseCode == 403) {
+                        try {
+                            com.google.android.gms.auth.GoogleAuthUtil.clearToken(context, token)
+                        } catch (e: Exception) {
+                            // ignore
+                        }
+                    }
+                    
+                    var readableMsg = "HTTP $responseCode"
+                    if (errorStream.contains("insufficientFilePermissions")) readableMsg = "Permission Denied: Ensure you granted Google Drive access when signing in."
+                    else if (errorStream.contains("rateLimitExceeded")) readableMsg = "Rate Limit Exceeded: Try again later."
+                    else if (errorStream.contains("Project") || errorStream.contains("disabled")) readableMsg = "Google Drive API is not enabled on this Client ID. Developer action required."
+                    else readableMsg = "Code $responseCode: $errorStream"
+                    
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                        onComplete(false, "Google Drive backup failed with code $responseCode: $errorStream")
+                        onComplete(false, "Drive Sync Error: $readableMsg")
                     }
                 }
             } catch (e: com.google.android.gms.auth.UserRecoverableAuthException) {
@@ -206,7 +220,7 @@ object GoogleDriveSyncManager {
                 val token = com.google.android.gms.auth.GoogleAuthUtil.getToken(
                     context,
                     lastAcc.account!!,
-                    "oauth2:https://www.googleapis.com/auth/drive.file"
+                    "oauth2:https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly"
                 )
                 val backupPath = settingsManager.googleDriveBackupPath.ifBlank { "My Drive/QuestionBank_Backup/backup.json" }
                 val filename = backupPath.substringAfterLast("/").ifBlank { "question_bank_backup.json" }
@@ -342,7 +356,7 @@ object GoogleDriveSyncManager {
             val token = com.google.android.gms.auth.GoogleAuthUtil.getToken(
                 context,
                 lastAcc.account!!,
-                "oauth2:https://www.googleapis.com/auth/drive.file"
+                "oauth2:https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly"
             )
             val url = java.net.URL("https://www.googleapis.com/drive/v3/files")
             val conn = url.openConnection() as java.net.HttpURLConnection
