@@ -1126,25 +1126,6 @@ fun SettingsScreen(
             }
         }
 
-        // --- 8. CLEAN UNINSTALL & REINSTALL DATA PRESERVATION ---
-        item {
-            SettingsCategory(
-                title = "Clean Uninstall & Cloud Preservation Policy",
-                icon = { Icon(Icons.Default.CleaningServices, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            ) {
-
-                    Text(
-                        text = "Clean Uninstall Policy:\n" +
-                                "• Local App Data Cleanup: When you uninstall this application, Android completely cleans and removes local app databases and internal cached files from the device storage.\n\n" +
-                                "• Google Drive Preservation: Your cloud backups stored in Google Drive remain 100% intact and untouched in your cloud account.\n\n" +
-                                "• Next Install Recovery: When you reinstall the app on any Android device, simply sign into Google Drive and tap 'Restore' under Google Drive Cloud Sync to immediately recover your entire question bank and configuration.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-            }
-        }
-
         // --- 9. APP UPDATE ---
         item {
             SettingsCategory(
@@ -1167,6 +1148,15 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )
+                        val matchResult = Regex("(\\d+)%").find(updateStatus)
+                        if (matchResult != null) {
+                            val progressPercent = matchResult.groupValues[1].toFloatOrNull() ?: 0f
+                            LinearProgressIndicator(
+                                progress = { progressPercent / 100f },
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                     
                     Button(

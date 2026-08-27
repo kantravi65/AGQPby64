@@ -186,12 +186,29 @@ object AppUpdater {
                     return@withContext
                 }
 
+                val contentLength = downloadConnection.contentLength
                 val inputStream = downloadConnection.inputStream
                 val outputStream = apkFile.outputStream()
                 
                 inputStream.use { input ->
                     outputStream.use { output ->
-                        input.copyTo(output)
+                        if (contentLength > 0) {
+                            val buffer = ByteArray(8 * 1024)
+                            var bytesRead: Int
+                            var totalRead = 0L
+                            var lastProgress = -1
+                            while (input.read(buffer).also { bytesRead = it } >= 0) {
+                                output.write(buffer, 0, bytesRead)
+                                totalRead += bytesRead
+                                val progress = ((totalRead * 100) / contentLength).toInt()
+                                if (progress != lastProgress && progress % 2 == 0) {
+                                    lastProgress = progress
+                                    withContext(Dispatchers.Main) { onProgress("Downloading version $tagName... $progress%") }
+                                }
+                            }
+                        } else {
+                            input.copyTo(output)
+                        }
                     }
                 }
 

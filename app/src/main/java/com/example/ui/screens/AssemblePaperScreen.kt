@@ -52,13 +52,13 @@ fun AssemblePaperScreen(viewModel: OtsViewModel, initialTab: Int = 0) {
     // Builder Form State
     var isConfigExpanded by remember { mutableStateOf(false) }
     var paperTitle by remember { mutableStateOf("Physics & Math Combined Test") }
-    var selectedBookFilter by remember { mutableStateOf<String?>(null) }
+    var selectedSubjects by remember { mutableStateOf(emptySet<String>()) }
     var durationMinutes by remember { mutableStateOf("60") }
-    var isAutoAssemble by remember { mutableStateOf(false) }
-        var autoMcqCount by remember { mutableStateOf("5") }
-    var autoTfCount by remember { mutableStateOf("5") }
-    var autoFibCount by remember { mutableStateOf("5") }
-    var autoSubjectiveCount by remember { mutableStateOf("5") }
+    var isAutoAssemble by remember { mutableStateOf(true) }
+        var autoMcqCount by remember { mutableStateOf("50") }
+    var autoTfCount by remember { mutableStateOf("0") }
+    var autoFibCount by remember { mutableStateOf("0") }
+    var autoSubjectiveCount by remember { mutableStateOf("0") }
 
     // Selected Question IDs for Manual Builder
     val selectedQuestionIds = remember { mutableStateListOf<String>() }
@@ -85,11 +85,11 @@ fun AssemblePaperScreen(viewModel: OtsViewModel, initialTab: Int = 0) {
     }
 
     // Filter questions by subject if selected
-    val availableQuestions = remember(questions, selectedBookFilter, allSubjects) {
-        if (selectedBookFilter == null) questions
+    val availableQuestions = remember(questions, selectedSubjects, allSubjects) {
+        if (selectedSubjects.isEmpty()) questions
         else {
-            val filterTitle = allSubjects.find { it.first == selectedBookFilter }?.second ?: selectedBookFilter
-            questions.filter { it.bookId == selectedBookFilter || it.bookTitle.equals(filterTitle, ignoreCase = true) }
+            val filterTitles = selectedSubjects.map { subjKey -> allSubjects.find { it.first == subjKey }?.second ?: subjKey }
+            questions.filter { selectedSubjects.contains(it.bookId) || filterTitles.any { title -> it.bookTitle.equals(title, ignoreCase = true) } }
         }
     }
 
@@ -104,8 +104,7 @@ fun AssemblePaperScreen(viewModel: OtsViewModel, initialTab: Int = 0) {
                             isConfigExpanded = true
                         } else {
                             val selectedQuestions = questions.filter { selectedQuestionIds.contains(it.id) }
-                            val selectedBook = books.find { it.id == selectedBookFilter }
-                            val subjectName = selectedBook?.title ?: "General Test"
+                            val subjectName = if (selectedSubjects.isEmpty()) "General Test" else selectedSubjects.mapNotNull { k -> allSubjects.find { it.first == k }?.second ?: k }.joinToString(", ")
                             viewModel.createPaper(
                                 title = paperTitle,
                                 subject = subjectName,
@@ -186,7 +185,7 @@ fun AssemblePaperScreen(viewModel: OtsViewModel, initialTab: Int = 0) {
                                         val selectedCount = selectedQuestionIds.size
                                         val totalMarks = questions.filter { selectedQuestionIds.contains(it.id) }.sumOf { it.marks }
                                         Text(
-                                            text = "$selectedCount selected (${totalMarks}m) • ${durationMinutes}m • Filter: ${if (selectedBookFilter != null) books.find { it.id == selectedBookFilter }?.title ?: selectedBookFilter else "All"}",
+                                            text = "$selectedCount selected (${totalMarks}m) • ${durationMinutes}m • Filter: ${if (selectedSubjects.isNotEmpty()) selectedSubjects.size.toString() + " Subjects" else "All"}",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -197,8 +196,7 @@ fun AssemblePaperScreen(viewModel: OtsViewModel, initialTab: Int = 0) {
                                     if (selectedQuestions.isNotEmpty()) {
                                         IconButton(
                                             onClick = {
-                                                val selectedBook = books.find { it.id == selectedBookFilter }
-                                                val subjectName = selectedBook?.title ?: "General Test"
+                                                val subjectName = if (selectedSubjects.isEmpty()) "General Test" else selectedSubjects.mapNotNull { k -> allSubjects.find { it.first == k }?.second ?: k }.joinToString(", ")
                                                 viewModel.createPaper(
                                                     title = paperTitle,
                                                     subject = subjectName,
@@ -290,18 +288,18 @@ fun AssemblePaperScreen(viewModel: OtsViewModel, initialTab: Int = 0) {
                                         ) {
                                             item {
                                                 FilterChip(
-                                                    selected = selectedBookFilter == null,
-                                                    onClick = { selectedBookFilter = null },
+                                                    selected = selectedSubjects.isEmpty(),
+                                                    onClick = { selectedSubjects = emptySet() },
                                                     label = { Text("All") }
                                                 )
                                             }
                                             items(allSubjects) { subject ->
                                                 val (subjectKey, subjectTitle) = subject
-                                                val isSelected = selectedBookFilter == subjectKey || selectedBookFilter.equals(subjectTitle, ignoreCase = true)
+                                                val isSelected = selectedSubjects.contains(subjectKey)
                                                 FilterChip(
                                                     selected = isSelected,
                                                     onClick = {
-                                                        selectedBookFilter = if (isSelected) null else subjectKey
+                                                        selectedSubjects = if (isSelected) selectedSubjects - subjectKey else selectedSubjects + subjectKey
                                                     },
                                                     label = { Text(subjectTitle) }
                                                 )
@@ -460,8 +458,7 @@ fun AssemblePaperScreen(viewModel: OtsViewModel, initialTab: Int = 0) {
                                             } else if (paperTitle.isBlank()) {
                                                 Toast.makeText(context, "Please enter paper title", Toast.LENGTH_SHORT).show()
                                             } else {
-                                                val selectedBook = books.find { it.id == selectedBookFilter }
-                                                val subjectName = selectedBook?.title ?: "General Test"
+                                                val subjectName = if (selectedSubjects.isEmpty()) "General Test" else selectedSubjects.mapNotNull { k -> allSubjects.find { it.first == k }?.second ?: k }.joinToString(", ")
                                                 viewModel.createPaper(
                                                     title = paperTitle,
                                                     subject = subjectName,
@@ -1244,8 +1241,9 @@ fun PdfPageSetupDialog(
     var fontTitleSp by remember { mutableFloatStateOf(15f) }
     var lineSpacingExtra by remember { mutableFloatStateOf(4f) }
 
-    var mainTitle by remember { mutableStateOf(paper.title.ifBlank { "GEN TEST: FLT ENG" }) }
-    var subTitle by remember { mutableStateOf("TECH II") }
+    val settingsManager = remember { com.example.util.SettingsManager(context) }
+    var mainTitle by remember { mutableStateOf(settingsManager.defaultInstitute.ifBlank { "GEN TEST: FLT ENG" }) }
+    var subTitle by remember { mutableStateOf(paper.title.ifBlank { "TECH II" }) }
     var dateStr by remember { mutableStateOf("2026-08-05") }
     var totalMarksText by remember {
         mutableStateOf("TOTAL MARKS: ${questions.size}X${questions.firstOrNull()?.marks ?: 1}=${paper.totalMarks}")
@@ -1257,7 +1255,6 @@ fun PdfPageSetupDialog(
     var showAnswerKey by remember { mutableStateOf(false) }
     var showExplanations by remember { mutableStateOf(false) }
 
-    val settingsManager = remember { com.example.util.SettingsManager(context) }
     var watermarkEnabled by remember { mutableStateOf(settingsManager.watermarkEnabled) }
     var watermarkText by remember { mutableStateOf(settingsManager.watermarkText) }
     var watermarkIsCursive by remember { mutableStateOf(settingsManager.watermarkIsCursive) }

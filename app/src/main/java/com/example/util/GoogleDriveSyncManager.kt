@@ -97,7 +97,8 @@ object GoogleDriveSyncManager {
                 val filename = backupPath.substringAfterLast("/").ifBlank { "question_bank_backup.json" }
 
                 // Search for existing file
-                val searchUrl = java.net.URL("https://www.googleapis.com/drive/v3/files?q=name='$filename'")
+                val query = java.net.URLEncoder.encode("name='$filename' and trashed=false", "UTF-8")
+                val searchUrl = java.net.URL("https://www.googleapis.com/drive/v3/files?q=$query")
                 val searchConn = searchUrl.openConnection() as java.net.HttpURLConnection
                 searchConn.setRequestProperty("Authorization", "Bearer $token")
                 searchConn.requestMethod = "GET"
@@ -109,18 +110,21 @@ object GoogleDriveSyncManager {
                     fileId = idMatch?.groupValues?.get(1)
                 }
 
-                val uploadUrl: java.net.URL
-                val method: String
+                                val uploadUrl: java.net.URL
+                val isPatch: Boolean
                 if (fileId != null) {
                     uploadUrl = java.net.URL("https://www.googleapis.com/upload/drive/v3/files/$fileId?uploadType=multipart")
-                    method = "PATCH"
+                    isPatch = true
                 } else {
                     uploadUrl = java.net.URL("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart")
-                    method = "POST"
+                    isPatch = false
                 }
-
+                
                 val conn = uploadUrl.openConnection() as java.net.HttpURLConnection
-                conn.requestMethod = method
+                conn.requestMethod = "POST"
+                if (isPatch) {
+                    conn.setRequestProperty("X-HTTP-Method-Override", "PATCH")
+                }
                 conn.setRequestProperty("Authorization", "Bearer $token")
                 val boundary = "foo_bar_baz"
                 conn.setRequestProperty("Content-Type", "multipart/related; boundary=$boundary")
@@ -207,7 +211,8 @@ object GoogleDriveSyncManager {
                 val backupPath = settingsManager.googleDriveBackupPath.ifBlank { "My Drive/QuestionBank_Backup/backup.json" }
                 val filename = backupPath.substringAfterLast("/").ifBlank { "question_bank_backup.json" }
 
-                val searchUrl = java.net.URL("https://www.googleapis.com/drive/v3/files?q=name='$filename'")
+                val query = java.net.URLEncoder.encode("name='$filename' and trashed=false", "UTF-8")
+                val searchUrl = java.net.URL("https://www.googleapis.com/drive/v3/files?q=$query")
                 val searchConn = searchUrl.openConnection() as java.net.HttpURLConnection
                 searchConn.setRequestProperty("Authorization", "Bearer $token")
                 searchConn.requestMethod = "GET"
