@@ -95,6 +95,23 @@ object PdfPrintUtils {
             val marginPt = settings.marginPt
             val printableWidth = widthPt - (marginPt * 2)
 
+            val paperCodeVal = try {
+                val startDate = java.time.LocalDate.of(2008, 12, 31)
+                val createdEpoch = if (paper.createdAt > 0L) paper.createdAt else System.currentTimeMillis()
+                val paperDate = java.time.Instant.ofEpochMilli(createdEpoch)
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .toLocalDate()
+                val period = java.time.Period.between(startDate, paperDate)
+                val formattedDate = String.format("%02d%02d%02d", period.years, period.months, period.days)
+                val seed = paper.id.hashCode().toLong()
+                val randomNum = kotlin.random.Random(seed).nextInt(10, 100)
+                "RYQP-$formattedDate-$randomNum"
+            } catch (e: Exception) {
+                val seed = paper.id.hashCode().toLong()
+                val randomNum = kotlin.random.Random(seed).nextInt(10, 100)
+                "RYQP-170726-$randomNum"
+            }
+
             val titlePaint = Paint().apply {
                 typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 textSize = settings.fontTitleSp
@@ -216,7 +233,7 @@ object PdfPrintUtils {
             fun drawFooter() {
                 drawWatermarkLayer(canvas)
                 val footerY = (heightPt - marginPt / 2).toFloat()
-                val codeText = if (settings.paperCode.isNotBlank()) "Paper Code: ${settings.paperCode} | " else ""
+                val codeText = "Paper Code: $paperCodeVal | "
                 canvas.drawText("${codeText}Page $pageNumber", (widthPt / 2).toFloat(), footerY, footerPaint)
             }
 
@@ -278,7 +295,7 @@ object PdfPrintUtils {
                 // Row 2 Text
                 val r2TextY = midY + (settings.fontBodySp * 1.1f) + 3f
                 val dateVal = if (settings.dateStr.isNotBlank()) settings.dateStr else "2026-08-05"
-                val codeVal = if (settings.paperCode.isNotBlank()) settings.paperCode else "QP-${paper.id.takeLast(6)}"
+                val codeVal = paperCodeVal
                 val marksVal = if (settings.totalMarksText.isNotBlank()) settings.totalMarksText else "TOTAL MARKS: ${questions.size}X${questions.firstOrNull()?.marks ?: 1}=${paper.totalMarks}"
 
                 canvas.drawText("DATE: $dateVal", leftX + 8f, r2TextY, labelPaint)
@@ -288,28 +305,7 @@ object PdfPrintUtils {
                 currentY += boxHeight + 10f
             }
 
-            // --- 3. SECTION HEADING BOX ---
-            if (settings.sectionHeading.isNotBlank()) {
-                val sectionHeight = settings.fontBodySp + 12f
-                checkNewPage(sectionHeight + 6f)
-
-                val leftX = marginPt.toFloat()
-                val rightX = (widthPt - marginPt).toFloat()
-
-                canvas.drawRect(leftX, currentY, rightX, currentY + sectionHeight, fillHeaderPaint)
-                canvas.drawRect(leftX, currentY, rightX, currentY + sectionHeight, borderPaint)
-
-                subTitlePaint.textAlign = Paint.Align.CENTER
-                canvas.drawText(
-                    settings.sectionHeading.uppercase(),
-                    (widthPt / 2).toFloat(),
-                    currentY + settings.fontBodySp + 4f,
-                    subTitlePaint
-                )
-                subTitlePaint.textAlign = Paint.Align.LEFT
-
-                currentY += sectionHeight
-            }
+            // --- 3. SECTION HEADING BOX REMOVED ---
 
             // --- 4. QUESTIONS TABLE / GRID ---
             val numColWidth = 42f
@@ -344,7 +340,9 @@ object PdfPrintUtils {
                 val headerText = typeNames[type] ?: "OTHER"
                 checkNewPage(settings.fontBodySp * 2 + 16f)
                 currentY += 8f
+                subTitlePaint.textAlign = Paint.Align.CENTER
                 canvas.drawText(headerText, (widthPt / 2).toFloat(), currentY + settings.fontBodySp, subTitlePaint)
+                subTitlePaint.textAlign = Paint.Align.LEFT
                 currentY += settings.fontBodySp * 2 + 8f
 
                 typeQuestions.forEach { q ->

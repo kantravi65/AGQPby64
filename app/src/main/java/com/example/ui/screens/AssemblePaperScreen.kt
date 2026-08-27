@@ -1246,17 +1246,7 @@ fun PdfPageSetupDialog(
 
     var mainTitle by remember { mutableStateOf(paper.title.ifBlank { "GEN TEST: FLT ENG" }) }
     var subTitle by remember { mutableStateOf("TECH II") }
-        val initialPaperCode = remember {
-        val startDate = java.time.LocalDate.of(2008, 12, 31)
-        val currentDate = java.time.LocalDate.now()
-        val period = java.time.Period.between(startDate, currentDate)
-        val formattedDate = String.format("%02d%02d%02d", period.years, period.months, period.days)
-        val randomNum = kotlin.random.Random.nextInt(10, 100)
-        "RYQP-$formattedDate-$randomNum"
-    }
-    var paperCode by remember { mutableStateOf(initialPaperCode) }
     var dateStr by remember { mutableStateOf("2026-08-05") }
-    var sectionHeading by remember { mutableStateOf("MULTIPLE CHOICE QUESTIONS (MCQ)") }
     var totalMarksText by remember {
         mutableStateOf("TOTAL MARKS: ${questions.size}X${questions.firstOrNull()?.marks ?: 1}=${paper.totalMarks}")
     }
@@ -1324,22 +1314,13 @@ fun PdfPageSetupDialog(
                             singleLine = true
                         )
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedTextField(
-                                value = subTitle,
-                                onValueChange = { subTitle = it },
-                                label = { Text("Subtitle / Branch") },
-                                modifier = Modifier.weight(1f),
-                                singleLine = true
-                            )
-                            OutlinedTextField(
-                                value = paperCode,
-                                onValueChange = { paperCode = it },
-                                label = { Text("Paper Code") },
-                                modifier = Modifier.weight(1f),
-                                singleLine = true
-                            )
-                        }
+                        OutlinedTextField(
+                            value = subTitle,
+                            onValueChange = { subTitle = it },
+                            label = { Text("Subtitle / Branch") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
 
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedTextField(
@@ -1357,14 +1338,6 @@ fun PdfPageSetupDialog(
                                 singleLine = true
                             )
                         }
-
-                        OutlinedTextField(
-                            value = sectionHeading,
-                            onValueChange = { sectionHeading = it },
-                            label = { Text("Section Heading Banner") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
                     }
                 }
 
@@ -1553,10 +1526,8 @@ fun PdfPageSetupDialog(
                             lineSpacingExtra = lineSpacingExtra,
                             mainTitle = mainTitle,
                             subTitle = subTitle,
-                            paperCode = paperCode,
                             dateStr = dateStr,
                             totalMarksText = totalMarksText,
-                            sectionHeading = sectionHeading,
                             showCandidateBox = showCandidateBox,
                             showGridBorders = showGridBorders,
                             twoColumnOptions = twoColumnOptions,
@@ -1595,10 +1566,8 @@ fun PdfPageSetupDialog(
                             lineSpacingExtra = lineSpacingExtra,
                             mainTitle = mainTitle,
                             subTitle = subTitle,
-                            paperCode = paperCode,
                             dateStr = dateStr,
                             totalMarksText = totalMarksText,
-                            sectionHeading = sectionHeading,
                             showCandidateBox = showCandidateBox,
                             showGridBorders = showGridBorders,
                             twoColumnOptions = twoColumnOptions,
@@ -1637,10 +1606,8 @@ fun PdfPageSetupDialog(
                             lineSpacingExtra = lineSpacingExtra,
                             mainTitle = mainTitle,
                             subTitle = subTitle,
-                            paperCode = paperCode,
                             dateStr = dateStr,
                             totalMarksText = totalMarksText,
-                            sectionHeading = sectionHeading,
                             showCandidateBox = showCandidateBox,
                             showGridBorders = showGridBorders,
                             twoColumnOptions = twoColumnOptions,
@@ -1679,10 +1646,8 @@ fun PdfPageSetupDialog(
                             lineSpacingExtra = lineSpacingExtra,
                             mainTitle = mainTitle,
                             subTitle = subTitle,
-                            paperCode = paperCode,
                             dateStr = dateStr,
                             totalMarksText = totalMarksText,
-                            sectionHeading = sectionHeading,
                             showCandidateBox = showCandidateBox,
                             showGridBorders = showGridBorders,
                             twoColumnOptions = twoColumnOptions,
