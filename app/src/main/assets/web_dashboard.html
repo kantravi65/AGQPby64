@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuestionBank Web Dashboard</title>
+    <style>
+        :root { --primary: #1976d2; --primary-hover: #1565c0; --bg: #f4f6f8; --text: #333; --border: #ddd; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--text); }
+        .header { background: var(--primary); color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .header p { margin: 5px 0 0 0; opacity: 0.8; }
+        .container { max-width: 1400px; margin: 20px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .nav-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+        .nav-tabs button { flex: 1; padding: 15px; background: none; border: none; font-size: 16px; cursor: pointer; border-bottom: 3px solid transparent; outline: none; transition: 0.2s; }
+        .nav-tabs button:hover { background: #f9f9f9; }
+        .nav-tabs button.active { border-bottom: 3px solid var(--primary); font-weight: bold; color: var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .search-box { padding: 8px 12px; width: 300px; border: 1px solid var(--border); border-radius: 4px; }
+        .actions button { margin-left: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        table, th, td { border: 1px solid var(--border); }
+        th, td { padding: 10px 12px; text-align: left; }
+        th { background-color: #f2f2f2; position: sticky; top: 0; }
+        tr:hover { background-color: #f9f9f9; }
+        .table-container { max-height: 600px; overflow-y: auto; }
+        .btn { padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: 500; transition: 0.2s; }
+        .btn-primary { background: var(--primary); }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-danger { background: #d32f2f; }
+        .btn-danger:hover { background: #c62828; }
+        .btn-success { background: #2e7d32; }
+        .btn-success:hover { background: #1b5e20; }
+        .btn-warning { background: #f57c00; }
+        .btn-warning:hover { background: #ef6c00; }
+        .btn-sm { padding: 5px 8px; font-size: 12px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 25px; border-radius: 8px; width: 60%; max-width: 800px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: black; }
+        .hidden { display: none !important; }
+        .stats { font-size: 14px; color: #666; margin-top: 5px; }
+        .inline-input { width: 100%; border: 1px solid transparent; background: transparent; font-family: inherit; font-size: inherit; padding: 4px; box-sizing: border-box; resize: vertical; }
+        .inline-input:focus { border: 1px solid var(--primary); background: #fff; outline: none; }
+        .filters { display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1>QuestionBank Desktop Dashboard</h1>
+        <p>Advanced Management, Bulk Import/Export, and Paper Assembly</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-warning" onclick="exportData()">Export Backup (JSON)</button>
+        <button class="btn btn-success" onclick="document.getElementById('importFile').click()">Import Data (JSON)</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+</div>
+
+<div class="container">
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="showTab('questions')">Questions</button>
+        <button class="tab-btn" onclick="showTab('books')">Books</button>
+        <button class="tab-btn" onclick="showTab('papers')">Papers</button>
+        <button class="tab-btn" onclick="showTab('quiz')">Take Quiz</button>
+    </div>
+
+    <!-- Questions Tab -->
+    <div id="questions" class="tab-content active">
+        <div class="toolbar">
+            <div class="filters">
+                <select class="search-box" style="width:150px" id="fq_subject" onchange="filterQuestions()"><option value="">All Subjects</option></select>
+                <select class="search-box" style="width:100px" id="fq_type" onchange="filterQuestions()">
+                    <option value="">All Types</option>
+                    <option value="mcq">MCQ</option>
+                    <option value="subjective">Subj</option>
+                    <option value="tf">T/F</option>
+                    <option value="fib">FIB</option>
+                </select>
+                <select class="search-box" style="width:200px" id="fq_answer" onchange="filterQuestions()"><option value="">All Answers</option></select>
+                <select class="search-box" style="width:100px" id="fq_marks" onchange="filterQuestions()"><option value="">All Marks</option></select>
+            </div>
+            <div class="actions">
+                <span class="stats" id="qStats">Loading...</span>
+                <button class="btn btn-primary" onclick="openModal('questionModal', true)">+ New Question</button>
+            </div>
+        </div>
+        <div class="table-container">
+            <table id="questionsTable">
+                <thead>
+                    <tr>
+                        <th width="15%">Book / Chapter</th>
+                        <th width="8%">Type</th>
+                        <th width="30%">Question</th>
+                        <th width="20%">Options (JSON)</th>
+                        <th width="12%">Answer</th>
+                        <th width="5%">Marks</th>
+                        <th width="10%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Books Tab -->
+    <div id="books" class="tab-content">
+        <div class="toolbar">
+            <input type="text" class="search-box" id="searchBooks" placeholder="Search books..." onkeyup="filterTable('booksTable', this.value)">
+            <div class="actions">
+                <span class="stats" id="bStats">Loading...</span>
+                <button class="btn btn-primary" onclick="openModal('bookModal', true)">+ New Book</button>
+            </div>
+        </div>
+        <div class="table-container">
+            <table id="booksTable">
+                <thead>
+                    <tr>
+                        <th width="20%">ID</th>
+                        <th width="50%">Title</th>
+                        <th width="15%">Chapters</th>
+                        <th width="15%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Papers Tab -->
+    <div id="papers" class="tab-content">
+        <div class="toolbar">
+            <input type="text" class="search-box" id="searchPapers" placeholder="Search papers..." onkeyup="filterTable('papersTable', this.value)">
+            <div class="actions">
+                <span class="stats" id="pStats">Loading...</span>
+                <button class="btn btn-primary" onclick="openModal('paperModal', true)">+ Create Paper</button>
+            </div>
+        </div>
+        <div class="table-container">
+            <table id="papersTable">
+                <thead>
+                    <tr>
+                        <th width="40%">Title</th>
+                        <th width="25%">Subject</th>
+                        <th width="10%">Total Marks</th>
+                        <th width="25%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Quiz Tab -->
+    <div id="quiz" class="tab-content">
+        <div id="quizSetup" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">
+            <div class="toolbar" style="margin-bottom: 0;">
+                <select id="quizSelectPaper" class="search-box" style="width:300px;"><option value="">Select Paper to Start...</option></select>
+                <button class="btn btn-success" onclick="startQuiz('paper')">Start from Paper</button>
+            </div>
+            <div style="text-align: center; font-weight: bold; color: #666;">- OR -</div>
+            <div class="toolbar" style="margin-bottom: 0;">
+                <select id="quizSelectSubject" class="search-box" style="width:200px;"><option value="">All Subjects</option></select>
+                <input type="number" id="quizQuestionCount" class="search-box" style="width:100px;" placeholder="No. of Qs">
+                <button class="btn btn-primary" onclick="startQuiz('subject')">Start from Subject</button>
+            </div>
+        </div>
+        <div id="quizContainer" style="display:none; background:#fff; padding:20px; border-radius:8px; border:1px solid var(--border);">
+            <h2 id="quizTitle" style="margin-top:0;"></h2>
+            <div id="quizQuestions"></div>
+            <button class="btn btn-primary" style="margin-top:20px; font-size:16px; padding:10px 20px;" onclick="submitQuiz()">Submit Quiz</button>
+        </div>
+        <div id="quizResult" style="display:none; margin-top:20px; padding:20px; background:#e8f5e9; border-radius:8px; border:1px solid #c8e6c9;">
+            <h2>Quiz Results</h2>
+            <p id="quizScoreText" style="font-size:24px; font-weight:bold;"></p>
+            <button class="btn btn-primary" onclick="resetQuiz()">Take Another Quiz</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modals for Add/Edit -->
+<div id="printModal" class="modal">
+    <div class="modal-content" style="width:50%; max-height:90vh; overflow-y:auto;">
+        <span class="close" onclick="closeModal('printModal')">&times;</span>
+        <h2 style="margin-top:0;">Print Paper Settings</h2>
+        <form id="printForm" onsubmit="executePrint(event)">
+            <input type="hidden" id="pr_id">
+            
+            <h4 style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">Formatting</h4>
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                    <label>Font Size</label>
+                    <select id="pr_fontSize">
+                        <option value="12px">Compact (12px)</option>
+                        <option value="16px" selected>Standard (16px)</option>
+                        <option value="20px">Large (20px)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Margins</label>
+                    <select id="pr_margin">
+                        <option value="0.5in">Narrow</option>
+                        <option value="1in" selected>Normal</option>
+                        <option value="1.5in">Wide</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Line Spacing</label>
+                    <select id="pr_lineSpacing">
+                        <option value="1.2">Tight</option>
+                        <option value="1.5" selected>Normal</option>
+                        <option value="2.0">Loose</option>
+                    </select>
+                </div>
+            </div>
+            
+            <h4 style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">Layout Elements</h4>
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                    <label>Candidate Details Box</label>
+                    <select id="pr_candidateBox"><option value="yes" selected>Yes</option><option value="no">No</option></select>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Include Answer Key</label>
+                    <select id="pr_ans"><option value="no">No</option><option value="yes">Yes</option></select>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Include Explanations</label>
+                    <select id="pr_explanations"><option value="no">No</option><option value="yes">Yes</option></select>
+                </div>
+            </div>
+
+            <h4 style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">Watermark</h4>
+            <div class="form-group">
+                <label>Watermark Text</label>
+                <input type="text" id="pr_watermark" value="QuestionBank" placeholder="Leave empty for no watermark">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                    <label>Pattern</label>
+                    <select id="pr_watermarkPattern">
+                        <option value="grid">Multiple Grid (Non-removable)</option>
+                        <option value="center" selected>Single Center</option>
+                        <option value="header">Header Stamp</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Font Style</label>
+                    <select id="pr_watermarkStyle">
+                        <option value="normal">Bold (Standard)</option>
+                        <option value="cursive" selected>Cursive (Italic)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px; font-size:16px; padding:10px;">Generate PDF / Print</button>
+        </form>
+    </div>
+</div>
+<div id="questionModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('questionModal')">&times;</span>
+        <h2 id="questionModalTitle">Add Question</h2>
+        <form id="questionForm" onsubmit="saveQuestion(event)">
+            <input type="hidden" id="q_id">
+            <div style="display: flex; gap: 15px;">
+                <div class="form-group" style="flex:1;">
+                    <label>Book ID</label>
+                    <input type="text" id="q_bookId" required>
+                </div>
+                <div class="form-group" style="flex:2;">
+                    <label>Book Title</label>
+                    <input type="text" id="q_bookTitle" required>
+                </div>
+            </div>
+            <div style="display: flex; gap: 15px;">
+                <div class="form-group" style="flex:2;">
+                    <label>Chapter</label>
+                    <input type="text" id="q_chapter" required>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Type</label>
+                    <select id="q_type">
+                        <option value="mcq">MCQ</option>
+                        <option value="subjective">Subjective</option>
+                        <option value="tf">True/False</option>
+                        <option value="fib">Fill in the Blanks</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Difficulty</label>
+                    <select id="q_difficulty">
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Marks</label>
+                    <input type="number" id="q_marks" value="1" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Question Text</label>
+                <textarea id="q_question" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Options (For MCQ)</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="q_opt_1" placeholder="Option A">
+                    <input type="text" id="q_opt_2" placeholder="Option B">
+                    <input type="text" id="q_opt_3" placeholder="Option C">
+                    <input type="text" id="q_opt_4" placeholder="Option D">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Correct Answer</label>
+                <input type="text" id="q_answer" required>
+            </div>
+            <div class="form-group">
+                <label>Explanation (Optional)</label>
+                <textarea id="q_explanation" rows="2"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Save Question</button>
+        </form>
+    </div>
+</div>
+
+<div id="bookModal" class="modal">
+    <div class="modal-content" style="width: 40%;">
+        <span class="close" onclick="closeModal('bookModal')">&times;</span>
+        <h2 id="bookModalTitle">Add Book</h2>
+        <form id="bookForm" onsubmit="saveBook(event)">
+            <div class="form-group">
+                <label>Book ID (Short unique key, e.g. sci_10)</label>
+                <input type="text" id="b_id" required>
+            </div>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="b_title" required>
+            </div>
+            <div class="form-group">
+                <label>Chapter Count</label>
+                <input type="number" id="b_chapterCount" value="1" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Save Book</button>
+        </form>
+    </div>
+</div>
+
+<div id="paperModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('paperModal')">&times;</span>
+        <h2 id="paperModalTitle">Create Paper</h2>
+        <form id="paperForm" onsubmit="savePaper(event)">
+            <input type="hidden" id="p_id">
+            <div style="display: flex; gap: 15px;">
+                <div class="form-group" style="flex:2;">
+                    <label>Paper Title</label>
+                    <input type="text" id="p_title" required>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Subject</label>
+                    <input type="text" id="p_subject" required>
+                </div>
+            </div>
+            <div style="display: flex; gap: 15px;">
+                <div class="form-group" style="flex:1;">
+                    <label>Duration (Minutes)</label>
+                    <input type="number" id="p_duration" value="60" required>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Total Marks (Calculated)</label>
+                    <input type="number" id="p_marks" value="0" readonly style="background:#eee;">
+                </div>
+            </div>
+            <div style="background: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #ddd;">
+                <h4 style="margin-top:0; margin-bottom:10px;">Auto Select Questions</h4>
+                <div style="display:flex; gap: 10px;">
+                   <select id="auto_subject" class="form-group" style="padding:8px; width:200px;"><option value="">All Subjects</option></select>
+                   <input type="number" id="auto_count" placeholder="No. of Qs" style="padding:8px; width:100px;">
+                   <button type="button" class="btn btn-warning" onclick="autoSelectQs()">Random Select</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Select Questions (<span id="selectedCount">0</span> selected)</label>
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;" id="questionSelectorList">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Save Paper</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const API_BASE = '/api';
+    let globalQuestions = [];
+    let globalBooks = [];
+    let globalPapers = [];
+
+    function showTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+        if (tabId === 'questions') loadQuestions();
+        if (tabId === 'books') loadBooks();
+        if (tabId === 'papers') loadPapers();
+    }
+
+    function openModal(id, isNew = false) { 
+        document.getElementById(id).style.display = "block"; 
+        if(isNew) {
+            if(id === 'questionModal') {
+                document.getElementById('questionForm').reset();
+                document.getElementById('q_id').value = '';
+                document.getElementById('questionModalTitle').innerText = 'Add Question';
+                document.getElementById('q_options').value = '[]';
+            } else if (id === 'bookModal') {
+                document.getElementById('bookForm').reset();
+                document.getElementById('bookModalTitle').innerText = 'Add Book';
+                document.getElementById('b_id').disabled = false;
+            } else if (id === 'paperModal') {
+                document.getElementById('paperForm').reset();
+                document.getElementById('p_id').value = '';
+                document.getElementById('paperModalTitle').innerText = 'Create Paper';
+                populateQuestionSelector();
+                populateAutoSubjects();
+            }
+        }
+    }
+    
+    function closeModal(id) { document.getElementById(id).style.display = "none"; }
+
+    function filterQuestions() {
+        const fSubj = document.getElementById('fq_subject').value.toUpperCase();
+        const fType = document.getElementById('fq_type').value.toUpperCase();
+        const fAns = document.getElementById('fq_answer').value.toUpperCase();
+        const fMarks = document.getElementById('fq_marks').value.toUpperCase();
+
+        const trs = document.getElementById('questionsTable').getElementsByTagName("tr");
+        for (let i = 1; i < trs.length; i++) {
+            const tr = trs[i];
+            const subj = tr.querySelector('.q-book')?.value.toUpperCase() || "";
+            const type = tr.querySelector('.q-type')?.value.toUpperCase() || "";
+            const ans = tr.querySelector('.q-answer')?.value.toUpperCase() || "";
+            const marks = tr.querySelector('.q-marks')?.value.toUpperCase() || "";
+
+            if ((fSubj === "" || subj === fSubj) && 
+                (fType === "" || type === fType) && 
+                (fAns === "" || ans === fAns) && 
+                (fMarks === "" || marks === fMarks)) {
+                tr.style.display = "";
+            } else {
+                tr.style.display = "none";
+            }
+        }
+    }
+
+    function filterTable(tableId, query) {
+        const filter = query.toUpperCase();
+        const trs = document.getElementById(tableId).getElementsByTagName("tr");
+        for (let i = 1; i < trs.length; i++) {
+            const tds = trs[i].getElementsByTagName("td");
+            let display = false;
+            for (let j = 0; j < tds.length; j++) {
+                if (tds[j]) {
+                    if (tds[j].innerHTML.toUpperCase().indexOf(filter) > -1 || (tds[j].querySelector('input') && tds[j].querySelector('input').value.toUpperCase().indexOf(filter) > -1)) {
+                        display = true;
+                        break;
+                    }
+                }
+            }
+            trs[i].style.display = display ? "" : "none";
+        }
+    }
+
+    function updateAnswerDropdown(id, isTypeChange = false) {
+        const tr = document.getElementById(`qrow_${id}`);
+        if(!tr) return;
+        const type = tr.querySelector('.q-type').value;
+        const ansContainer = tr.querySelector('.q-answer-container');
+        const currentAnsElement = tr.querySelector('.q-answer');
+        let currentAns = currentAnsElement ? currentAnsElement.value : '';
+
+        if (type === 'mcq') {
+            const optInputs = tr.querySelectorAll('.q-opt-item');
+            let opts = [];
+            optInputs.forEach(inp => { if(inp.value.trim()) opts.push(inp.value.trim()); });
+            
+            let html = '<select class="inline-input q-answer">';
+            if(opts.length === 0) html += `<option value="${currentAns.replace(/"/g, '&quot;')}">${currentAns}</option>`;
+            opts.forEach(opt => {
+                const sel = (opt === currentAns) ? 'selected' : '';
+                html += `<option value="${opt.replace(/"/g, '&quot;')}" ${sel}>${opt}</option>`;
+            });
+            html += '</select>';
+            ansContainer.innerHTML = html;
+        } else if (type === 'tf') {
+            if (isTypeChange) {
+                ansContainer.innerHTML = `<select class="inline-input q-answer">
+                    <option value="True" ${currentAns.toLowerCase()==='true'?'selected':''}>True</option>
+                    <option value="False" ${currentAns.toLowerCase()==='false'?'selected':''}>False</option>
+                 </select>`;
+            }
+        } else {
+            if (isTypeChange) {
+                ansContainer.innerHTML = `<input class="inline-input q-answer" value="${currentAns.replace(/"/g, '&quot;')}">`;
+            }
+        }
+    }
+
+    function populateFilters() {
+        const subjs = [...new Set(globalQuestions.map(q => q.bookTitle))].sort();
+        const ans = [...new Set(globalQuestions.map(q => q.answer))].sort();
+        const marks = [...new Set(globalQuestions.map(q => q.marks))].sort((a,b)=>a-b);
+        
+        const subjSel = document.getElementById('fq_subject');
+        const ansSel = document.getElementById('fq_answer');
+        const markSel = document.getElementById('fq_marks');
+        
+        const curSubj = subjSel.value;
+        const curAns = ansSel.value;
+        const curMark = markSel.value;
+        
+        subjSel.innerHTML = '<option value="">All Subjects</option>' + subjs.map(s => `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`).join('');
+        ansSel.innerHTML = '<option value="">All Answers</option>' + ans.map(a => `<option value="${a.replace(/"/g, '&quot;')}">${a}</option>`).join('');
+        markSel.innerHTML = '<option value="">All Marks</option>' + marks.map(m => `<option value="${m}">${m}</option>`).join('');
+        
+        subjSel.value = curSubj; ansSel.value = curAns; markSel.value = curMark;
+        
+        const quizSubj = document.getElementById('quizSelectSubject');
+        if (quizSubj) {
+            const curQuizSubj = quizSubj.value;
+            quizSubj.innerHTML = '<option value="">All Subjects</option>' + subjs.map(s => `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`).join('');
+            quizSubj.value = curQuizSubj;
+        }
+    }
+
+    // --- Questions ---
+    async function loadQuestions() {
+        const res = await fetch(`${API_BASE}/questions`);
+        globalQuestions = await res.json();
+        document.getElementById('qStats').innerText = `${globalQuestions.length} Total Questions`;
+        const tbody = document.querySelector('#questionsTable tbody');
+        tbody.innerHTML = '';
+        globalQuestions.forEach(q => {
+            const tr = document.createElement('tr');
+            tr.id = `qrow_${q.id}`;
+            let opts=[]; try{opts=JSON.parse(q.optionsJson);}catch(e){}
+            
+            tr.innerHTML = `
+                <td>
+                    <input class="inline-input q-book" value="${q.bookTitle.replace(/"/g, '&quot;')}" placeholder="Book/Subject">
+                    <input class="inline-input q-chapter" value="${q.chapter.replace(/"/g, '&quot;')}" placeholder="Chapter" style="font-size:0.85em; color:#666;">
+                </td>
+                <td>
+                    <select class="inline-input q-type" onchange="updateAnswerDropdown('${q.id}', true)">
+                        <option value="mcq" ${q.type==='mcq'?'selected':''}>MCQ</option>
+                        <option value="subjective" ${q.type==='subjective'?'selected':''}>Subj</option>
+                        <option value="tf" ${q.type==='tf'?'selected':''}>T/F</option>
+                        <option value="fib" ${q.type==='fib'?'selected':''}>FIB</option>
+                    </select>
+                </td>
+                <td><textarea class="inline-input q-question" rows="2">${q.question}</textarea></td>
+                <td>
+                    <div style="display:flex; flex-direction:column; gap:2px;">
+                        <input class="inline-input q-opt-item" placeholder="Opt A" value="${(opts[0]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerDropdown('${q.id}')">
+                        <input class="inline-input q-opt-item" placeholder="Opt B" value="${(opts[1]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerDropdown('${q.id}')">
+                        <input class="inline-input q-opt-item" placeholder="Opt C" value="${(opts[2]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerDropdown('${q.id}')">
+                        <input class="inline-input q-opt-item" placeholder="Opt D" value="${(opts[3]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerDropdown('${q.id}')">
+                    </div>
+                </td>
+                <td class="q-answer-container">
+                    ${q.type === 'mcq' ? 
+                        `<select class="inline-input q-answer">${
+                            (() => {
+                                if(opts.length===0) return `<option value="${q.answer.replace(/"/g, '&quot;')}">${q.answer}</option>`;
+                                return opts.map(o => `<option value="${o.replace(/"/g, '&quot;')}" ${o===q.answer?'selected':''}>${o}</option>`).join('');
+                            })()
+                        }</select>` : 
+                        q.type === 'tf' ? 
+                        `<select class="inline-input q-answer">
+                            <option value="True" ${q.answer.toLowerCase()==='true'?'selected':''}>True</option>
+                            <option value="False" ${q.answer.toLowerCase()==='false'?'selected':''}>False</option>
+                         </select>` :
+                        `<input class="inline-input q-answer" value="${q.answer.replace(/"/g, '&quot;')}">`
+                    }
+                </td>
+                <td><input class="inline-input q-marks" value="${q.marks}" type="number" style="width:50px;"></td>
+                <td>
+                    <button class="btn btn-success btn-sm" onclick="saveInlineQuestion('${q.id}')">Save</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteQuestion('${q.id}')">Del</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        populateFilters();
+    }
+
+    async function saveInlineQuestion(id) {
+        const tr = document.getElementById(`qrow_${id}`);
+        const q = globalQuestions.find(x => x.id === id);
+        if(!q || !tr) return;
+
+        const optInputs = tr.querySelectorAll('.q-opt-item');
+        let opts = [];
+        optInputs.forEach(inp => { if(inp.value.trim()) opts.push(inp.value.trim()); });
+
+        const updated = {
+            ...q,
+            bookTitle: tr.querySelector('.q-book').value,
+            chapter: tr.querySelector('.q-chapter').value,
+            type: tr.querySelector('.q-type').value,
+            question: tr.querySelector('.q-question').value,
+            optionsJson: JSON.stringify(opts),
+            answer: tr.querySelector('.q-answer').value,
+            marks: parseInt(tr.querySelector('.q-marks').value) || 0
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/questions`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(updated)
+            });
+            if(res.ok) {
+                tr.style.backgroundColor = '#d4edda';
+                setTimeout(() => tr.style.backgroundColor = '', 1000);
+                Object.assign(q, updated);
+                populateFilters(); // update dropdowns in case new subjects/answers added
+            } else {
+                alert('Failed to save');
+            }
+        } catch(e) {
+            alert('Failed to save: ' + e.message);
+        }
+    }
+
+    function editQuestion(id) {
+        const q = globalQuestions.find(x => x.id === id);
+        if(!q) return;
+        document.getElementById('q_id').value = q.id;
+        document.getElementById('q_bookId').value = q.bookId;
+        document.getElementById('q_bookTitle').value = q.bookTitle;
+        document.getElementById('q_chapter').value = q.chapter;
+        document.getElementById('q_type').value = q.type;
+        document.getElementById('q_difficulty').value = q.difficulty;
+        document.getElementById('q_question').value = q.question;
+        
+        let opts = [];
+        try { opts = JSON.parse(q.optionsJson); } catch(e){}
+        document.getElementById('q_opt_1').value = opts[0] || '';
+        document.getElementById('q_opt_2').value = opts[1] || '';
+        document.getElementById('q_opt_3').value = opts[2] || '';
+        document.getElementById('q_opt_4').value = opts[3] || '';
+        
+        document.getElementById('q_answer').value = q.answer;
+        document.getElementById('q_explanation').value = q.explanation;
+        document.getElementById('q_marks').value = q.marks;
+        document.getElementById('questionModalTitle').innerText = 'Edit Question';
+        openModal('questionModal', false);
+    }
+
+    async function saveQuestion(e) {
+        e.preventDefault();
+        let id = document.getElementById('q_id').value;
+        if (!id) id = 'q_' + Date.now();
+        
+        const o1 = document.getElementById('q_opt_1').value.trim();
+        const o2 = document.getElementById('q_opt_2').value.trim();
+        const o3 = document.getElementById('q_opt_3').value.trim();
+        const o4 = document.getElementById('q_opt_4').value.trim();
+        const opts = [];
+        if(o1) opts.push(o1); if(o2) opts.push(o2); if(o3) opts.push(o3); if(o4) opts.push(o4);
+        
+        const q = {
+            id,
+            bookId: document.getElementById('q_bookId').value,
+            bookTitle: document.getElementById('q_bookTitle').value,
+            chapter: document.getElementById('q_chapter').value,
+            type: document.getElementById('q_type').value,
+            difficulty: document.getElementById('q_difficulty').value,
+            question: document.getElementById('q_question').value,
+            optionsJson: JSON.stringify(opts),
+            answer: document.getElementById('q_answer').value,
+            explanation: document.getElementById('q_explanation').value,
+            marks: parseInt(document.getElementById('q_marks').value),
+            isBookmarked: false,
+            createdAt: Date.now()
+        };
+        await fetch(`${API_BASE}/questions`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(q)
+        });
+        closeModal('questionModal');
+        loadQuestions();
+    }
+
+    async function deleteQuestion(id) {
+        if(confirm("Are you sure you want to delete this question?")) {
+            await fetch(`${API_BASE}/questions/${id}`, { method: 'DELETE' });
+            loadQuestions();
+        }
+    }
+
+    // --- Books ---
+    async function loadBooks() {
+        const res = await fetch(`${API_BASE}/books`);
+        globalBooks = await res.json();
+        document.getElementById('bStats').innerText = `${globalBooks.length} Books`;
+        const tbody = document.querySelector('#booksTable tbody');
+        tbody.innerHTML = '';
+        globalBooks.forEach(b => {
+            tbody.innerHTML += `<tr>
+                <td>${b.id}</td>
+                <td><b>${b.title}</b></td>
+                <td>${b.chapterCount}</td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="editBook('${b.id}')">Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteBook('${b.id}')">Del</button>
+                </td>
+            </tr>`;
+        });
+    }
+
+    function editBook(id) {
+        const b = globalBooks.find(x => x.id === id);
+        if(!b) return;
+        document.getElementById('b_id').value = b.id;
+        document.getElementById('b_id').disabled = true; // prevent changing ID
+        document.getElementById('b_title').value = b.title;
+        document.getElementById('b_chapterCount').value = b.chapterCount;
+        document.getElementById('bookModalTitle').innerText = 'Edit Book';
+        openModal('bookModal', false);
+    }
+
+    async function saveBook(e) {
+        e.preventDefault();
+        const b = {
+            id: document.getElementById('b_id').value,
+            title: document.getElementById('b_title').value,
+            chapterCount: parseInt(document.getElementById('b_chapterCount').value)
+        };
+        await fetch(`${API_BASE}/books`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(b)
+        });
+        closeModal('bookModal');
+        loadBooks();
+    }
+
+    async function deleteBook(id) {
+        if(confirm("Are you sure?")) {
+            await fetch(`${API_BASE}/books/${id}`, { method: 'DELETE' });
+            loadBooks();
+        }
+    }
+
+    // --- Papers ---
+    async function loadPapers() {
+        const res = await fetch(`${API_BASE}/papers`);
+        globalPapers = await res.json();
+        
+        // update quiz dropdown
+        const qSel = document.getElementById('quizSelectPaper');
+        qSel.innerHTML = '<option value="">Select Paper to Start...</option>';
+        globalPapers.forEach(p => {
+            qSel.innerHTML += `<option value="${p.id}">${p.title}</option>`;
+        });
+        
+        document.getElementById('pStats').innerText = `${globalPapers.length} Papers`;
+        const tbody = document.querySelector('#papersTable tbody');
+        tbody.innerHTML = '';
+        globalPapers.forEach(p => {
+            let qCount = 0;
+            try { qCount = JSON.parse(p.questionIdsJson).length; } catch(e){}
+            tbody.innerHTML += `<tr>
+                <td><b>${p.title}</b></td>
+                <td>${p.subject}</td>
+                <td>${p.totalMarks} (${qCount} Qs)</td>
+                <td>
+                    <button class="btn btn-warning btn-sm" onclick="openPrintModal('${p.id}')">🖨️ Print/PDF</button>
+                    <button class="btn btn-primary btn-sm" onclick="editPaper('${p.id}')">Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deletePaper('${p.id}')">Del</button>
+                </td>
+            </tr>`;
+        });
+    }
+
+    function populateAutoSubjects() {
+        const sel = document.getElementById('auto_subject');
+        sel.innerHTML = '<option value="">All Subjects</option>';
+        const subjects = [...new Set(globalQuestions.map(q => q.bookTitle))];
+        subjects.forEach(s => {
+            sel.innerHTML += `<option value="${s}">${s}</option>`;
+        });
+    }
+
+    function autoSelectQs() {
+        const subj = document.getElementById('auto_subject').value;
+        const count = parseInt(document.getElementById('auto_count').value) || 0;
+        if(count <= 0) return;
+
+        let pool = globalQuestions;
+        if(subj) pool = pool.filter(q => q.bookTitle === subj);
+        
+        let shuffled = [...pool].sort(() => 0.5 - Math.random());
+        let selected = shuffled.slice(0, count).map(q => q.id);
+
+        populateQuestionSelector(selected);
+    }
+
+    function openPrintModal(id) {
+        document.getElementById('pr_id').value = id;
+        openModal('printModal');
+    }
+
+    function executePrint(e) {
+        e.preventDefault();
+        const id = document.getElementById('pr_id').value;
+        const p = globalPapers.find(x => x.id === id);
+        if(!p) return;
+        
+        const watermark = document.getElementById('pr_watermark').value;
+        const wmPattern = document.getElementById('pr_watermarkPattern').value;
+        const wmStyle = document.getElementById('pr_watermarkStyle').value;
+        
+        const showAns = document.getElementById('pr_ans').value;
+        const showExp = document.getElementById('pr_explanations').value;
+        const showCandidate = document.getElementById('pr_candidateBox').value;
+        
+        const fontSize = document.getElementById('pr_fontSize').value;
+        const margin = document.getElementById('pr_margin').value;
+        const lineSpacing = document.getElementById('pr_lineSpacing').value;
+
+        // Call our backend API to generate exactly matching PDF!
+        const url = `/api/papers/${id}/pdf?watermarkText=${encodeURIComponent(watermark)}&wmPattern=${wmPattern}&wmStyle=${wmStyle}&showAns=${showAns}&showExp=${showExp}&showCandidate=${showCandidate}&fontSize=${fontSize}&margin=${margin}&lineSpacing=${lineSpacing}`;
+        
+        window.open(url, '_blank');
+        closeModal('printModal');
+    }
+
+    function populateQuestionSelector(selectedIds = []) {
+        const container = document.getElementById('questionSelectorList');
+        container.innerHTML = '';
+        if(globalQuestions.length === 0) {
+            container.innerHTML = '<i>No questions available. Add questions first.</i>';
+            return;
+        }
+        globalQuestions.forEach(q => {
+            const div = document.createElement('div');
+            div.style.marginBottom = '5px';
+            const checked = selectedIds.includes(q.id) ? 'checked' : '';
+            div.innerHTML = `<label><input type="checkbox" value="${q.id}" class="paper-q-cb" onchange="calculatePaperMarks()" ${checked}> [${q.bookTitle}] ${q.question.substring(0, 50)}... (${q.marks}M)</label>`;
+            container.appendChild(div);
+        });
+        calculatePaperMarks();
+    }
+
+    function calculatePaperMarks() {
+        const checkboxes = document.querySelectorAll('.paper-q-cb:checked');
+        let total = 0;
+        document.getElementById('selectedCount').innerText = checkboxes.length;
+        checkboxes.forEach(cb => {
+            const q = globalQuestions.find(x => x.id === cb.value);
+            if(q) total += q.marks;
+        });
+        document.getElementById('p_marks').value = total;
+    }
+
+    function editPaper(id) {
+        const p = globalPapers.find(x => x.id === id);
+        if(!p) return;
+        document.getElementById('p_id').value = p.id;
+        document.getElementById('p_title').value = p.title;
+        document.getElementById('p_subject').value = p.subject;
+        document.getElementById('p_duration').value = p.durationMinutes;
+        
+        let selectedIds = [];
+        try { selectedIds = JSON.parse(p.questionIdsJson); } catch(e){}
+        populateQuestionSelector(selectedIds);
+        
+        document.getElementById('paperModalTitle').innerText = 'Edit Paper';
+        openModal('paperModal', false);
+    }
+
+    async function savePaper(e) {
+        e.preventDefault();
+        let id = document.getElementById('p_id').value;
+        if (!id) id = 'p_' + Date.now();
+        
+        const checkboxes = document.querySelectorAll('.paper-q-cb:checked');
+        const qIds = Array.from(checkboxes).map(cb => cb.value);
+
+        const p = {
+            id,
+            title: document.getElementById('p_title').value,
+            subject: document.getElementById('p_subject').value,
+            durationMinutes: parseInt(document.getElementById('p_duration').value),
+            totalMarks: parseInt(document.getElementById('p_marks').value),
+            questionIdsJson: JSON.stringify(qIds),
+            createdAt: Date.now()
+        };
+        await fetch(`${API_BASE}/papers`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p)
+        });
+        closeModal('paperModal');
+        loadPapers();
+    }
+
+    async function deletePaper(id) {
+        if(confirm("Are you sure?")) {
+            await fetch(`${API_BASE}/papers/${id}`, { method: 'DELETE' });
+            loadPapers();
+        }
+    }
+
+    // --- Bulk Data Export / Import ---
+    async function exportData() {
+        try {
+            const data = {
+                questions: globalQuestions,
+                books: globalBooks,
+                papers: globalPapers
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `QuestionBank_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            alert("Export failed: " + err.message);
+        }
+    }
+
+    async function importData(event) {
+        const file = event.target.files[0];
+        if(!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                let msg = `Found ${data.questions?.length || 0} questions, ${data.books?.length || 0} books, and ${data.papers?.length || 0} papers. Import and overwrite duplicates?`;
+                if(confirm(msg)) {
+                    if(data.questions && data.questions.length > 0) {
+                        await fetch(`${API_BASE}/questions/bulk`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data.questions) });
+                    }
+                    if(data.books && data.books.length > 0) {
+                        for(let b of data.books) {
+                            await fetch(`${API_BASE}/books`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(b) });
+                        }
+                    }
+                    if(data.papers && data.papers.length > 0) {
+                        for(let p of data.papers) {
+                            await fetch(`${API_BASE}/papers`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p) });
+                        }
+                    }
+                    alert("Import successful!");
+                    loadQuestions();
+                    loadBooks();
+                    loadPapers();
+                }
+            } catch (err) {
+                alert("Import failed. Invalid JSON format. " + err.message);
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = ''; // reset file input
+    }
+
+    // --- Quiz Logic ---
+    let currentQuizQs = [];
+    
+    function startQuiz(mode) {
+        currentQuizQs = [];
+        let title = "Quiz";
+        
+        if (mode === 'paper') {
+            const pid = document.getElementById('quizSelectPaper').value;
+            if(!pid) return alert("Select a paper first");
+            const p = globalPapers.find(x => x.id === pid);
+            if(!p) return;
+            
+            let qIds = [];
+            try { qIds = JSON.parse(p.questionIdsJson); } catch(e){}
+            currentQuizQs = globalQuestions.filter(q => qIds.includes(q.id));
+            if(currentQuizQs.length === 0) return alert("This paper has no questions!");
+            title = p.title;
+        } else if (mode === 'subject') {
+            const subj = document.getElementById('quizSelectSubject').value;
+            const countStr = document.getElementById('quizQuestionCount').value;
+            const count = parseInt(countStr) || 10;
+            
+            let pool = globalQuestions;
+            if(subj) pool = pool.filter(q => q.bookTitle === subj);
+            if (pool.length === 0) return alert("No questions available for this subject!");
+            
+            let shuffled = [...pool].sort(() => 0.5 - Math.random());
+            currentQuizQs = shuffled.slice(0, count);
+            title = subj ? `${subj} Quiz` : `Random Quiz`;
+        }
+        
+        document.getElementById('quizSetup').style.display = 'none';
+        document.getElementById('quizContainer').style.display = 'block';
+        document.getElementById('quizTitle').innerText = title;
+        
+        const qDiv = document.getElementById('quizQuestions');
+        qDiv.innerHTML = '';
+        currentQuizQs.forEach((q, idx) => {
+            let html = `<div style="margin-bottom: 20px; padding: 15px; border: 1px solid var(--border); border-radius: 4px; background: #fafafa;">
+                <p><b>Q${idx+1}.</b> ${q.question} <span style="float:right;">[${q.marks} Marks]</span></p>`;
+            
+            if(q.type === 'mcq') {
+                try {
+                    const opts = JSON.parse(q.optionsJson);
+                    opts.forEach((opt, oIdx) => {
+                        html += `<label style="display:block; margin-bottom:5px;"><input type="radio" name="ans_${q.id}" value="${opt.replace(/"/g, '&quot;')}"> ${opt}</label>`;
+                    });
+                }catch(e){}
+            } else if (q.type === 'tf') {
+                 html += `<label style="display:inline-block; margin-right:20px;"><input type="radio" name="ans_${q.id}" value="True"> True</label>
+                          <label style="display:inline-block;"><input type="radio" name="ans_${q.id}" value="False"> False</label>`;
+            } else if (q.type === 'fib' || q.type === 'subjective') {
+                 html += `<input type="text" id="ans_${q.id}" class="search-box" style="width:100%" placeholder="Type your answer here...">`;
+            } else {
+                 html += `<input type="text" id="ans_${q.id}" class="search-box" style="width:100%" placeholder="Type your answer here...">`;
+            }
+            html += `</div>`;
+            qDiv.innerHTML += html;
+        });
+    }
+
+    function submitQuiz() {
+        let score = 0;
+        let total = 0;
+        currentQuizQs.forEach(q => {
+            total += q.marks;
+            let userAns = '';
+            if(q.type === 'mcq' || q.type === 'tf') {
+                const el = document.querySelector(`input[name="ans_${q.id}"]:checked`);
+                if(el) userAns = el.value;
+            } else {
+                const el = document.getElementById(`ans_${q.id}`);
+                if(el) userAns = el.value.trim();
+            }
+            
+            if(userAns.toLowerCase() === q.answer.toLowerCase()) {
+                score += q.marks;
+            }
+        });
+        
+        document.getElementById('quizContainer').style.display = 'none';
+        document.getElementById('quizResult').style.display = 'block';
+        document.getElementById('quizScoreText').innerText = `You scored ${score} out of ${total} Marks!`;
+    }
+
+    function resetQuiz() {
+        document.getElementById('quizResult').style.display = 'none';
+        document.getElementById('quizContainer').style.display = 'none';
+        document.getElementById('quizSetup').style.display = 'flex';
+        document.getElementById('quizSelectPaper').value = '';
+    }
+
+    // Init
+    loadQuestions();
+</script>
+</body>
+</html>

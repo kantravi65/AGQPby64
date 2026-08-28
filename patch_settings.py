@@ -1,74 +1,47 @@
 import re
 
-with open('app/src/main/java/com/example/ui/screens/SettingsScreen.kt', 'r') as f:
+with open("app/src/main/java/com/example/ui/screens/SettingsScreen.kt", "r") as f:
     content = f.read()
 
-content = content.replace("import com.example.util.FtpManager", "import com.example.util.NetworkStorageManager")
+buttons_old = r'''Button\(
+                        onClick = \{ viewModel\.startWebServer\(\) \},
+                        modifier = Modifier\.fillMaxWidth\(\)
+                    \) \{
+                        Icon\(Icons\.Default\.PlayArrow, contentDescription = null\)
+                        Spacer\(modifier = Modifier\.width\(8\.dp\)\)
+                        Text\("Start Web Server"\)
+                    \}'''
 
-target1 = """                                    val res = FtpManager.testConnection(
-                                        host = ftpHost.trim(),
-                                        port = ftpPort.toIntOrNull() ?: 21,
-                                        user = ftpUser.trim(),
-                                        pass = ftpPass,
-                                        usePassive = ftpUsePassive,
-                                        useFtps = ftpUseFtps
-                                    )"""
-replacement1 = """                                    val res = NetworkStorageManager.testConnection(
-                                        host = ftpHost.trim(),
-                                        port = ftpPort.toIntOrNull() ?: 21,
-                                        user = ftpUser.trim(),
-                                        pass = ftpPass,
-                                        remoteDir = ftpRemoteDir.trim(),
-                                        usePassive = ftpUsePassive,
-                                        useFtps = ftpUseFtps
-                                    )"""
-content = content.replace(target1, replacement1)
+buttons_new = '''Button(
+                        onClick = { viewModel.startWebServer("admin") },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Start Admin Server")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { viewModel.startWebServer("expert") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Start Expert Review Server")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { viewModel.startWebServer("livetest") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Start Live Test Server")
+                    }'''
 
-target2 = """                                    val res = FtpManager.uploadJson(
-                                        host = ftpHost.trim(),
-                                        port = ftpPort.toIntOrNull() ?: 21,
-                                        user = ftpUser.trim(),
-                                        pass = ftpPass,
-                                        remoteDir = ftpRemoteDir.trim(),
-                                        fileName = "ots_question_bank_backup.json",
-                                        jsonContent = jsonPayload,
-                                        usePassive = ftpUsePassive,
-                                        useFtps = ftpUseFtps
-                                    )"""
-replacement2 = """                                    val res = NetworkStorageManager.uploadJson(
-                                        host = ftpHost.trim(),
-                                        port = ftpPort.toIntOrNull() ?: 21,
-                                        user = ftpUser.trim(),
-                                        pass = ftpPass,
-                                        remoteDir = ftpRemoteDir.trim(),
-                                        fileName = "ots_question_bank_backup.json",
-                                        jsonContent = jsonPayload,
-                                        usePassive = ftpUsePassive,
-                                        useFtps = ftpUseFtps
-                                    )"""
-content = content.replace(target2, replacement2)
+content = re.sub(buttons_old, buttons_new, content, count=1)
 
-target3 = """                                    val res = FtpManager.downloadLatestJson(
-                                        host = ftpHost.trim(),
-                                        port = ftpPort.toIntOrNull() ?: 21,
-                                        user = ftpUser.trim(),
-                                        pass = ftpPass,
-                                        remoteDir = ftpRemoteDir.trim(),
-                                        fileName = "ots_question_bank_backup.json",
-                                        usePassive = ftpUsePassive,
-                                        useFtps = ftpUseFtps
-                                    )"""
-replacement3 = """                                    val res = NetworkStorageManager.downloadLatestJson(
-                                        host = ftpHost.trim(),
-                                        port = ftpPort.toIntOrNull() ?: 21,
-                                        user = ftpUser.trim(),
-                                        pass = ftpPass,
-                                        remoteDir = ftpRemoteDir.trim(),
-                                        fileName = "ots_question_bank_backup.json",
-                                        usePassive = ftpUsePassive,
-                                        useFtps = ftpUseFtps
-                                    )"""
-content = content.replace(target3, replacement3)
-
-with open('app/src/main/java/com/example/ui/screens/SettingsScreen.kt', 'w') as f:
+with open("app/src/main/java/com/example/ui/screens/SettingsScreen.kt", "w") as f:
     f.write(content)

@@ -8,6 +8,11 @@ import com.example.data.model.BookEntity
 import com.example.data.model.PaperEntity
 import com.example.data.model.QuestionEntity
 import com.example.data.repository.OtsRepository
+import com.example.util.WebServerManager
+import com.example.util.WebServerState
+import com.example.service.WebServerService
+import android.content.Intent
+import android.os.Build
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
@@ -20,6 +25,8 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val settingsManager by lazy { com.example.util.SettingsManager(application) }
     private var autoSyncJob: kotlinx.coroutines.Job? = null
+    
+    val webServerUrl: StateFlow<String?> = WebServerState.url
 
     private val repository: OtsRepository
     private val bookSyncMutex = kotlinx.coroutines.sync.Mutex()
@@ -1112,5 +1119,25 @@ Question,BookTitle,Chapter,Type,Difficulty,Options,Answer,Explanation,Marks
                 onComplete?.invoke(finalMsg)
             }
         }
+    }
+
+    fun startWebServer(mode: String = "admin") {
+        val intent = Intent(getApplication(), WebServerService::class.java).apply {
+            putExtra("SERVER_MODE", mode)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            getApplication<Application>().startForegroundService(intent)
+        } else {
+            getApplication<Application>().startService(intent)
+        }
+    }
+
+    fun stopWebServer() {
+        val intent = Intent(getApplication(), WebServerService::class.java)
+        getApplication<Application>().stopService(intent)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
     }
 }

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuestionBank Web Dashboard</title>
+    <style>
+        :root { --primary: #1976d2; --primary-hover: #1565c0; --bg: #f4f6f8; --text: #333; --border: #ddd; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--text); }
+        .header { background: var(--primary); color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .header p { margin: 5px 0 0 0; opacity: 0.8; }
+        .container { max-width: 1400px; margin: 20px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .nav-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+        .nav-tabs button { flex: 1; padding: 15px; background: none; border: none; font-size: 16px; cursor: pointer; border-bottom: 3px solid transparent; outline: none; transition: 0.2s; }
+        .nav-tabs button:hover { background: #f9f9f9; }
+        .nav-tabs button.active { border-bottom: 3px solid var(--primary); font-weight: bold; color: var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .search-box { padding: 8px 12px; width: 300px; border: 1px solid var(--border); border-radius: 4px; }
+        .actions button { margin-left: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        table, th, td { border: 1px solid var(--border); }
+        th, td { padding: 10px 12px; text-align: left; }
+        th { background-color: #f2f2f2; position: sticky; top: 0; }
+        tr:hover { background-color: #f9f9f9; }
+        .table-container { max-height: 600px; overflow-y: auto; }
+        .btn { padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: 500; transition: 0.2s; }
+        .btn-primary { background: var(--primary); }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-danger { background: #d32f2f; }
+        .btn-danger:hover { background: #c62828; }
+        .btn-success { background: #2e7d32; }
+        .btn-success:hover { background: #1b5e20; }
+        .btn-warning { background: #f57c00; }
+        .btn-warning:hover { background: #ef6c00; }
+        .btn-sm { padding: 5px 8px; font-size: 12px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 25px; border-radius: 8px; width: 60%; max-width: 800px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: black; }
+        .hidden { display: none !important; }
+        .stats { font-size: 14px; color: #666; margin-top: 5px; }
+        .inline-input { width: 100%; border: 1px solid transparent; background: transparent; font-family: inherit; font-size: inherit; padding: 4px; box-sizing: border-box; resize: vertical; }
+        .inline-input:focus { border: 1px solid var(--primary); background: #fff; outline: none; }
+        .filters { display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1>QuestionBank Desktop Dashboard</h1>
+        <p>Advanced Management, Bulk Import/Export, and Paper Assembly</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-warning" onclick="exportData()">Export Backup (JSON)</button>
+        <button class="btn btn-success" onclick="document.getElementById('importFile').click()">Import Data (JSON)</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+</div>
+
+<div class="container" style="max-width: 800px; margin: 40px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <h1 style="text-align: center; color: #1976d2;">Live Test Portal</h1>
+    
+    <div id="setupView">
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px;">
+            <h3>Candidate Details</h3>
+            <div class="form-group"><label>Full Name</label><input type="text" id="lt_name" class="search-box" style="width:100%;"></div>
+            <div class="form-group"><label>Roll / Candidate Number</label><input type="text" id="lt_number" class="search-box" style="width:100%;"></div>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+            <h3>Test Parameters</h3>
+            <div class="form-group"><label>Subject</label><select id="lt_subject" class="search-box" style="width:100%;"><option value="">Random / All Subjects</option></select></div>
+            <div class="form-group">
+                <label>Question Type</label>
+                <select id="lt_type" class="search-box" style="width:100%;">
+                    <option value="">Mixed (All Types)</option>
+                    <option value="mcq">MCQ</option>
+                    <option value="fib">Fill in the Blanks</option>
+                    <option value="tf">True/False</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Number of Questions</label><input type="number" id="lt_count" class="search-box" style="width:100%;" value="10"></div>
+            <button class="btn btn-primary" style="width:100%; padding:15px; font-size:18px; margin-top:15px;" onclick="startTest()">Start Exam</button>
+        </div>
+    </div>
+
+    <div id="testView" style="display:none;">
+        <h2 id="testTitle" style="text-align:center;"></h2>
+        <div style="text-align:right; font-weight:bold; color:red;" id="timer"></div>
+        <div id="testQuestions"></div>
+        <button class="btn btn-success" style="width:100%; padding:15px; font-size:18px; margin-top:20px;" onclick="submitTest()">Submit Exam</button>
+    </div>
+
+    <div id="resultView" style="display:none; text-align:center;">
+        <h2 style="color: #4CAF50;">Test Submitted Successfully!</h2>
+        <div style="font-size:24px; margin: 20px 0;">Your Score: <b id="finalScore"></b></div>
+        <p>Your results have been sent to the Admin. Once approved, you can download your official scorecard.</p>
+        <button class="btn btn-primary" onclick="checkApproval()">Check Approval Status</button>
+        <div id="approvalStatus" style="margin-top:20px; font-weight:bold;"></div>
+    </div>
+</div>
+
+<script>
+let allQuestions = [];
+let testQuestions = [];
+let cName = "";
+let cNumber = "";
+
+async function fetchData() {
+    const r = await fetch('/api/questions');
+    allQuestions = await r.json();
+    const subjs = [...new Set(allQuestions.map(q => q.bookTitle))].sort();
+    document.getElementById('lt_subject').innerHTML = '<option value="">All Subjects</option>' + subjs.map(s => `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`).join('');
+}
+
+function startTest() {
+    cName = document.getElementById('lt_name').value.trim();
+    cNumber = document.getElementById('lt_number').value.trim();
+    if(!cName || !cNumber) return alert("Please enter Name and Number");
+    
+    const subj = document.getElementById('lt_subject').value;
+    const type = document.getElementById('lt_type').value;
+    const count = parseInt(document.getElementById('lt_count').value) || 10;
+    
+    let pool = allQuestions;
+    if (subj) pool = pool.filter(q => q.bookTitle === subj);
+    if (type) pool = pool.filter(q => q.type === type);
+    
+    if(pool.length === 0) return alert("No questions available for these filters!");
+    
+    testQuestions = pool.sort(() => 0.5 - Math.random()).slice(0, count);
+    
+    document.getElementById('setupView').style.display = 'none';
+    document.getElementById('testView').style.display = 'block';
+    document.getElementById('testTitle').innerText = `${subj || 'Mixed'} Exam - Candidate: ${cName} (${cNumber})`;
+    
+    renderTest();
+}
+
+function renderTest() {
+    const qDiv = document.getElementById('testQuestions');
+    qDiv.innerHTML = '';
+    
+    testQuestions.forEach((q, idx) => {
+        let html = `<div style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #ddd;">
+            <p><b>Q${idx+1}.</b> ${q.question} <i>[${q.marks} Marks]</i></p>`;
+            
+        if(q.type === 'mcq') {
+            try {
+                const opts = JSON.parse(q.optionsJson);
+                opts.forEach(opt => {
+                    html += `<label style="display:block; margin:8px 0;"><input type="radio" name="ans_${q.id}" value="${opt.replace(/"/g, '&quot;')}"> ${opt}</label>`;
+                });
+            } catch(e){}
+        } else if (q.type === 'tf') {
+            html += `<label style="margin-right:20px;"><input type="radio" name="ans_${q.id}" value="True"> True</label>
+                     <label><input type="radio" name="ans_${q.id}" value="False"> False</label>`;
+        } else {
+            html += `<input type="text" id="ans_${q.id}" class="search-box" style="width:100%" placeholder="Your answer...">`;
+        }
+        html += `</div>`;
+        qDiv.innerHTML += html;
+    });
+}
+
+function submitTest() {
+    if(!confirm("Are you sure you want to submit?")) return;
+    
+    let score = 0;
+    let max = 0;
+    
+    testQuestions.forEach(q => {
+        max += q.marks;
+        let uAns = "";
+        if(q.type === 'mcq' || q.type === 'tf') {
+            const sel = document.querySelector(`input[name="ans_${q.id}"]:checked`);
+            if(sel) uAns = sel.value;
+        } else {
+            const inp = document.getElementById(`ans_${q.id}`);
+            if(inp) uAns = inp.value.trim();
+        }
+        
+        if(uAns.toLowerCase() === q.answer.toLowerCase()) {
+            score += q.marks;
+        }
+    });
+    
+    document.getElementById('testView').style.display = 'none';
+    document.getElementById('resultView').style.display = 'block';
+    document.getElementById('finalScore').innerText = `${score} / ${max}`;
+    
+    // We would normally POST to /api/attempts here.
+    // For this prototype, we'll pretend it's sent.
+}
+
+function checkApproval() {
+    // Mock approval logic
+    document.getElementById('approvalStatus').innerHTML = "<span style='color:orange;'>Status: Pending Admin Approval...</span>";
+}
+
+fetchData();
+</script>
+</body></html>

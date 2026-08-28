@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     id("com.google.gms.google-services")
 }
@@ -43,6 +44,7 @@ android {
             buildConfigField("String", "APP_GITHUB_SHA", "\"${System.getenv("APP_GITHUB_SHA") ?: ""}\"")
         }
         debug {
+            applicationIdSuffix = ".debug"
             signingConfig = signingConfigs.getByName("debug")
             buildConfigField("String", "APP_UPDATE_REPO", "\"${System.getenv("APP_UPDATE_REPO") ?: "myslv409-debug/OTSNGG"}\"")
             buildConfigField("String", "APP_UPDATE_TOKEN", "\"${System.getenv("APP_UPDATE_TOKEN") ?: ""}\"")
@@ -60,6 +62,14 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/io.netty.versions.properties"
+            excludes += "/META-INF/AL2.0"
+            excludes += "/META-INF/LGPL2.1"
+        }
     }
 }
 
@@ -90,6 +100,12 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.cors)
+    implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
