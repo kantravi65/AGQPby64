@@ -84,7 +84,7 @@
                     <option value="tf">T/F</option>
                     <option value="fib">FIB</option>
                 </select>
-                <select class="search-box" style="width:200px" id="fq_answer" onchange="filterQuestions()"><option value="">All Answers</option></select>
+                <input type="text" class="search-box" style="width:200px" id="fq_answer" placeholder="Filter by answer..." onkeyup="filterQuestions()">
                 <select class="search-box" style="width:100px" id="fq_marks" onchange="filterQuestions()"><option value="">All Marks</option></select>
             </div>
             <div class="actions">
@@ -446,6 +446,7 @@
         const fMarks = document.getElementById('fq_marks').value.toUpperCase();
 
         const trs = document.getElementById('questionsTable').getElementsByTagName("tr");
+        let visibleCount = 0;
         for (let i = 1; i < trs.length; i++) {
             const tr = trs[i];
             const subj = tr.querySelector('.q-book')?.value.toUpperCase() || "";
@@ -455,13 +456,15 @@
 
             if ((fSubj === "" || subj === fSubj) && 
                 (fType === "" || type === fType) && 
-                (fAns === "" || ans === fAns) && 
+                (fAns === "" || ans.indexOf(fAns) > -1) && 
                 (fMarks === "" || marks === fMarks)) {
                 tr.style.display = "";
+                visibleCount++;
             } else {
                 tr.style.display = "none";
             }
         }
+        document.getElementById('qStats').innerText = `${visibleCount} of ${globalQuestions.length} Questions (Filtered)`;
     }
 
     function filterTable(tableId, query) {
@@ -489,6 +492,25 @@
         const ansContainer = tr.querySelector('.q-answer-container');
         const currentAnsElement = tr.querySelector('.q-answer');
         let currentAns = currentAnsElement ? currentAnsElement.value : '';
+
+        // Update MCQ options container visibility
+        const optsContainer = tr.querySelector('.q-opts-container');
+        if (optsContainer) {
+            if (type === 'mcq') {
+                if (!optsContainer.querySelector('.q-opt-item')) {
+                    optsContainer.innerHTML = `
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <input class="inline-input q-opt-item" placeholder="Opt A" value="" onkeyup="updateAnswerDropdown('${id}')">
+                            <input class="inline-input q-opt-item" placeholder="Opt B" value="" onkeyup="updateAnswerDropdown('${id}')">
+                            <input class="inline-input q-opt-item" placeholder="Opt C" value="" onkeyup="updateAnswerDropdown('${id}')">
+                            <input class="inline-input q-opt-item" placeholder="Opt D" value="" onkeyup="updateAnswerDropdown('${id}')">
+                        </div>
+                    `;
+                }
+            } else {
+                optsContainer.innerHTML = `<span style="color:#aaa; font-style:italic;">N/A (Not MCQ)</span>`;
+            }
+        }
 
         if (type === 'mcq') {
             const optInputs = tr.querySelectorAll('.q-opt-item');
@@ -519,22 +541,18 @@
 
     function populateFilters() {
         const subjs = [...new Set(globalQuestions.map(q => q.bookTitle))].sort();
-        const ans = [...new Set(globalQuestions.map(q => q.answer))].sort();
         const marks = [...new Set(globalQuestions.map(q => q.marks))].sort((a,b)=>a-b);
         
         const subjSel = document.getElementById('fq_subject');
-        const ansSel = document.getElementById('fq_answer');
         const markSel = document.getElementById('fq_marks');
         
         const curSubj = subjSel.value;
-        const curAns = ansSel.value;
         const curMark = markSel.value;
         
         subjSel.innerHTML = '<option value="">All Subjects</option>' + subjs.map(s => `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`).join('');
-        ansSel.innerHTML = '<option value="">All Answers</option>' + ans.map(a => `<option value="${a.replace(/"/g, '&quot;')}">${a}</option>`).join('');
         markSel.innerHTML = '<option value="">All Marks</option>' + marks.map(m => `<option value="${m}">${m}</option>`).join('');
         
-        subjSel.value = curSubj; ansSel.value = curAns; markSel.value = curMark;
+        subjSel.value = curSubj; markSel.value = curMark;
         
         const quizSubj = document.getElementById('quizSelectSubject');
         if (quizSubj) {
@@ -548,7 +566,6 @@
     async function loadQuestions() {
         const res = await fetch(`${API_BASE}/questions`);
         globalQuestions = await res.json();
-        document.getElementById('qStats').innerText = `${globalQuestions.length} Total Questions`;
         const tbody = document.querySelector('#questionsTable tbody');
         tbody.innerHTML = '';
         globalQuestions.forEach(q => {
@@ -570,13 +587,15 @@
                     </select>
                 </td>
                 <td><textarea class="inline-input q-question" rows="2">${q.question}</textarea></td>
-                <td>
+                <td class="q-opts-container">
+                    ${q.type === 'mcq' ? `
                     <div style="display:flex; flex-direction:column; gap:2px;">
                         <input class="inline-input q-opt-item" placeholder="Opt A" value="${(opts[0]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerDropdown('${q.id}')">
                         <input class="inline-input q-opt-item" placeholder="Opt B" value="${(opts[1]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerDropdown('${q.id}')">
                         <input class="inline-input q-opt-item" placeholder="Opt C" value="${(opts[2]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerDropdown('${q.id}')">
                         <input class="inline-input q-opt-item" placeholder="Opt D" value="${(opts[3]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerDropdown('${q.id}')">
                     </div>
+                    ` : `<span style="color:#aaa; font-style:italic;">N/A (Not MCQ)</span>`}
                 </td>
                 <td class="q-answer-container">
                     ${q.type === 'mcq' ? 
@@ -603,6 +622,7 @@
             tbody.appendChild(tr);
         });
         populateFilters();
+        filterQuestions();
     }
 
     async function saveInlineQuestion(id) {

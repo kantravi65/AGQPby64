@@ -52,7 +52,7 @@ class WebServerService : Service() {
             )
             webServerManager = WebServerManager(applicationContext, repository, mode)
             webServerManager?.startServer { url ->
-                WebServerState.setUrl(url)
+                WebServerState.setUrl(url, mode)
             }
         }
         return START_STICKY

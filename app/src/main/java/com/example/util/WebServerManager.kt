@@ -38,6 +38,7 @@ import com.example.util.MarginSize
 import com.example.util.WatermarkPattern
 import com.example.util.PdfPrintSettings
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import java.net.NetworkInterface
 
 @Serializable
@@ -66,7 +67,7 @@ class WebServerManager(private val appContext: Context, private val repository: 
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                server = embeddedServer(Netty, port = port) {
+                server = embeddedServer(Netty, port = port, host = "0.0.0.0") {
                     install(ContentNegotiation) {
                         json(kotlinx.serialization.json.Json { prettyPrint = true; isLenient = true; ignoreUnknownKeys = true })
                     }
@@ -208,6 +209,123 @@ class WebServerManager(private val appContext: Context, private val repository: 
                         }
                     } else {
                         call.respond(HttpStatusCode.NotFound)
+                    }
+                }
+
+                // API: Live Test Portal
+                get("/api/livetest/config") {
+                    call.respond(LiveTestState.config)
+                }
+
+                @Serializable
+                data class LoginRequest(val name: String, val rollNumber: String)
+
+                @Serializable
+                data class LoginResponse(val success: Boolean, val questions: List<QuestionDto>, val durationMinutes: Int)
+
+                post("/api/livetest/login") {
+                    try {
+                        val req = call.receive<LoginRequest>()
+                        
+                        // Check if candidate has already completed/submitted/disqualified from the test
+                        val existing = LiveTestState.candidates.value.find { it.rollNumber == req.rollNumber }
+                        if (existing != null && (existing.status == "Submitted" || existing.status == "Disqualified")) {
+                            return@post call.respond(HttpStatusCode.Forbidden, "You have already completed this exam and cannot enter again.")
+                        }
+                        
+                        val allQuestions = repository.allQuestions.first()
+                        
+                        val subjectFiltered = if (LiveTestState.config.subject.isNotEmpty()) {
+                            allQuestions.filter { it.bookTitle.equals(LiveTestState.config.subject, ignoreCase = true) }
+                        } else {
+                            allQuestions
+                        }
+                        
+                        val mcqPool = subjectFiltered.filter { it.type == "mcq" }.shuffled()
+                        val fibPool = subjectFiltered.filter { it.type == "fib" }.shuffled()
+                        val tfPool = subjectFiltered.filter { it.type == "tf" }.shuffled()
+                        
+                        val selectedQuestions = mutableListOf<QuestionEntity>()
+                        selectedQuestions.addAll(mcqPool.take(LiveTestState.config.mcqCount))
+                        selectedQuestions.addAll(fibPool.take(LiveTestState.config.fibCount))
+                        selectedQuestions.addAll(tfPool.take(LiveTestState.config.tfCount))
+                        
+                        if (selectedQuestions.isEmpty()) {
+                            selectedQuestions.addAll(subjectFiltered.shuffled().take(10))
+                        }
+                        
+                        val questionDtos = selectedQuestions.map {
+                            QuestionDto(it.id, it.bookId, it.bookTitle, it.chapter, it.type, it.difficulty, it.question, it.optionsJson, it.answer, it.explanation, it.marks, it.isBookmarked, it.createdAt)
+                        }
+                        
+                        val session = CandidateSession(
+                            id = java.util.UUID.randomUUID().toString(),
+                            name = req.name,
+                            rollNumber = req.rollNumber,
+                            loginTime = System.currentTimeMillis(),
+                            status = "Testing",
+                            questionsJson = kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(QuestionDto.serializer()), questionDtos),
+                            answersJson = "{}",
+                            score = 0,
+                            totalMarks = selectedQuestions.sumOf { it.marks },
+                            isDispatched = false,
+                            warningCount = 0
+                        )
+                        
+                        LiveTestState.addCandidate(session)
+                        call.respond(LoginResponse(true, questionDtos, LiveTestState.config.durationMinutes))
+                    } catch (e: Exception) {
+                        Log.e("WebServerManager", "Error in login: ${e.message}", e)
+                        call.respond(HttpStatusCode.InternalServerError, e.message ?: "Internal Error")
+                    }
+                }
+
+                @Serializable
+                data class SubmitRequest(val rollNumber: String, val answers: Map<String, String>, val status: String)
+
+                post("/api/livetest/submit") {
+                    try {
+                        val req = call.receive<SubmitRequest>()
+                        val candidate = LiveTestState.candidates.value.find { it.rollNumber == req.rollNumber }
+                            ?: return@post call.respond(HttpStatusCode.NotFound, "Session not found")
+                            
+                        val assignedQuestions = kotlinx.serialization.json.Json.decodeFromString<List<QuestionDto>>(candidate.questionsJson)
+                        
+                        var score = 0
+                        var totalMarks = 0
+                        assignedQuestions.forEach { q ->
+                            totalMarks += q.marks
+                            val studentAns = req.answers[q.id]?.trim() ?: ""
+                            if (studentAns.isNotEmpty() && studentAns.equals(q.answer.trim(), ignoreCase = true)) {
+                                score += q.marks
+                            }
+                        }
+                        
+                        LiveTestState.updateCandidateStatus(
+                            rollNumber = req.rollNumber,
+                            status = req.status,
+                            answersJson = kotlinx.serialization.json.Json.encodeToString(req.answers),
+                            score = score,
+                            totalMarks = totalMarks,
+                            warnings = candidate.warningCount
+                        )
+                        call.respond(HttpStatusCode.OK)
+                    } catch (e: Exception) {
+                        Log.e("WebServerManager", "Error in submit: ${e.message}", e)
+                        call.respond(HttpStatusCode.InternalServerError, e.message ?: "Internal Error")
+                    }
+                }
+
+                @Serializable
+                data class WarningRequest(val rollNumber: String, val warnings: Int)
+
+                post("/api/livetest/warning") {
+                    try {
+                        val req = call.receive<WarningRequest>()
+                        LiveTestState.updateWarnings(req.rollNumber, req.warnings)
+                        call.respond(HttpStatusCode.OK)
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, e.message ?: "Error")
                     }
                 }
 

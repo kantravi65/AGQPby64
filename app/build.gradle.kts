@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.File
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +8,24 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     id("com.google.gms.google-services")
+}
+
+val envProperties = Properties()
+val envFile = rootProject.file(".env")
+if (envFile.exists()) {
+    envFile.inputStream().use { envProperties.load(it) }
+}
+
+fun getSecret(key: String, defaultValue: String = ""): String {
+    val envValue = System.getenv(key)
+    if (!envValue.isNullOrBlank()) {
+        return envValue
+    }
+    val propValue = envProperties.getProperty(key) as? String
+    if (!propValue.isNullOrBlank()) {
+        return propValue
+    }
+    return defaultValue
 }
 
 android {
@@ -38,17 +59,17 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "APP_UPDATE_REPO", "\"${System.getenv("APP_UPDATE_REPO") ?: "myslv409-debug/OTSNGG"}\"")
-            buildConfigField("String", "APP_UPDATE_TOKEN", "\"${System.getenv("APP_UPDATE_TOKEN") ?: ""}\"")
+            buildConfigField("String", "APP_UPDATE_REPO", "\"${getSecret("APP_UPDATE_REPO", "myslv409-debug/OTSNGG")}\"")
+            buildConfigField("String", "APP_UPDATE_TOKEN", "\"${getSecret("APP_UPDATE_TOKEN")}\"")
             buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
-            buildConfigField("String", "APP_GITHUB_SHA", "\"${System.getenv("APP_GITHUB_SHA") ?: ""}\"")
+            buildConfigField("String", "APP_GITHUB_SHA", "\"${getSecret("APP_GITHUB_SHA")}\"")
         }
         debug {
             signingConfig = signingConfigs.getByName("debug")
-            buildConfigField("String", "APP_UPDATE_REPO", "\"${System.getenv("APP_UPDATE_REPO") ?: "myslv409-debug/OTSNGG"}\"")
-            buildConfigField("String", "APP_UPDATE_TOKEN", "\"${System.getenv("APP_UPDATE_TOKEN") ?: ""}\"")
+            buildConfigField("String", "APP_UPDATE_REPO", "\"${getSecret("APP_UPDATE_REPO", "myslv409-debug/OTSNGG")}\"")
+            buildConfigField("String", "APP_UPDATE_TOKEN", "\"${getSecret("APP_UPDATE_TOKEN")}\"")
             buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
-            buildConfigField("String", "APP_GITHUB_SHA", "\"${System.getenv("APP_GITHUB_SHA") ?: ""}\"")
+            buildConfigField("String", "APP_GITHUB_SHA", "\"${getSecret("APP_GITHUB_SHA")}\"")
         }
     }
     compileOptions {

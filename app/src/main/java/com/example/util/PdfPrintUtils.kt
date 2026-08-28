@@ -629,5 +629,242 @@ object PdfPrintUtils {
             sharePdf(context, pdfFile, title)
         }
     }
+
+    fun generateLiveTestReportPdf(
+        context: Context,
+        candidates: List<CandidateSession>,
+        subject: String,
+        durationMinutes: Int
+    ): File? {
+        return try {
+            val pdfDocument = PdfDocument()
+            val widthPt = 595 // A4 width
+            val heightPt = 842 // A4 height
+            val marginPt = 36
+            val printableWidth = widthPt - (marginPt * 2)
+
+            val titlePaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textSize = 15f
+                color = Color.BLACK
+                isAntiAlias = true
+            }
+
+            val subtitlePaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+                textSize = 9.5f
+                color = Color.DKGRAY
+                isAntiAlias = true
+            }
+
+            val tableHeaderPaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textSize = 9.5f
+                color = Color.BLACK
+                isAntiAlias = true
+            }
+
+            val tableCellPaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+                textSize = 9.5f
+                color = Color.BLACK
+                isAntiAlias = true
+            }
+
+            val cardTitlePaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textSize = 11.5f
+                color = Color.BLACK
+                isAntiAlias = true
+            }
+
+            val borderPaint = Paint().apply {
+                color = Color.GRAY
+                strokeWidth = 0.8f
+                style = Paint.Style.STROKE
+            }
+
+            val fillHeaderPaint = Paint().apply {
+                color = Color.parseColor("#F5F5F5")
+                style = Paint.Style.FILL
+            }
+
+            val fillCardPaint = Paint().apply {
+                color = Color.parseColor("#FAFAFA")
+                style = Paint.Style.FILL
+            }
+
+            // Sort candidates by score descending (Merit List)
+            val sortedCandidates = candidates.sortedWith(
+                compareByDescending<CandidateSession> { it.score }
+                    .thenBy { it.rollNumber }
+            )
+
+            var pageNumber = 1
+            var pageInfo = PdfDocument.PageInfo.Builder(widthPt, heightPt, pageNumber).create()
+            var page = pdfDocument.startPage(pageInfo)
+            var canvas = page.canvas
+            var currentY = marginPt.toFloat()
+
+            fun drawFooter() {
+                val footerPaint = Paint().apply {
+                    typeface = Typeface.DEFAULT
+                    textSize = 8f
+                    color = Color.GRAY
+                    isAntiAlias = true
+                    textAlign = Paint.Align.CENTER
+                }
+                val footerY = (heightPt - marginPt / 2).toFloat()
+                canvas.drawText("Live Test Report | Page $pageNumber", (widthPt / 2).toFloat(), footerY, footerPaint)
+            }
+
+            fun startNewPage() {
+                drawFooter()
+                pdfDocument.finishPage(page)
+                pageNumber++
+                pageInfo = PdfDocument.PageInfo.Builder(widthPt, heightPt, pageNumber).create()
+                page = pdfDocument.startPage(pageInfo)
+                canvas = page.canvas
+                currentY = marginPt.toFloat()
+            }
+
+            fun checkNewPage(neededHeight: Float) {
+                if (currentY + neededHeight > heightPt - marginPt) {
+                    startNewPage()
+                }
+            }
+
+            // --- Draw Header ---
+            checkNewPage(80f)
+            canvas.drawText("LIVE SECURED TEST REPORT & MERIT LIST", marginPt.toFloat(), currentY + 18, titlePaint)
+            currentY += 24
+            
+            val subjectStr = if (subject.isEmpty()) "All Subjects" else subject
+            canvas.drawText("Subject: $subjectStr | Duration: $durationMinutes Mins | Date: ${java.time.LocalDate.now()}", marginPt.toFloat(), currentY + 12, subtitlePaint)
+            currentY += 16
+            canvas.drawText("Total Candidates: ${candidates.size} | Submitted: ${candidates.count { it.status == "Submitted" }}", marginPt.toFloat(), currentY + 12, subtitlePaint)
+            currentY += 28
+
+            // Draw divider
+            canvas.drawLine(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY, borderPaint)
+            currentY += 16
+
+            // --- Merit List Table ---
+            checkNewPage(40f)
+            canvas.drawText("PART A: CANDIDATE MERIT LIST", marginPt.toFloat(), currentY + 14, cardTitlePaint)
+            currentY += 22
+
+            // Table headers
+            checkNewPage(24f)
+            val colX = floatArrayOf(
+                marginPt.toFloat(),               // Rank (0)
+                marginPt.toFloat() + 45f,         // Name (1)
+                marginPt.toFloat() + 155f,        // Roll No (2)
+                marginPt.toFloat() + 245f,        // Status (3)
+                marginPt.toFloat() + 325f,        // Score (4)
+                marginPt.toFloat() + 395f,        // % (5)
+                marginPt.toFloat() + 445f         // Warnings (6)
+            )
+
+            canvas.drawRect(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY + 20, fillHeaderPaint)
+            canvas.drawRect(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY + 20, borderPaint)
+            
+            canvas.drawText("Rank", colX[0] + 5, currentY + 14, tableHeaderPaint)
+            canvas.drawText("Candidate Name", colX[1] + 5, currentY + 14, tableHeaderPaint)
+            canvas.drawText("Roll No", colX[2] + 5, currentY + 14, tableHeaderPaint)
+            canvas.drawText("Status", colX[3] + 5, currentY + 14, tableHeaderPaint)
+            canvas.drawText("Score", colX[4] + 5, currentY + 14, tableHeaderPaint)
+            canvas.drawText("%", colX[5] + 5, currentY + 14, tableHeaderPaint)
+            canvas.drawText("Warnings", colX[6] + 5, currentY + 14, tableHeaderPaint)
+            currentY += 20
+
+            // Draw rows
+            sortedCandidates.forEachIndexed { index, candidate ->
+                checkNewPage(20f)
+                canvas.drawRect(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY + 20, borderPaint)
+                
+                val percentage = if (candidate.totalMarks > 0) {
+                    (candidate.score.toFloat() / candidate.totalMarks.toFloat() * 100f)
+                } else 0f
+                val percentStr = String.format(java.util.Locale.US, "%.1f%%", percentage)
+
+                canvas.drawText("#${index + 1}", colX[0] + 5, currentY + 14, tableCellPaint)
+                
+                // Truncate candidate name to fit if too long
+                var dispName = candidate.name
+                if (dispName.length > 18) {
+                    dispName = dispName.take(16) + ".."
+                }
+                canvas.drawText(dispName, colX[1] + 5, currentY + 14, tableCellPaint)
+                canvas.drawText(candidate.rollNumber, colX[2] + 5, currentY + 14, tableCellPaint)
+                canvas.drawText(candidate.status, colX[3] + 5, currentY + 14, tableCellPaint)
+                canvas.drawText("${candidate.score} / ${candidate.totalMarks}", colX[4] + 5, currentY + 14, tableCellPaint)
+                canvas.drawText(percentStr, colX[5] + 5, currentY + 14, tableCellPaint)
+                canvas.drawText("${candidate.warningCount} / 3", colX[6] + 5, currentY + 14, tableCellPaint)
+                currentY += 20
+            }
+
+            currentY += 25
+
+            // --- Candidate Scorecards ---
+            startNewPage()
+            canvas.drawText("PART B: INDIVIDUAL SCORECARDS", marginPt.toFloat(), currentY + 14, cardTitlePaint)
+            currentY += 24
+
+            sortedCandidates.forEach { candidate ->
+                checkNewPage(120f)
+                // Draw card container
+                canvas.drawRect(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY + 105, fillCardPaint)
+                canvas.drawRect(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY + 105, borderPaint)
+
+                // Left column info
+                canvas.drawText("Candidate: ${candidate.name}", marginPt.toFloat() + 15, currentY + 20, tableHeaderPaint)
+                canvas.drawText("Roll Number: ${candidate.rollNumber}", marginPt.toFloat() + 15, currentY + 38, tableCellPaint)
+                
+                val loginDateTime = java.time.Instant.ofEpochMilli(candidate.loginTime)
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                canvas.drawText("Login Time: $loginDateTime", marginPt.toFloat() + 15, currentY + 56, tableCellPaint)
+                canvas.drawText("Warnings Logged: ${candidate.warningCount} / 3", marginPt.toFloat() + 15, currentY + 74, tableCellPaint)
+                canvas.drawText("Status: ${candidate.status}", marginPt.toFloat() + 15, currentY + 92, tableCellPaint)
+
+                // Right column score box
+                val rightBoxLeft = widthPt - marginPt - 180f
+                canvas.drawLine(rightBoxLeft, currentY, rightBoxLeft, currentY + 105, borderPaint)
+                
+                val percentage = if (candidate.totalMarks > 0) {
+                    (candidate.score.toFloat() / candidate.totalMarks.toFloat() * 100f)
+                } else 0f
+                val percentStr = String.format(java.util.Locale.US, "%.1f%%", percentage)
+
+                canvas.drawText("GRAND SCORECARD", rightBoxLeft + 15, currentY + 20, tableHeaderPaint)
+                canvas.drawText("Obtained: ${candidate.score} Marks", rightBoxLeft + 15, currentY + 42, tableCellPaint)
+                canvas.drawText("Max Marks: ${candidate.totalMarks} Marks", rightBoxLeft + 15, currentY + 60, tableCellPaint)
+                canvas.drawText("Percentage: $percentStr", rightBoxLeft + 15, currentY + 78, tableHeaderPaint)
+
+                val verdict = if (candidate.status == "Disqualified") {
+                    "DISQUALIFIED"
+                } else if (candidate.score >= candidate.totalMarks * 0.4) {
+                    "PASSED"
+                } else {
+                    "FAILED"
+                }
+                canvas.drawText("Verdict: $verdict", rightBoxLeft + 15, currentY + 94, tableHeaderPaint)
+
+                currentY += 120
+            }
+
+            drawFooter()
+            pdfDocument.finishPage(page)
+
+            val file = File(context.cacheDir, "live_test_merit_list.pdf")
+            pdfDocument.writeTo(FileOutputStream(file))
+            pdfDocument.close()
+            file
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }
 

@@ -3,145 +3,768 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuestionBank Web Dashboard</title>
+    <title>QuestionBank Online Exam Portal</title>
     <style>
-        :root { --primary: #1976d2; --primary-hover: #1565c0; --bg: #f4f6f8; --text: #333; --border: #ddd; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--text); }
-        .header { background: var(--primary); color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { margin: 0; font-size: 24px; }
-        .header p { margin: 5px 0 0 0; opacity: 0.8; }
-        .container { max-width: 1400px; margin: 20px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .nav-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
-        .nav-tabs button { flex: 1; padding: 15px; background: none; border: none; font-size: 16px; cursor: pointer; border-bottom: 3px solid transparent; outline: none; transition: 0.2s; }
-        .nav-tabs button:hover { background: #f9f9f9; }
-        .nav-tabs button.active { border-bottom: 3px solid var(--primary); font-weight: bold; color: var(--primary); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .search-box { padding: 8px 12px; width: 300px; border: 1px solid var(--border); border-radius: 4px; }
-        .actions button { margin-left: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        table, th, td { border: 1px solid var(--border); }
-        th, td { padding: 10px 12px; text-align: left; }
-        th { background-color: #f2f2f2; position: sticky; top: 0; }
-        tr:hover { background-color: #f9f9f9; }
-        .table-container { max-height: 600px; overflow-y: auto; }
-        .btn { padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: 500; transition: 0.2s; }
-        .btn-primary { background: var(--primary); }
-        .btn-primary:hover { background: var(--primary-hover); }
-        .btn-danger { background: #d32f2f; }
-        .btn-danger:hover { background: #c62828; }
-        .btn-success { background: #2e7d32; }
-        .btn-success:hover { background: #1b5e20; }
-        .btn-warning { background: #f57c00; }
-        .btn-warning:hover { background: #ef6c00; }
-        .btn-sm { padding: 5px 8px; font-size: 12px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
-        .modal-content { background-color: #fff; margin: 5% auto; padding: 25px; border-radius: 8px; width: 60%; max-width: 800px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-        .close:hover { color: black; }
-        .hidden { display: none !important; }
-        .stats { font-size: 14px; color: #666; margin-top: 5px; }
-        .inline-input { width: 100%; border: 1px solid transparent; background: transparent; font-family: inherit; font-size: inherit; padding: 4px; box-sizing: border-box; resize: vertical; }
-        .inline-input:focus { border: 1px solid var(--primary); background: #fff; outline: none; }
-        .filters { display: flex; gap: 10px; }
+        :root {
+            --primary: #1976d2;
+            --primary-hover: #1565c0;
+            --success: #2e7d32;
+            --success-hover: #1b5e20;
+            --danger: #d32f2f;
+            --danger-hover: #c62828;
+            --bg: #f8f9fa;
+            --surface: #ffffff;
+            --text: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* Anticheat: Disable text selection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), #0d47a1);
+            color: #fff;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* Setup / Login View */
+        .login-card {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            padding: 40px;
+            max-width: 500px;
+            margin: 60px auto;
+            border: 1px solid var(--border);
+        }
+
+        .login-card h2 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .login-card p {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: var(--success-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        /* Main Test Layout (Grid-based for Desktop, Responsive to Stack on Mobile) */
+        .test-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .test-layout {
+                grid-template-columns: 1fr;
+                padding-top: 100px; /* Leave space for sticky mobile bar */
+            }
+            .sidebar {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0;
+                right: 0;
+                border-radius: 0;
+                border: none;
+                border-bottom: 2px solid var(--border);
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                padding: 10px 15px;
+                flex-direction: row !important;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                z-index: 999;
+                background-color: var(--surface);
+            }
+            .candidate-info {
+                display: none !important; /* Hide candidate text to save vertical height */
+            }
+            .timer-box {
+                margin: 0 !important;
+                padding: 5px 10px;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                flex-direction: row;
+            }
+            .timer-box .label {
+                display: none !important; /* Hide 'Time Remaining' label text on mobile */
+            }
+            .timer-box .time {
+                font-size: 16px !important;
+            }
+            .stats-grid {
+                display: flex;
+                gap: 8px;
+                flex-direction: row;
+            }
+            .stat-box {
+                padding: 5px 10px;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 12px;
+            }
+            .stat-box .num {
+                font-size: 14px !important;
+                margin: 0 !important;
+            }
+            .stat-box .label {
+                font-size: 11px;
+            }
+            .anticheat-box {
+                display: none !important; /* Hide anticheat text info block to fit screens */
+            }
+            .sidebar button {
+                width: auto !important;
+                padding: 8px 16px !important;
+                font-size: 14px !important;
+            }
+        }
+
+        /* Left Side Questions */
+        .questions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .question-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            transition: transform 0.2s ease;
+        }
+
+        .question-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .question-number {
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 16px;
+        }
+
+        .question-marks {
+            background-color: rgba(25, 118, 210, 0.08);
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .question-text {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14.5px;
+        }
+
+        .option-label:hover {
+            background-color: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .option-label input[type="radio"] {
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .option-label.selected {
+            background-color: rgba(25, 118, 210, 0.05);
+            border-color: var(--primary);
+            font-weight: 500;
+        }
+
+        .text-answer-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 14.5px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .text-answer-input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Right Side Info Sidebar */
+        .sidebar {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky;
+            top: 20px;
+            align-self: start;
+        }
+
+        .candidate-info {
+            background-color: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .candidate-info h3 {
+            font-size: 15px;
+            margin-bottom: 5px;
+            color: var(--text);
+        }
+
+        .candidate-info p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-box {
+            background-color: var(--bg);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-box .num {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--primary);
+            display: block;
+        }
+
+        .stat-box .num.success {
+            color: var(--success);
+        }
+
+        .stat-box .num.danger {
+            color: var(--danger);
+        }
+
+        .stat-box .label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .timer-box {
+            background-color: #fffbeb;
+            border: 1px solid #fef3c7;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .timer-box .time {
+            font-size: 32px;
+            font-weight: 700;
+            color: #d97706;
+            font-family: monospace;
+        }
+
+        .timer-box.warning {
+            background-color: #fef2f2;
+            border-color: #fecaca;
+            animation: pulse-red 1s infinite alternate;
+        }
+
+        .timer-box.warning .time {
+            color: var(--danger);
+        }
+
+        @keyframes pulse-red {
+            from { box-shadow: 0 0 5px rgba(211,47,47,0.2); }
+            to { box-shadow: 0 0 15px rgba(211,47,47,0.5); }
+        }
+
+        /* Anticheat Card */
+        .anticheat-box {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .anticheat-box.warn {
+            background-color: #fff5f5;
+            border-color: #fed7d7;
+        }
+
+        .anticheat-title {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .shield-icon {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        .anticheat-box.warn .shield-icon {
+            color: var(--danger);
+        }
+
+        .anticheat-box:not(.warn) .shield-icon {
+            color: var(--success);
+        }
+
+        /* Result View */
+        .result-card {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            padding: 40px;
+            max-width: 600px;
+            margin: 60px auto;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .result-icon {
+            font-size: 64px;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+
+        .result-card h2 {
+            color: #2c3e50;
+            font-size: 26px;
+            margin-bottom: 12px;
+        }
+
+        .result-card p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-bottom: 30px;
+        }
+
+        /* Overlay Fullscreen Request */
+        .fullscreen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.95);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .fullscreen-overlay h2 {
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+
+        .fullscreen-overlay p {
+            max-width: 500px;
+            margin-bottom: 30px;
+            opacity: 0.8;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .fullscreen-overlay .btn {
+            max-width: 300px;
+        }
+
+        /* Cheat Modal */
+        .cheat-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.85);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .cheat-content {
+            background-color: #1e293b;
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            border: 2px solid var(--danger);
+        }
     </style>
 </head>
 <body>
 
 <div class="header">
     <div>
-        <h1>QuestionBank Desktop Dashboard</h1>
-        <p>Advanced Management, Bulk Import/Export, and Paper Assembly</p>
-    </div>
-    <div class="header-actions">
-        <button class="btn btn-warning" onclick="exportData()">Export Backup (JSON)</button>
-        <button class="btn btn-success" onclick="document.getElementById('importFile').click()">Import Data (JSON)</button>
-        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+        <h1 id="portalHeaderTitle">QuestionBank Examination Portal</h1>
+        <p id="portalHeaderSub">High Security Environment</p>
     </div>
 </div>
 
-<div class="container" style="max-width: 800px; margin: 40px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-    <h1 style="text-align: center; color: #1976d2;">Live Test Portal</h1>
-    
-    <div id="setupView">
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px;">
-            <h3>Candidate Details</h3>
-            <div class="form-group"><label>Full Name</label><input type="text" id="lt_name" class="search-box" style="width:100%;"></div>
-            <div class="form-group"><label>Roll / Candidate Number</label><input type="text" id="lt_number" class="search-box" style="width:100%;"></div>
+<div class="container">
+    <!-- SETUP VIEW (LOGIN) -->
+    <div id="setupView" class="login-card">
+        <h2>Candidate Entrance</h2>
+        <p>Please enter your exact details to retrieve the exam paper assigned to you.</p>
+        
+        <div class="form-group">
+            <label for="lt_name">Full Name</label>
+            <input type="text" id="lt_name" class="form-input" placeholder="e.g. John Doe">
         </div>
         
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
-            <h3>Test Parameters</h3>
-            <div class="form-group"><label>Subject</label><select id="lt_subject" class="search-box" style="width:100%;"><option value="">Random / All Subjects</option></select></div>
-            <div class="form-group">
-                <label>Question Type</label>
-                <select id="lt_type" class="search-box" style="width:100%;">
-                    <option value="">Mixed (All Types)</option>
-                    <option value="mcq">MCQ</option>
-                    <option value="fib">Fill in the Blanks</option>
-                    <option value="tf">True/False</option>
-                </select>
+        <div class="form-group">
+            <label for="lt_number">Roll / Candidate Number</label>
+            <input type="text" id="lt_number" class="form-input" placeholder="e.g. ROLL-10254">
+        </div>
+
+        <div style="background-color: #f0f7ff; border: 1px solid #c2e0ff; padding: 15px; border-radius: 8px; margin-bottom: 25px; font-size: 13px; color: #004085;">
+            <b>Test Security Policy:</b> Tab switching, exiting fullscreen, right-clicking, or copying text is strictly prohibited and monitored. Violations will result in automatic submission.
+        </div>
+        
+        <button class="btn btn-primary" onclick="initiateRegistration()">Validate and Enter Exam</button>
+    </div>
+
+    <!-- FULLSCREEN REQUIREMENT OVERLAY -->
+    <div id="fullscreenOverlay" class="fullscreen-overlay" style="display:none;">
+        <h2>Security Protocol Activation</h2>
+        <p>To ensure fairness and security, this exam requires a locked full-screen browser window. Please click below to enter fullscreen and unlock your test paper.</p>
+        <button class="btn btn-primary" onclick="requestFullScreenAndStart()">Go Fullscreen & Start Exam</button>
+    </div>
+
+    <!-- MAIN EXAM TEST VIEW -->
+    <div id="testView" class="test-layout" style="display:none;">
+        <!-- Left Column: Questions -->
+        <div class="questions-list" id="testQuestions">
+            <!-- Dynamically populated -->
+        </div>
+
+        <!-- Right Column: Sidebar Stats -->
+        <div class="sidebar">
+            <div class="candidate-info">
+                <h3 id="sideName">Candidate</h3>
+                <p id="sideRoll">Roll No:</p>
             </div>
-            <div class="form-group"><label>Number of Questions</label><input type="number" id="lt_count" class="search-box" style="width:100%;" value="10"></div>
-            <button class="btn btn-primary" style="width:100%; padding:15px; font-size:18px; margin-top:15px;" onclick="startTest()">Start Exam</button>
+
+            <div class="timer-box" id="timerBox">
+                <div class="label" style="font-weight:700; margin-bottom:5px;">Time Remaining</div>
+                <div class="time" id="timeRemaining">00:00</div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="num success" id="statAttempted">0</span>
+                    <span class="label">Attempted</span>
+                </div>
+                <div class="stat-box">
+                    <span class="num danger" id="statLeft">0</span>
+                    <span class="label">Questions Left</span>
+                </div>
+            </div>
+
+            <div class="anticheat-box" id="anticheatBox">
+                <div class="anticheat-title" id="anticheatTitle">
+                    <span class="shield-icon">🛡️</span> Security Shield: SECURED
+                </div>
+                <div style="font-size:12px; color: var(--text-secondary);" id="anticheatDesc">
+                    Full-screen and focus monitoring is active. Do not exit this page.
+                </div>
+                <div style="margin-top:10px; font-weight:bold; font-size:13px; display:none; color: var(--danger);" id="warningCounter">
+                    Security Violations: 0 / 3
+                </div>
+            </div>
+
+            <button class="btn btn-success" style="padding: 15px; font-size: 16px;" onclick="submitTest(false)">Submit Exam Paper</button>
         </div>
     </div>
 
-    <div id="testView" style="display:none;">
-        <h2 id="testTitle" style="text-align:center;"></h2>
-        <div style="text-align:right; font-weight:bold; color:red;" id="timer"></div>
-        <div id="testQuestions"></div>
-        <button class="btn btn-success" style="width:100%; padding:15px; font-size:18px; margin-top:20px;" onclick="submitTest()">Submit Exam</button>
+    <!-- RESULT VIEW -->
+    <div id="resultView" class="result-card" style="display:none;">
+        <div class="result-icon">✓</div>
+        <h2>Test Submitted Successfully</h2>
+        <p>Thank you. Your answers have been encrypted and saved securely on the local database.</p>
+        <div style="background-color: #f8fafc; border: 1px solid var(--border); padding: 20px; border-radius: 8px; font-size: 15px; margin-bottom: 25px;">
+            Your scorecard is being processed by the system. The exam administrator will review and dispatch your marksheet shortly.
+        </div>
+        <p style="font-size:12px; color: var(--text-secondary);">You may now close this browser window.</p>
     </div>
+</div>
 
-    <div id="resultView" style="display:none; text-align:center;">
-        <h2 style="color: #4CAF50;">Test Submitted Successfully!</h2>
-        <div style="font-size:24px; margin: 20px 0;">Your Score: <b id="finalScore"></b></div>
-        <p>Your results have been sent to the Admin. Once approved, you can download your official scorecard.</p>
-        <button class="btn btn-primary" onclick="checkApproval()">Check Approval Status</button>
-        <div id="approvalStatus" style="margin-top:20px; font-weight:bold;"></div>
+<!-- CHEAT DETECTED MODAL -->
+<div id="cheatModal" class="cheat-modal">
+    <div class="cheat-content">
+        <h2 style="color: var(--danger); font-size: 28px; margin-bottom: 15px;">Exam Terminated</h2>
+        <p style="margin-bottom: 25px; line-height: 1.6;">Your exam session has been locked due to repeated security/focus violations (switching tabs or exiting fullscreen). Your answers up to this point have been automatically submitted.</p>
+        <button class="btn btn-danger" onclick="closeCheatScreen()">Return to Entrance</button>
     </div>
 </div>
 
 <script>
-let allQuestions = [];
 let testQuestions = [];
 let cName = "";
 let cNumber = "";
+let warnings = 0;
+const maxWarnings = 3;
+let examTimer = null;
+let timeLimitSeconds = 0;
+let isSubmitted = false;
 
-async function fetchData() {
-    const r = await fetch('/api/questions');
-    allQuestions = await r.json();
-    const subjs = [...new Set(allQuestions.map(q => q.bookTitle))].sort();
-    document.getElementById('lt_subject').innerHTML = '<option value="">All Subjects</option>' + subjs.map(s => `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`).join('');
-}
+// Disable right click context menu
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+}, false);
 
-function startTest() {
+// Disable copying, cutting, pasting
+document.addEventListener('copy', function(e) { e.preventDefault(); }, false);
+document.addEventListener('cut', function(e) { e.preventDefault(); }, false);
+document.addEventListener('paste', function(e) { e.preventDefault(); }, false);
+
+// Disable keyboard developer shortcuts
+document.onkeydown = function (e) {
+    // F12 key
+    if (e.keyCode === 123) return false;
+    // Ctrl+Shift+I
+    if (e.ctrlKey && e.shiftKey && e.keyCode === 73) return false;
+    // Ctrl+Shift+J
+    if (e.ctrlKey && e.shiftKey && e.keyCode === 74) return false;
+    // Ctrl+U
+    if (e.ctrlKey && e.keyCode === 85) return false;
+};
+
+async function initiateRegistration() {
     cName = document.getElementById('lt_name').value.trim();
     cNumber = document.getElementById('lt_number').value.trim();
-    if(!cName || !cNumber) return alert("Please enter Name and Number");
+    if (!cName || !cNumber) {
+        alert("Please enter both your Full Name and Candidate Number.");
+        return;
+    }
+
+    // Call server to login and get questions according to admin settings
+    try {
+        const response = await fetch('/api/livetest/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: cName, rollNumber: cNumber })
+        });
+        
+        if (!response.ok) {
+            const errText = await response.text();
+            alert("Entrance Failed: " + errText);
+            return;
+        }
+
+        const data = await response.json();
+        testQuestions = data.questions;
+        timeLimitSeconds = data.durationMinutes * 60;
+
+        if (!testQuestions || testQuestions.length === 0) {
+            alert("There are no questions assigned for this exam currently. Please ask the administrator to configure the question parameters.");
+            return;
+        }
+
+        // Hide Login Card and show Fullscreen Security activation prompt
+        document.getElementById('setupView').style.display = 'none';
+        document.getElementById('fullscreenOverlay').style.display = 'flex';
+    } catch (err) {
+        alert("Server communication error: " + err.message);
+    }
+}
+
+function requestFullScreenAndStart() {
+    // Enter Fullscreen on document
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+    } else if (elem.mozRequestFullScreen) { // Firefox
+        elem.mozRequestFullScreen();
+    } else if (elem.webkitRequestFullscreen) { // Chrome, Safari, Opera
+        elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) { // IE/Edge
+        elem.msRequestFullscreen();
+    }
+
+    // Hide fullscreen overlay and start exam
+    document.getElementById('fullscreenOverlay').style.display = 'none';
+    document.getElementById('testView').style.display = 'grid';
     
-    const subj = document.getElementById('lt_subject').value;
-    const type = document.getElementById('lt_type').value;
-    const count = parseInt(document.getElementById('lt_count').value) || 10;
-    
-    let pool = allQuestions;
-    if (subj) pool = pool.filter(q => q.bookTitle === subj);
-    if (type) pool = pool.filter(q => q.type === type);
-    
-    if(pool.length === 0) return alert("No questions available for these filters!");
-    
-    testQuestions = pool.sort(() => 0.5 - Math.random()).slice(0, count);
-    
-    document.getElementById('setupView').style.display = 'none';
-    document.getElementById('testView').style.display = 'block';
-    document.getElementById('testTitle').innerText = `${subj || 'Mixed'} Exam - Candidate: ${cName} (${cNumber})`;
-    
+    // Set headers
+    document.getElementById('portalHeaderTitle').innerText = "QuestionBank SECURED Active Exam";
+    document.getElementById('portalHeaderSub').innerText = "Warning: Exiting fullscreen or tab will trigger violation counters!";
+    document.getElementById('sideName').innerText = cName;
+    document.getElementById('sideRoll').innerText = "Roll No: " + cNumber;
+
+    // Start Cheat Monitoring
+    startCheatMonitoring();
+
+    // Render Paper
     renderTest();
+    updateStats();
+
+    // Start Timer
+    startTimer();
 }
 
 function renderTest() {
@@ -149,62 +772,276 @@ function renderTest() {
     qDiv.innerHTML = '';
     
     testQuestions.forEach((q, idx) => {
-        let html = `<div style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #ddd;">
-            <p><b>Q${idx+1}.</b> ${q.question} <i>[${q.marks} Marks]</i></p>`;
-            
-        if(q.type === 'mcq') {
+        const card = document.createElement('div');
+        card.className = 'question-card';
+        
+        let headerHtml = `
+            <div class="question-header">
+                <span class="question-number">Question ${idx+1}</span>
+                <span class="question-marks">${q.marks} Marks</span>
+            </div>
+            <div class="question-text">${q.question}</div>
+        `;
+        
+        let answersHtml = '';
+        if (q.type === 'mcq') {
+            let opts = [];
             try {
-                const opts = JSON.parse(q.optionsJson);
-                opts.forEach(opt => {
-                    html += `<label style="display:block; margin:8px 0;"><input type="radio" name="ans_${q.id}" value="${opt.replace(/"/g, '&quot;')}"> ${opt}</label>`;
-                });
-            } catch(e){}
+                opts = JSON.parse(q.optionsJson);
+                if (!Array.isArray(opts)) opts = [];
+            } catch(e) {
+                opts = [];
+            }
+            
+            opts.forEach((opt, oIdx) => {
+                const optId = `q_${q.id}_opt_${oIdx}`;
+                answersHtml += `
+                    <label class="option-label" id="lbl_${optId}" onclick="onOptionSelected('${q.id}', '${optId}')">
+                        <input type="radio" name="ans_${q.id}" id="${optId}" value="${opt.replace(/"/g, '&quot;')}" onchange="updateStats()">
+                        ${opt}
+                    </label>
+                `;
+            });
+            headerHtml += `<div class="options-container">${answersHtml}</div>`;
         } else if (q.type === 'tf') {
-            html += `<label style="margin-right:20px;"><input type="radio" name="ans_${q.id}" value="True"> True</label>
-                     <label><input type="radio" name="ans_${q.id}" value="False"> False</label>`;
+            headerHtml += `
+                <div class="options-container" style="flex-direction: row; gap: 20px;">
+                    <label class="option-label" style="flex:1; justify-content:center;" id="lbl_q_${q.id}_t" onclick="onOptionSelected('${q.id}', 'q_${q.id}_t')">
+                        <input type="radio" name="ans_${q.id}" id="q_${q.id}_t" value="True" onchange="updateStats()"> True
+                    </label>
+                    <label class="option-label" style="flex:1; justify-content:center;" id="lbl_q_${q.id}_f" onclick="onOptionSelected('${q.id}', 'q_${q.id}_f')">
+                        <input type="radio" name="ans_${q.id}" id="q_${q.id}_f" value="False" onchange="updateStats()"> False
+                    </label>
+                </div>
+            `;
         } else {
-            html += `<input type="text" id="ans_${q.id}" class="search-box" style="width:100%" placeholder="Your answer...">`;
-        }
-        html += `</div>`;
-        qDiv.innerHTML += html;
-    });
-}
-
-function submitTest() {
-    if(!confirm("Are you sure you want to submit?")) return;
-    
-    let score = 0;
-    let max = 0;
-    
-    testQuestions.forEach(q => {
-        max += q.marks;
-        let uAns = "";
-        if(q.type === 'mcq' || q.type === 'tf') {
-            const sel = document.querySelector(`input[name="ans_${q.id}"]:checked`);
-            if(sel) uAns = sel.value;
-        } else {
-            const inp = document.getElementById(`ans_${q.id}`);
-            if(inp) uAns = inp.value.trim();
+            headerHtml += `
+                <input type="text" id="ans_${q.id}" class="text-answer-input" placeholder="Type your answer here..." oninput="updateStats()">
+            `;
         }
         
-        if(uAns.toLowerCase() === q.answer.toLowerCase()) {
-            score += q.marks;
-        }
+        card.innerHTML = headerHtml;
+        qDiv.appendChild(card);
     });
-    
-    document.getElementById('testView').style.display = 'none';
-    document.getElementById('resultView').style.display = 'block';
-    document.getElementById('finalScore').innerText = `${score} / ${max}`;
-    
-    // We would normally POST to /api/attempts here.
-    // For this prototype, we'll pretend it's sent.
 }
 
-function checkApproval() {
-    // Mock approval logic
-    document.getElementById('approvalStatus').innerHTML = "<span style='color:orange;'>Status: Pending Admin Approval...</span>";
+function onOptionSelected(qId, selectedInputId) {
+    // Styling helper for selected options
+    const radios = document.getElementsByName(`ans_${qId}`);
+    radios.forEach(r => {
+        const label = document.getElementById(`lbl_${r.id}`);
+        if (label) label.classList.remove('selected');
+    });
+    
+    const checkedInput = document.getElementById(selectedInputId);
+    if (checkedInput) {
+        checkedInput.checked = true;
+        const selectedLabel = document.getElementById(`lbl_${selectedInputId}`);
+        if (selectedLabel) selectedLabel.classList.add('selected');
+    }
+    updateStats();
+}
+
+function updateStats() {
+    let attempted = 0;
+    
+    testQuestions.forEach(q => {
+        if (q.type === 'mcq' || q.type === 'tf') {
+            const sel = document.querySelector(`input[name="ans_${q.id}"]:checked`);
+            if (sel) attempted++;
+        } else {
+            const inp = document.getElementById(`ans_${q.id}`);
+            if (inp && inp.value.trim() !== '') attempted++;
+        }
+    });
+
+    const left = testQuestions.length - attempted;
+    document.getElementById('statAttempted').innerText = attempted;
+    document.getElementById('statLeft').innerText = left;
+}
+
+function startTimer() {
+    const timerText = document.getElementById('timeRemaining');
+    const timerBox = document.getElementById('timerBox');
+    
+    function tick() {
+        if (isSubmitted) return;
+        
+        if (timeLimitSeconds <= 0) {
+            clearInterval(examTimer);
+            submitTest(true); // Auto-submit on expiry
+            return;
+        }
+        
+        timeLimitSeconds--;
+        
+        const mins = Math.floor(timeLimitSeconds / 60);
+        const secs = timeLimitSeconds % 60;
+        
+        timerText.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        
+        if (timeLimitSeconds <= 120) { // Warning under 2 minutes
+            timerBox.classList.add('warning');
+        }
+    }
+    
+    tick();
+    examTimer = setInterval(tick, 1000);
+}
+
+// Anti-cheat Focus Logic
+function startCheatMonitoring() {
+    const warningText = document.getElementById('warningCounter');
+    warningText.style.display = 'block';
+
+    // Focus / Visibility change triggers
+    document.addEventListener("visibilitychange", handleCheatViolation);
+    window.addEventListener("blur", handleCheatViolation);
+
+    // Full screen exit check
+    document.addEventListener("fullscreenchange", checkFullscreenExit);
+    document.addEventListener("webkitfullscreenchange", checkFullscreenExit);
+    document.addEventListener("mozfullscreenchange", checkFullscreenExit);
+    document.addEventListener("MSFullscreenChange", checkFullscreenExit);
+}
+
+function handleCheatViolation() {
+    if (isSubmitted) return;
+    
+    // Trigger only if document is hidden or window is blurred
+    if (document.hidden || !document.hasFocus()) {
+        warnings++;
+        reportWarningToServer(warnings);
+
+        const anticheat = document.getElementById('anticheatBox');
+        anticheat.classList.add('warn');
+        document.getElementById('anticheatTitle').innerHTML = '<span class="shield-icon">⚠️</span> Security Breach Detected!';
+        document.getElementById('warningCounter').innerText = `Security Violations: ${warnings} / ${maxWarnings}`;
+
+        if (warnings >= maxWarnings) {
+            terminateExamForCheating();
+        } else {
+            alert(`SECURITY WARNING:\nYou are strictly forbidden from leaving the exam tab! This is violation #${warnings} of 3. Next violations will result in automatic disqualification.`);
+        }
+    }
+}
+
+function checkFullscreenExit() {
+    if (isSubmitted) return;
+    
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+    if (!isFullscreen) {
+        warnings++;
+        reportWarningToServer(warnings);
+        
+        const anticheat = document.getElementById('anticheatBox');
+        anticheat.classList.add('warn');
+        document.getElementById('anticheatTitle').innerHTML = '<span class="shield-icon">⚠️</span> Security Breach: Left Fullscreen!';
+        document.getElementById('warningCounter').innerText = `Security Violations: ${warnings} / ${maxWarnings}`;
+
+        if (warnings >= maxWarnings) {
+            terminateExamForCheating();
+        } else {
+            alert("SECURITY WARNING:\nYou must stay in fullscreen mode! This is violation #" + warnings + " of 3. Click OK to re-enter fullscreen.");
+            // Force back into full screen
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) elem.requestFullscreen();
+        }
+    }
+}
+
+async function reportWarningToServer(count) {
+    try {
+        await fetch('/api/livetest/warning', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rollNumber: cNumber, warnings: count })
+        });
+    } catch(e) {}
+}
+
+function terminateExamForCheating() {
+    isSubmitted = true;
+    clearInterval(examTimer);
+    
+    // Auto-submit current answers silently
+    submitAnswersPayload(true);
+    
+    // Exit fullscreen
+    if (document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+    
+    // Hide exam, show cheat terminal modal
+    document.getElementById('testView').style.display = 'none';
+    document.getElementById('cheatModal').style.display = 'flex';
+}
+
+function closeCheatScreen() {
+    document.getElementById('cheatModal').style.display = 'none';
+    location.reload();
+}
+
+async function submitTest(isAutoSubmit = false) {
+    if (isSubmitted) return;
+    
+    if (!isAutoSubmit) {
+        if (!confirm("Are you sure you want to finish and submit your exam paper? Double check your answers before submitting!")) {
+            return;
+        }
+    }
+
+    isSubmitted = true;
+    clearInterval(examTimer);
+    
+    // Exit fullscreen
+    if (document.exitFullscreen) {
+        document.exitFullscreen().catch(()=>{});
+    }
+
+    await submitAnswersPayload(false);
+}
+
+async function submitAnswersPayload(cheated = false) {
+    let answers = {};
+    
+    testQuestions.forEach(q => {
+        let val = "";
+        if (q.type === 'mcq' || q.type === 'tf') {
+            const sel = document.querySelector(`input[name="ans_${q.id}"]:checked`);
+            if (sel) val = sel.value;
+        } else {
+            const inp = document.getElementById(`ans_${q.id}`);
+            if (inp) val = inp.value.trim();
+        }
+        answers[q.id] = val;
+    });
+
+    const status = cheated ? "Disqualified" : "Submitted";
+
+    try {
+        const response = await fetch('/api/livetest/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                rollNumber: cNumber,
+                answers: answers,
+                status: status
+            })
+        });
+
+        if (response.ok) {
+            if (!cheated) {
+                document.getElementById('testView').style.display = 'none';
+                document.getElementById('resultView').style.display = 'block';
+            }
+        } else {
+            alert("Network error saving answers. Please notify the exam supervisor immediately.");
+        }
+    } catch (err) {
+        alert("Submission failed. Network is unreachable: " + err.message);
+    }
 }
 
 fetchData();
 </script>
-</body></html>
+</body>
+</html>

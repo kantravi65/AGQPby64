@@ -28,6 +28,49 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
     
     val webServerUrl: StateFlow<String?> = WebServerState.url
 
+    // Live Test Configuration State
+    private val _liveTestSubject = MutableStateFlow("")
+    val liveTestSubject: StateFlow<String> = _liveTestSubject.asStateFlow()
+
+    private val _liveTestMcqCount = MutableStateFlow(10)
+    val liveTestMcqCount: StateFlow<Int> = _liveTestMcqCount.asStateFlow()
+
+    private val _liveTestFibCount = MutableStateFlow(0)
+    val liveTestFibCount: StateFlow<Int> = _liveTestFibCount.asStateFlow()
+
+    private val _liveTestTfCount = MutableStateFlow(0)
+    val liveTestTfCount: StateFlow<Int> = _liveTestTfCount.asStateFlow()
+
+    private val _liveTestDuration = MutableStateFlow(30)
+    val liveTestDuration: StateFlow<Int> = _liveTestDuration.asStateFlow()
+
+    // Expose candidates session list from LiveTestState
+    val liveCandidates: StateFlow<List<com.example.util.CandidateSession>> = com.example.util.LiveTestState.candidates
+
+    fun updateLiveTestConfig(subject: String, mcqs: Int, fibs: Int, tfs: Int, duration: Int) {
+        _liveTestSubject.value = subject
+        _liveTestMcqCount.value = mcqs
+        _liveTestFibCount.value = fibs
+        _liveTestTfCount.value = tfs
+        _liveTestDuration.value = duration
+        
+        com.example.util.LiveTestState.config = com.example.util.LiveTestConfig(
+            subject = subject,
+            mcqCount = mcqs,
+            fibCount = fibs,
+            tfCount = tfs,
+            durationMinutes = duration
+        )
+    }
+
+    fun dispatchCandidateMarksheet(rollNumber: String) {
+        com.example.util.LiveTestState.dispatchMarksheet(rollNumber)
+    }
+
+    fun clearLiveTestSessions() {
+        com.example.util.LiveTestState.clearSessions()
+    }
+
     private val repository: OtsRepository
     private val bookSyncMutex = kotlinx.coroutines.sync.Mutex()
     private var lastManuallyAddedBookId: String? = null
