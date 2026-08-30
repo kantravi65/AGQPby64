@@ -18,6 +18,11 @@ data class CandidateSession(
     val id: String,
     val name: String,
     val rollNumber: String,
+    val email: String = "",
+    val mobile: String = "",
+    var portraitBase64: String = "",
+    var latestFrameBase64: String = "",
+    var activeWarningMessage: String = "",
     val loginTime: Long,
     var status: String = "Testing", // "Testing" or "Submitted"
     var questionsJson: String = "[]", // Serialized list of QuestionDto assigned
@@ -29,6 +34,27 @@ data class CandidateSession(
 )
 
 object LiveTestState {
+    fun updateFrame(rollNumber: String, frameBase64: String): String {
+        var msg = ""
+        val list = _candidates.value.map {
+            if (it.rollNumber == rollNumber) {
+                msg = it.activeWarningMessage
+                it.copy(latestFrameBase64 = frameBase64, activeWarningMessage = "")
+            } else {
+                it
+            }
+        }
+        _candidates.value = list
+        return msg
+    }
+    
+    fun setWarning(rollNumber: String, message: String) {
+        val list = _candidates.value.map {
+            if (it.rollNumber == rollNumber) it.copy(activeWarningMessage = message) else it
+        }
+        _candidates.value = list
+    }
+
     var config = LiveTestConfig()
     
     private val _candidates = MutableStateFlow<List<CandidateSession>>(emptyList())

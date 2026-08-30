@@ -857,7 +857,11 @@ object PdfPrintUtils {
             drawFooter()
             pdfDocument.finishPage(page)
 
-            val file = File(context.cacheDir, "live_test_merit_list.pdf")
+            val archiveDir = File(context.filesDir, "ExamArchives")
+            if (!archiveDir.exists()) archiveDir.mkdirs()
+            val safeSubject = subject.replace(" ", "_").ifEmpty { "All_Subjects" }
+            val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(java.util.Date())
+            val file = File(archiveDir, "Merit_List_${safeSubject}_$timestamp.pdf")
             pdfDocument.writeTo(FileOutputStream(file))
             pdfDocument.close()
             file

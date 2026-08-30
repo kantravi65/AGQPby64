@@ -283,7 +283,16 @@ class WebServerManager(private val appContext: Context, private val repository: 
                 @Serializable
                 data class SubmitRequest(val rollNumber: String, val answers: Map<String, String>, val status: String)
 
-                post("/api/livetest/submit") {
+                                        post("/api/livetest/heartbeat") {
+                            val request = call.receive<Map<String, String>>()
+                            val roll = request["rollNumber"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                            val frameBase64 = request["frameBase64"] ?: ""
+                            
+                            val warningMsg = LiveTestState.updateFrame(roll, frameBase64)
+                            call.respond(mapOf("warningMessage" to warningMsg))
+                        }
+
+                        post("/api/livetest/submit") {
                     try {
                         val req = call.receive<SubmitRequest>()
                         val candidate = LiveTestState.candidates.value.find { it.rollNumber == req.rollNumber }

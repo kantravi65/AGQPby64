@@ -164,15 +164,20 @@
         }
 
         @media (max-width: 900px) {
+            body.in-exam .header {
+                display: none !important;
+            }
             .test-layout {
                 grid-template-columns: 1fr;
-                padding-top: 100px; /* Leave space for sticky mobile bar */
+                padding-top: 75px; /* Leave space for sticky mobile top bar */
+                padding-bottom: 80px; /* Leave space for sticky mobile bottom bar */
             }
             .sidebar {
                 position: fixed !important;
                 top: 0 !important;
                 left: 0;
                 right: 0;
+                height: 60px;
                 border-radius: 0;
                 border: none;
                 border-bottom: 2px solid var(--border);
@@ -225,9 +230,47 @@
                 display: none !important; /* Hide anticheat text info block to fit screens */
             }
             .sidebar button {
-                width: auto !important;
-                padding: 8px 16px !important;
-                font-size: 14px !important;
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                border-radius: 0 !important;
+                padding: 16px !important;
+                font-size: 16px !important;
+                margin: 0 !important;
+                z-index: 999;
+                box-shadow: 0 -4px 10px rgba(0,0,0,0.15) !important;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .login-card {
+                padding: 20px;
+                margin: 20px auto;
+            }
+            .result-card {
+                padding: 20px;
+                margin: 20px auto;
+            }
+            .container {
+                padding: 0 10px;
+                margin: 10px auto;
+            }
+            .question-card {
+                padding: 15px;
+            }
+            .option-label {
+                padding: 10px 12px;
+                font-size: 13.5px;
+            }
+            .text-answer-input {
+                padding: 10px 12px;
+                font-size: 13.5px;
+            }
+            .question-text {
+                font-size: 15px;
+                margin-bottom: 15px;
             }
         }
 
@@ -581,6 +624,19 @@
             <input type="text" id="lt_number" class="form-input" placeholder="e.g. ROLL-10254">
         </div>
 
+        <div class="form-group">
+            <label for="lt_email">Email Address</label>
+            <input type="email" id="lt_email" class="form-input" placeholder="e.g. john@example.com">
+        </div>
+        <div class="form-group">
+            <label for="lt_mobile">Mobile Number (SMS Enabled)</label>
+            <input type="tel" id="lt_mobile" class="form-input" placeholder="e.g. +1234567890">
+        </div>
+        <div class="form-group">
+            <label>Live Camera Registration</label>
+            <video id="cameraPreview" autoplay playsinline muted style="width:100%; border-radius:8px; background:#000; height: 180px;"></video>
+            <p style="font-size:12px; color:gray; text-align:center;">Camera required for proctoring. Please allow permissions.</p>
+        </div>
         <div style="background-color: #f0f7ff; border: 1px solid #c2e0ff; padding: 15px; border-radius: 8px; margin-bottom: 25px; font-size: 13px; color: #004085;">
             <b>Test Security Policy:</b> Tab switching, exiting fullscreen, right-clicking, or copying text is strictly prohibited and monitored. Violations will result in automatic submission.
         </div>
@@ -697,17 +753,25 @@ document.onkeydown = function (e) {
 async function initiateRegistration() {
     cName = document.getElementById('lt_name').value.trim();
     cNumber = document.getElementById('lt_number').value.trim();
-    if (!cName || !cNumber) {
-        alert("Please enter both your Full Name and Candidate Number.");
+    const email = document.getElementById('lt_email').value.trim();
+    const mobile = document.getElementById('lt_mobile').value.trim();
+    
+    if (!cName || !cNumber || !email || !mobile) {
+        alert("Please fill in all details (Name, Roll, Email, Mobile).");
+        return;
+    }
+    
+    currentPortraitBase64 = captureFrame();
+    if (!currentPortraitBase64) {
+        alert("Please allow camera permissions to proceed.");
         return;
     }
 
-    // Call server to login and get questions according to admin settings
     try {
         const response = await fetch('/api/livetest/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: cName, rollNumber: cNumber })
+            body: JSON.stringify({ name: cName, rollNumber: cNumber, email: email, mobile: mobile, portraitBase64: currentPortraitBase64 })
         });
         
         if (!response.ok) {
@@ -749,6 +813,7 @@ function requestFullScreenAndStart() {
     // Hide fullscreen overlay and start exam
     document.getElementById('fullscreenOverlay').style.display = 'none';
     document.getElementById('testView').style.display = 'grid';
+    document.body.classList.add('in-exam');
     
     // Set headers
     document.getElementById('portalHeaderTitle').innerText = "QuestionBank SECURED Active Exam";

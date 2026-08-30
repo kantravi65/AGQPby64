@@ -31,8 +31,27 @@ import com.example.util.NetworkStorageManager
 import com.example.util.GoogleDriveSyncManager
 import com.example.util.GoogleSignInHelper
 import com.example.util.SettingsManager
+import android.telephony.SmsManager
+import android.graphics.BitmapFactory
+import android.util.Base64
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.ui.layout.ContentScale
+import com.example.util.LiveTestState
+
 import kotlinx.coroutines.launch
 import org.json.JSONArray
+
+
+fun decodeBase64Image(base64Str: String): androidx.compose.ui.graphics.ImageBitmap? {
+    if (base64Str.isEmpty()) return null
+    return try {
+        val cleanBase64 = base64Str.substringAfter("base64,")
+        val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
+    } catch (e: Exception) { null }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1610,11 +1629,26 @@ fun SettingsScreen(
                                                     Row(
                                                         modifier = Modifier.fillMaxWidth(),
                                                         horizontalArrangement = Arrangement.SpaceBetween,
-                                                        verticalAlignment = Alignment.CenterVertically
+                                                        verticalAlignment = Alignment.Top
                                                     ) {
-                                                        Column {
-                                                            Text(session.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
-                                                            Text("Roll: ${session.rollNumber}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                                        Row {
+                                                            val portraitBmp = decodeBase64Image(session.latestFrameBase64.ifEmpty { session.portraitBase64 })
+                                                            if (portraitBmp != null) {
+                                                                Image(
+                                                                    bitmap = portraitBmp,
+                                                                    contentDescription = "Candidate Portrait",
+                                                                    contentScale = ContentScale.Crop,
+                                                                    modifier = Modifier.size(60.dp).clip(RoundedCornerShape(4.dp)).border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                                                                )
+                                                                Spacer(modifier = Modifier.width(12.dp))
+                                                            }
+                                                            Column {
+                                                                Text(session.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                                                                Text("Roll: ${session.rollNumber}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                                                if (session.mobile.isNotEmpty()) {
+                                                                    Text("Mob: ${session.mobile}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                                                                }
+                                                            }
                                                         }
                                                         
                                                         val badgeBg = if (session.status == "Testing") Color(0xFFFEF3C7) else if (session.status == "Disqualified") Color(0xFFFEE2E2) else Color(0xFFD1FAE5)

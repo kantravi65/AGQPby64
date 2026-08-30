@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -99,6 +100,15 @@ fun HomeScreen(
             countBadge = "${bookmarkedCount} Favs",
             containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
             contentColor = MaterialTheme.colorScheme.onErrorContainer
+        ),
+        HomeTileItem(
+            id = "archives",
+            title = "Exam Archives",
+            description = "Post-exam marksheet & result storage",
+            icon = Icons.Outlined.Archive,
+            countBadge = "Results",
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         ),
         HomeTileItem(
             id = "settings",

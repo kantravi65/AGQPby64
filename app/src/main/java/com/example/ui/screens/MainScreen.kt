@@ -140,6 +140,7 @@ fun MainScreen(viewModel: OtsViewModel) {
                                         "saved_papers" -> "Saved Papers"
                                         "recycle_bin" -> "Recycle Bin"
                                         "settings" -> "Settings"
+                                        "archives" -> "Exam Archives"
                                         else -> "Question Bank"
                                     },
                                     fontWeight = FontWeight.SemiBold,
