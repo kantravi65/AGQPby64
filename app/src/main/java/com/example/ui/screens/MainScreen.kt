@@ -286,6 +286,7 @@ fun MainScreen(viewModel: OtsViewModel) {
                         "assemble_paper" -> AssemblePaperScreen(viewModel = viewModel, initialTab = 0)
                         "saved_papers" -> AssemblePaperScreen(viewModel = viewModel, initialTab = 1)
                         "recycle_bin" -> QuestionBankScreen(viewModel = viewModel, initialMode = "backup")
+                        "archives" -> ArchivesScreen(viewModel = viewModel, settingsManager = settingsManager)
                         "settings" -> SettingsScreen(
                             viewModel = viewModel,
                             settingsManager = settingsManager,

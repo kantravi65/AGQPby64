@@ -1,40 +1,42 @@
 import re
 
-with open("app/src/main/java/com/example/ui/viewmodel/OtsViewModel.kt", "r") as f:
-    content = f.read()
+with open('app/src/main/java/com/example/ui/viewmodel/OtsViewModel.kt', 'r') as f:
+    vm = f.read()
 
-# Replace import
-content = content.replace("import com.example.util.WebServerManager", "import com.example.util.WebServerManager\nimport com.example.util.WebServerState\nimport com.example.service.WebServerService\nimport android.content.Intent\nimport android.os.Build")
+old_start = """    fun startWebServer(mode: String = "admin") {
+        val intent = Intent(getApplication(), WebServerService::class.java).apply {
+            putExtra("SERVER_MODE", mode)
+        }"""
+new_start = """    fun startWebServer(mode: String = "admin", adminUser: String = "admin", adminPass: String = "1234") {
+        val intent = Intent(getApplication(), WebServerService::class.java).apply {
+            putExtra("SERVER_MODE", mode)
+            putExtra("ADMIN_USER", adminUser)
+            putExtra("ADMIN_PASS", adminPass)
+        }"""
 
-# Replace webServerUrl property
-content = re.sub(r'private var webServerManager: WebServerManager\? = null\s*private val _webServerUrl = MutableStateFlow<String\?>\(null\)\s*val webServerUrl: StateFlow<String\?> = _webServerUrl.asStateFlow\(\)', 'val webServerUrl: StateFlow<String?> = WebServerState.url', content)
+vm = vm.replace(old_start, new_start)
 
-# Replace startWebServer
-start_func_pattern = r'fun startWebServer\(\) \{[\s\S]*?\}'
-new_start_func = '''fun startWebServer() {
-        val intent = Intent(getApplication(), WebServerService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            getApplication<Application>().startForegroundService(intent)
-        } else {
-            getApplication<Application>().startService(intent)
-        }
-    }'''
-content = re.sub(start_func_pattern, new_start_func, content, count=1)
+with open('app/src/main/java/com/example/ui/viewmodel/OtsViewModel.kt', 'w') as f:
+    f.write(vm)
 
-# Replace stopWebServer
-stop_func_pattern = r'fun stopWebServer\(\) \{[\s\S]*?\}'
-new_stop_func = '''fun stopWebServer() {
-        val intent = Intent(getApplication(), WebServerService::class.java)
-        getApplication<Application>().stopService(intent)
-    }'''
-content = re.sub(stop_func_pattern, new_stop_func, content, count=1)
+with open('app/src/main/java/com/example/service/WebServerService.kt', 'r') as f:
+    svc = f.read()
 
-# Remove stopWebServer from onCleared
-on_cleared_pattern = r'override fun onCleared\(\) \{\s*super\.onCleared\(\)\s*stopWebServer\(\)\s*\}'
-new_on_cleared = '''override fun onCleared() {
-        super.onCleared()
-    }'''
-content = re.sub(on_cleared_pattern, new_on_cleared, content)
+old_svc_mode = """        val mode = intent?.getStringExtra("SERVER_MODE") ?: "admin"
+        val notification = createNotification(mode)"""
+new_svc_mode = """        val mode = intent?.getStringExtra("SERVER_MODE") ?: "admin"
+        val adminUser = intent?.getStringExtra("ADMIN_USER") ?: "admin"
+        val adminPass = intent?.getStringExtra("ADMIN_PASS") ?: "1234"
+        val notification = createNotification(mode)"""
 
-with open("app/src/main/java/com/example/ui/viewmodel/OtsViewModel.kt", "w") as f:
-    f.write(content)
+svc = svc.replace(old_svc_mode, new_svc_mode)
+
+old_start_server = """            webServerManager = WebServerManager(applicationContext, repository, mode)
+            webServerManager?.startServer { url ->"""
+new_start_server = """            webServerManager = WebServerManager(applicationContext, repository, mode)
+            webServerManager?.startServer(adminUser, adminPass) { url ->"""
+svc = svc.replace(old_start_server, new_start_server)
+
+with open('app/src/main/java/com/example/service/WebServerService.kt', 'w') as f:
+    f.write(svc)
+

@@ -1164,9 +1164,11 @@ Question,BookTitle,Chapter,Type,Difficulty,Options,Answer,Explanation,Marks
         }
     }
 
-    fun startWebServer(mode: String = "admin") {
+    fun startWebServer(mode: String = "admin", adminUser: String = "admin", adminPass: String = "1234") {
         val intent = Intent(getApplication(), WebServerService::class.java).apply {
             putExtra("SERVER_MODE", mode)
+            putExtra("ADMIN_USER", adminUser)
+            putExtra("ADMIN_PASS", adminPass)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getApplication<Application>().startForegroundService(intent)

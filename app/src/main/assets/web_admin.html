@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Exam Monitor - Supervisor Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
+        header { background-color: #0f172a; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        h1 { margin: 0; font-size: 20px; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; padding: 20px; }
+        .candidate-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .video-container { width: 100%; height: 200px; background-color: #000; display: flex; align-items: center; justify-content: center; position: relative; }
+        .video-container img { width: 100%; height: 100%; object-fit: cover; }
+        .no-feed { color: #666; font-size: 14px; }
+        .candidate-info { padding: 15px; flex-grow: 1; }
+        .name { font-weight: bold; font-size: 18px; margin-bottom: 5px; color: #1e293b; }
+        .roll { color: #64748b; font-size: 14px; margin-bottom: 10px; }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .status-testing { background-color: #fef3c7; color: #d97706; }
+        .status-submitted { background-color: #d1fae5; color: #047857; }
+        .status-disqualified { background-color: #fee2e2; color: #b91c1c; }
+        .details { margin-top: 15px; font-size: 13px; color: #475569; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .actions { padding: 15px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; }
+        button { padding: 8px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+        .btn-warn { background-color: #f59e0b; color: white; }
+        .btn-dispatch { background-color: #3b82f6; color: white; }
+        .btn-dispatched { background-color: #10b981; color: white; cursor: not-allowed; }
+        .live-indicator { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: bold; }
+        .dot { width: 10px; height: 10px; background-color: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        .stats-bar { padding: 10px 20px; background: white; border-bottom: 1px solid #e2e8f0; display: flex; gap: 20px; font-size: 14px; color: #475569; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Live Exam Web Monitor</h1>
+        <div class="live-indicator"><div class="dot"></div> SERVER ACTIVE</div>
+    </header>
+    <div class="stats-bar" id="statsBar">
+        Loading statistics...
+    </div>
+    
+    <div class="grid-container" id="candidateGrid">
+        <!-- Candidate Cards will be injected here -->
+    </div>
+
+    <script>
+        async function fetchCandidates() {
+            try {
+                const response = await fetch('/api/admin/status');
+                if (response.status === 401) {
+                    // Browser will prompt for auth
+                    return;
+                }
+                const candidates = await response.json();
+                renderGrid(candidates);
+                updateStats(candidates);
+            } catch (err) {
+                console.error("Failed to fetch status", err);
+            }
+        }
+
+        function getStatusClass(status) {
+            if (status === 'Testing') return 'status-testing';
+            if (status === 'Disqualified') return 'status-disqualified';
+            return 'status-submitted';
+        }
+
+        function renderGrid(candidates) {
+            const grid = document.getElementById('candidateGrid');
+            if (candidates.length === 0) {
+                grid.innerHTML = '<div style="padding: 20px; color: #64748b;">No active candidates. Waiting for logins...</div>';
+                return;
+            }
+            
+            let html = '';
+            candidates.forEach(c => {
+                const isDispatched = c.isDispatched;
+                const frame = c.latestFrameBase64 || c.portraitBase64 || null;
+                const statusCls = getStatusClass(c.status);
+                
+                html += `
+                    <div class="candidate-card">
+                        <div class="video-container">
+                            ${frame ? `<img src="${frame}" alt="Live Feed">` : `<div class="no-feed">NO CAMERA FEED</div>`}
+                        </div>
+                        <div class="candidate-info">
+                            <div class="name">${c.name}</div>
+                            <div class="roll">${c.rollNumber}</div>
+                            <span class="status-badge ${statusCls}">${c.status}</span>
+                            
+                            <div class="details">
+                                <div><b>Score:</b> ${c.score}/${c.totalMarks}</div>
+                                <div><b>Warnings:</b> ${c.warningCount}/3</div>
+                                <div style="grid-column: span 2;"><b>Contact:</b> ${c.mobile || 'N/A'}</div>
+                            </div>
+                        </div>
+                        <div class="actions">
+                            ${c.status === 'Testing' ? 
+                                `<button class="btn-warn" onclick="issueWarning('${c.rollNumber}')">⚠️ Issue Warning</button>` : 
+                                (isDispatched ? 
+                                    `<button class="btn-dispatched" disabled>✓ Dispatched</button>` : 
+                                    `<button class="btn-dispatch" onclick="dispatchResult('${c.rollNumber}')">📤 Dispatch & SMS</button>`)
+                            }
+                        </div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+        }
+        
+        function updateStats(candidates) {
+            const total = candidates.length;
+            const active = candidates.filter(c => c.status === 'Testing').length;
+            const submitted = candidates.filter(c => c.status === 'Submitted').length;
+            const disqualified = candidates.filter(c => c.status === 'Disqualified').length;
+            
+            document.getElementById('statsBar').innerHTML = `
+                <div><b>Total Connections:</b> ${total}</div>
+                <div><b>Active Testing:</b> ${active}</div>
+                <div><b>Submitted:</b> ${submitted}</div>
+                <div><b>Disqualified:</b> ${disqualified}</div>
+            `;
+        }
+
+        async function issueWarning(roll) {
+            const msg = prompt("Enter warning message for candidate:");
+            if (!msg) return;
+            try {
+                await fetch('/api/admin/warn', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rollNumber: roll, message: msg })
+                });
+                alert("Warning sent!");
+            } catch (e) {
+                alert("Failed to send warning.");
+            }
+        }
+
+        async function dispatchResult(roll) {
+            if (!confirm("Are you sure you want to finalize and dispatch this result?")) return;
+            try {
+                await fetch('/api/admin/dispatch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rollNumber: roll })
+                });
+            } catch (e) {
+                alert("Failed to dispatch.");
+            }
+        }
+
+        // Start heartbeat polling
+        setInterval(fetchCandidates, 2000);
+        fetchCandidates();
+    </script>
+</body>
+</html>

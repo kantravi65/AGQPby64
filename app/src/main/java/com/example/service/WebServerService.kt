@@ -34,6 +34,8 @@ class WebServerService : Service() {
         }
 
         val mode = intent?.getStringExtra("SERVER_MODE") ?: "admin"
+        val adminUser = intent?.getStringExtra("ADMIN_USER") ?: "admin"
+        val adminPass = intent?.getStringExtra("ADMIN_PASS") ?: "1234"
         val notification = createNotification(mode)
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -51,7 +53,7 @@ class WebServerService : Service() {
                 database.testAttemptDao()
             )
             webServerManager = WebServerManager(applicationContext, repository, mode)
-            webServerManager?.startServer { url ->
+            webServerManager?.startServer(adminUser, adminPass) { url ->
                 WebServerState.setUrl(url, mode)
             }
         }
