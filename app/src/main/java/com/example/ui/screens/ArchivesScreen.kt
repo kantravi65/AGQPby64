@@ -78,6 +78,7 @@ fun ArchivesScreen(viewModel: OtsViewModel, settingsManager: SettingsManager) {
                 listOf("") + booksList.map { it.title }.distinct().sorted()
             }
             
+            val liveExamName by viewModel.liveTestExamName.collectAsState()
             val liveSubject by viewModel.liveTestSubject.collectAsState()
             val liveMcqCount by viewModel.liveTestMcqCount.collectAsState()
             val liveFibCount by viewModel.liveTestFibCount.collectAsState()
@@ -605,8 +606,20 @@ fun ArchivesScreen(viewModel: OtsViewModel, settingsManager: SettingsManager) {
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = { viewModel.stopWebServer() },
+                                        Button(
+                        onClick = {
+                            viewModel.stopWebServer()
+                            viewModel.generateMeritListPdf(context)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.PictureAsPdf, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("End Exam & Generate Merit List")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = { viewModel.stopWebServer() },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -630,6 +643,13 @@ fun ArchivesScreen(viewModel: OtsViewModel, settingsManager: SettingsManager) {
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             
+                                                        OutlinedTextField(
+                                value = liveExamName,
+                                onValueChange = { viewModel.updateLiveTestConfig(it, liveSubject, liveMcqCount, liveFibCount, liveTfCount, liveDuration) },
+                                label = { Text("Exam Name (For Candidate Portal)") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
                             // 1. Subject Select Dropdown
                             var expandedSubj by remember { mutableStateOf(false) }
                             Box(modifier = Modifier.fillMaxWidth()) {
@@ -654,7 +674,7 @@ fun ArchivesScreen(viewModel: OtsViewModel, settingsManager: SettingsManager) {
                                         DropdownMenuItem(
                                             text = { Text(if (s.isEmpty()) "All Subjects" else s) },
                                             onClick = {
-                                                viewModel.updateLiveTestConfig(s, liveMcqCount, liveFibCount, liveTfCount, liveDuration)
+                                                viewModel.updateLiveTestConfig(liveExamName, s, liveMcqCount, liveFibCount, liveTfCount, liveDuration)
                                                 expandedSubj = false
                                             }
                                         )
@@ -670,7 +690,7 @@ fun ArchivesScreen(viewModel: OtsViewModel, settingsManager: SettingsManager) {
                                     value = liveMcqCount.toString(),
                                     onValueChange = {
                                         val count = it.toIntOrNull() ?: 0
-                                        viewModel.updateLiveTestConfig(liveSubject, count, liveFibCount, liveTfCount, liveDuration)
+                                        viewModel.updateLiveTestConfig(liveExamName, liveSubject, count, liveFibCount, liveTfCount, liveDuration)
                                     },
                                     label = { Text("MCQs") },
                                     modifier = Modifier.weight(1f),
@@ -680,7 +700,7 @@ fun ArchivesScreen(viewModel: OtsViewModel, settingsManager: SettingsManager) {
                                     value = liveFibCount.toString(),
                                     onValueChange = {
                                         val count = it.toIntOrNull() ?: 0
-                                        viewModel.updateLiveTestConfig(liveSubject, liveMcqCount, count, liveTfCount, liveDuration)
+                                        viewModel.updateLiveTestConfig(liveExamName, liveSubject, liveMcqCount, count, liveTfCount, liveDuration)
                                     },
                                     label = { Text("FIBs") },
                                     modifier = Modifier.weight(1f),
@@ -690,7 +710,7 @@ fun ArchivesScreen(viewModel: OtsViewModel, settingsManager: SettingsManager) {
                                     value = liveTfCount.toString(),
                                     onValueChange = {
                                         val count = it.toIntOrNull() ?: 0
-                                        viewModel.updateLiveTestConfig(liveSubject, liveMcqCount, liveFibCount, count, liveDuration)
+                                        viewModel.updateLiveTestConfig(liveExamName, liveSubject, liveMcqCount, liveFibCount, count, liveDuration)
                                     },
                                     label = { Text("T/F") },
                                     modifier = Modifier.weight(1f),
@@ -705,7 +725,7 @@ fun ArchivesScreen(viewModel: OtsViewModel, settingsManager: SettingsManager) {
                                 value = liveDuration.toString(),
                                 onValueChange = {
                                     val mins = it.toIntOrNull() ?: 30
-                                    viewModel.updateLiveTestConfig(liveSubject, liveMcqCount, liveFibCount, liveTfCount, mins)
+                                    viewModel.updateLiveTestConfig(liveExamName, liveSubject, liveMcqCount, liveFibCount, liveTfCount, mins)
                                 },
                                 label = { Text("Exam Duration (Minutes)") },
                                 trailingIcon = { Icon(Icons.Default.Timer, contentDescription = null) },

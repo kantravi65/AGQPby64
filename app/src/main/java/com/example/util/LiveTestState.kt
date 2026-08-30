@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LiveTestConfig(
+    val examName: String = "Online Secured Exam",
     val subject: String = "",
     val mcqCount: Int = 10,
     val fibCount: Int = 0,

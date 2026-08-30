@@ -29,6 +29,8 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
     val webServerUrl: StateFlow<String?> = WebServerState.url
 
     // Live Test Configuration State
+    private val _liveTestExamName = MutableStateFlow("Online Secured Exam")
+    val liveTestExamName: StateFlow<String> = _liveTestExamName.asStateFlow()
     private val _liveTestSubject = MutableStateFlow("")
     val liveTestSubject: StateFlow<String> = _liveTestSubject.asStateFlow()
 
@@ -47,7 +49,8 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
     // Expose candidates session list from LiveTestState
     val liveCandidates: StateFlow<List<com.example.util.CandidateSession>> = com.example.util.LiveTestState.candidates
 
-    fun updateLiveTestConfig(subject: String, mcqs: Int, fibs: Int, tfs: Int, duration: Int) {
+    fun updateLiveTestConfig(examName: String, subject: String, mcqs: Int, fibs: Int, tfs: Int, duration: Int) {
+        _liveTestExamName.value = examName
         _liveTestSubject.value = subject
         _liveTestMcqCount.value = mcqs
         _liveTestFibCount.value = fibs
@@ -55,12 +58,24 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
         _liveTestDuration.value = duration
         
         com.example.util.LiveTestState.config = com.example.util.LiveTestConfig(
+            examName = examName,
             subject = subject,
             mcqCount = mcqs,
             fibCount = fibs,
             tfCount = tfs,
             durationMinutes = duration
         )
+    }
+    
+    fun generateMeritListPdf(context: android.content.Context) {
+        val candidates = com.example.util.LiveTestState.candidates.value
+        val config = com.example.util.LiveTestState.config
+        val pdf = com.example.util.PdfPrintUtils.generateLiveTestReportPdf(context, candidates, config.subject, config.durationMinutes)
+        if (pdf != null) {
+            android.widget.Toast.makeText(context, "Merit List Generated!", android.widget.Toast.LENGTH_SHORT).show()
+        } else {
+            android.widget.Toast.makeText(context, "Failed to generate Merit List.", android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun dispatchCandidateMarksheet(rollNumber: String) {

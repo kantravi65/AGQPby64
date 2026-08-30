@@ -719,6 +719,96 @@
 </div>
 
 <script>
+let currentPortraitBase64 = null;
+let videoStream = null;
+let heartbeatInterval = null;
+
+async function initCamera() {
+    try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            enableCameraFallback();
+            return;
+        }
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        const videoElement = document.getElementById('cameraPreview');
+        if (videoElement) {
+            videoElement.srcObject = videoStream;
+        }
+    } catch (err) {
+        console.error("Camera error:", err);
+        enableCameraFallback();
+    }
+}
+
+let fallbackImageBase64 = null;
+
+function enableCameraFallback() {
+    const preview = document.getElementById('cameraPreview');
+    if (preview) {
+        preview.outerHTML = `
+            <div style="width:100%; height:180px; background:#333; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:8px; text-align:center; padding: 20px;" id="fallbackContainer">
+                <span style="margin-bottom:10px;">Live Camera Blocked (HTTP).<br>Take a photo manually:</span>
+                <input type="file" accept="image/*" capture="user" id="manualPhotoInput" style="max-width: 90%;">
+                <img id="manualPhotoPreview" style="display:none; max-height:100px; margin-top:10px; border-radius:4px;"/>
+            </div>
+        `;
+        document.getElementById('manualPhotoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    fallbackImageBase64 = evt.target.result;
+                    const imgPreview = document.getElementById('manualPhotoPreview');
+                    imgPreview.src = fallbackImageBase64;
+                    imgPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+}
+
+window.addEventListener('load', initCamera);
+
+function captureFrame() {
+    if (fallbackImageBase64) return fallbackImageBase64;
+    const fallback = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+    const videoElement = document.getElementById('cameraPreview');
+    if (!videoStream || !videoElement) {
+        return fallback;
+    }
+    const width = videoElement.videoWidth || 320;
+    const height = videoElement.videoHeight || 240;
+    if (width === 0 || height === 0) return fallback;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.5);
+}
+
+async function sendHeartbeat() {
+    if (!cNumber || isSubmitted) return;
+    const frame = captureFrame();
+    try {
+        const response = await fetch('/api/livetest/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rollNumber: cNumber, frameBase64: frame || "" })
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.warningMessage && data.warningMessage.trim() !== "") {
+                alert("SUPERVISOR WARNING: " + data.warningMessage);
+            }
+        }
+    } catch (e) {
+        console.error("Heartbeat error", e);
+    }
+}
+
 let testQuestions = [];
 let cName = "";
 let cNumber = "";
@@ -783,6 +873,10 @@ async function initiateRegistration() {
         const data = await response.json();
         testQuestions = data.questions;
         timeLimitSeconds = data.durationMinutes * 60;
+        
+        document.getElementById('portalHeaderTitle').innerText = data.examName || 'Examination Portal';
+        document.getElementById('portalHeaderSub').innerText = (data.subjectName && data.subjectName !== "") ? 'Subject: ' + data.subjectName : 'High Security Environment';
+
 
         if (!testQuestions || testQuestions.length === 0) {
             alert("There are no questions assigned for this exam currently. Please ask the administrator to configure the question parameters.");

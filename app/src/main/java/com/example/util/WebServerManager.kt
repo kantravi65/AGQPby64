@@ -274,10 +274,10 @@ class WebServerManager(private val appContext: Context, private val repository: 
                 }
 
                 @Serializable
-                data class LoginRequest(val name: String, val rollNumber: String)
+                data class LoginRequest(val name: String, val rollNumber: String, val email: String = "", val mobile: String = "", val portraitBase64: String = "")
 
                 @Serializable
-                data class LoginResponse(val success: Boolean, val questions: List<QuestionDto>, val durationMinutes: Int)
+                data class LoginResponse(val success: Boolean, val questions: List<QuestionDto>, val durationMinutes: Int, val examName: String = "", val subjectName: String = "")
 
                 post("/api/livetest/login") {
                     try {
@@ -318,6 +318,9 @@ class WebServerManager(private val appContext: Context, private val repository: 
                             id = java.util.UUID.randomUUID().toString(),
                             name = req.name,
                             rollNumber = req.rollNumber,
+                            email = req.email,
+                            mobile = req.mobile,
+                            portraitBase64 = req.portraitBase64,
                             loginTime = System.currentTimeMillis(),
                             status = "Testing",
                             questionsJson = kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(QuestionDto.serializer()), questionDtos),
@@ -329,7 +332,7 @@ class WebServerManager(private val appContext: Context, private val repository: 
                         )
                         
                         LiveTestState.addCandidate(session)
-                        call.respond(LoginResponse(true, questionDtos, LiveTestState.config.durationMinutes))
+                        call.respond(LoginResponse(true, questionDtos, LiveTestState.config.durationMinutes, LiveTestState.config.examName, LiveTestState.config.subject))
                     } catch (e: Exception) {
                         Log.e("WebServerManager", "Error in login: ${e.message}", e)
                         call.respond(HttpStatusCode.InternalServerError, e.message ?: "Internal Error")
