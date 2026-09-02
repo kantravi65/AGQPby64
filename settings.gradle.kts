@@ -16,5 +16,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "QPby64"
+rootProject.name = "QB4EnGby64"
 include(":app")
