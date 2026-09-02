@@ -239,7 +239,7 @@ class SettingsManager(context: Context) {
         set(value) = prefs.edit().putString("google_drive_backup_path", value).apply()
 
     var googleWebClientId: String
-        get() = prefs.getString(KEY_GOOGLE_WEB_CLIENT_ID, HARDCODED_WEB_CLIENT_ID)?.ifBlank { HARDCODED_WEB_CLIENT_ID } ?: HARDCODED_WEB_CLIENT_ID
+        get() = HARDCODED_WEB_CLIENT_ID
         set(value) = prefs.edit().putString(KEY_GOOGLE_WEB_CLIENT_ID, value).apply()
 
     var isFtpConnectionValid: Boolean
