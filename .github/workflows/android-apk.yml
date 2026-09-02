@@ -45,7 +45,7 @@ jobs:
           keytool -list -v -keystore debug.keystore -storepass android -alias androiddebugkey | grep "SHA1"
 
       - name: Build Debug APK
-        run: gradle assembleDebug
+        run: ./gradlew assembleDebug
         env:
           APP_UPDATE_REPO: ${{ secrets.APP_UPDATE_REPO }}
           APP_UPDATE_TOKEN: ${{ secrets.APP_UPDATE_TOKEN }}
