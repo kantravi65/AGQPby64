@@ -136,6 +136,7 @@ fun MainScreen(viewModel: OtsViewModel) {
                                     text = when (currentScreen) {
                                         "manage_bank" -> "Question Bank"
                                         "build_bank" -> "Build Bank"
+                                        "share_database" -> "Cloud Database Sharing"
                                         "assemble_paper" -> "Paper Builder"
                                         "saved_papers" -> "Saved Papers"
                                         "recycle_bin" -> "Recycle Bin"
@@ -166,6 +167,25 @@ fun MainScreen(viewModel: OtsViewModel) {
                             }
                         },
                         actions = {
+                            val unreadSharesCount by viewModel.unreadReceivedSharesCount.collectAsState()
+                            IconButton(
+                                onClick = { currentScreen = "share_database" }
+                            ) {
+                                BadgedBox(
+                                    badge = {
+                                        if (unreadSharesCount > 0) {
+                                            Badge { Text("$unreadSharesCount") }
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CloudSync,
+                                        contentDescription = "Cloud Database Sharing",
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
+
                             var isSyncing by remember { mutableStateOf(false) }
                             IconButton(
                                 onClick = {
@@ -283,6 +303,11 @@ fun MainScreen(viewModel: OtsViewModel) {
                         )
                         "manage_bank" -> QuestionBankScreen(viewModel = viewModel, initialMode = "manage")
                         "build_bank" -> QuestionBankScreen(viewModel = viewModel, initialMode = "add")
+                        "share_database" -> DatabaseSharingScreen(
+                            viewModel = viewModel,
+                            settingsManager = settingsManager,
+                            onBack = { currentScreen = "home" }
+                        )
                         "assemble_paper" -> AssemblePaperScreen(viewModel = viewModel, initialTab = 0)
                         "saved_papers" -> AssemblePaperScreen(viewModel = viewModel, initialTab = 1)
                         "recycle_bin" -> QuestionBankScreen(viewModel = viewModel, initialMode = "backup")
@@ -291,6 +316,7 @@ fun MainScreen(viewModel: OtsViewModel) {
                             viewModel = viewModel,
                             settingsManager = settingsManager,
                             onLockAppNow = { viewModel.setAppLocked(true) },
+                            onNavigateToDatabaseSharing = { currentScreen = "share_database" },
                             onGoogleSignOut = {
                                 scope.launch {
                                     com.example.util.GoogleDriveSyncManager.signOutGoogle(context, settingsManager)

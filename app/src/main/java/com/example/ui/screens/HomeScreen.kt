@@ -43,6 +43,7 @@ fun HomeScreen(
     val questions by viewModel.questions.collectAsState()
     val books by viewModel.books.collectAsState()
     val papers by viewModel.papers.collectAsState()
+    val unreadReceivedCount by viewModel.unreadReceivedSharesCount.collectAsState()
 
     val bookmarkedCount = remember(questions) { questions.count { it.isBookmarked } }
 
@@ -73,6 +74,15 @@ fun HomeScreen(
             countBadge = "+ New",
             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
             contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+        ),
+        HomeTileItem(
+            id = "share_database",
+            title = "Cloud DB Sharing",
+            description = "Share & receive question banks with users via email",
+            icon = Icons.Default.Share,
+            countBadge = if (unreadReceivedCount > 0) "$unreadReceivedCount New" else "Cloud",
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         ),
         HomeTileItem(
             id = "assemble_paper",

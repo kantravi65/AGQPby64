@@ -7,10 +7,13 @@ import com.example.data.db.AppDatabase
 import com.example.data.model.BookEntity
 import com.example.data.model.PaperEntity
 import com.example.data.model.QuestionEntity
+import com.example.data.model.TestAttemptEntity
 import com.example.data.repository.OtsRepository
 import com.example.util.WebServerManager
 import com.example.util.WebServerState
 import com.example.service.WebServerService
+import com.example.util.DatabaseSharingManager
+import com.example.util.SharedDatabaseItem
 import android.content.Intent
 import android.os.Build
 import kotlinx.coroutines.flow.*
@@ -20,6 +23,14 @@ import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
+
+data class DatabaseImportResult(
+    val success: Boolean,
+    val booksImported: Int = 0,
+    val questionsImported: Int = 0,
+    val papersImported: Int = 0,
+    val errorMessage: String? = null
+)
 
 class OtsViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -46,16 +57,43 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
     private val _liveTestDuration = MutableStateFlow(30)
     val liveTestDuration: StateFlow<Int> = _liveTestDuration.asStateFlow()
 
+    private val _liveTestMaxStrikes = MutableStateFlow(3)
+    val liveTestMaxStrikes: StateFlow<Int> = _liveTestMaxStrikes.asStateFlow()
+
+    private val _liveTestCameraProctoring = MutableStateFlow(true)
+    val liveTestCameraProctoring: StateFlow<Boolean> = _liveTestCameraProctoring.asStateFlow()
+
+    private val _liveTestStrictTabLock = MutableStateFlow(true)
+    val liveTestStrictTabLock: StateFlow<Boolean> = _liveTestStrictTabLock.asStateFlow()
+
+    private val _liveTestBlockClipboard = MutableStateFlow(true)
+    val liveTestBlockClipboard: StateFlow<Boolean> = _liveTestBlockClipboard.asStateFlow()
+
     // Expose candidates session list from LiveTestState
     val liveCandidates: StateFlow<List<com.example.util.CandidateSession>> = com.example.util.LiveTestState.candidates
 
-    fun updateLiveTestConfig(examName: String, subject: String, mcqs: Int, fibs: Int, tfs: Int, duration: Int) {
+    fun updateLiveTestConfig(
+        examName: String,
+        subject: String,
+        mcqs: Int,
+        fibs: Int,
+        tfs: Int,
+        duration: Int,
+        maxStrikes: Int = _liveTestMaxStrikes.value,
+        cameraProctoring: Boolean = _liveTestCameraProctoring.value,
+        strictTabLock: Boolean = _liveTestStrictTabLock.value,
+        blockClipboard: Boolean = _liveTestBlockClipboard.value
+    ) {
         _liveTestExamName.value = examName
         _liveTestSubject.value = subject
         _liveTestMcqCount.value = mcqs
         _liveTestFibCount.value = fibs
         _liveTestTfCount.value = tfs
         _liveTestDuration.value = duration
+        _liveTestMaxStrikes.value = maxStrikes
+        _liveTestCameraProctoring.value = cameraProctoring
+        _liveTestStrictTabLock.value = strictTabLock
+        _liveTestBlockClipboard.value = blockClipboard
         
         com.example.util.LiveTestState.config = com.example.util.LiveTestConfig(
             examName = examName,
@@ -63,7 +101,11 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
             mcqCount = mcqs,
             fibCount = fibs,
             tfCount = tfs,
-            durationMinutes = duration
+            durationMinutes = duration,
+            maxStrikes = maxStrikes,
+            cameraProctoringEnabled = cameraProctoring,
+            strictTabLock = strictTabLock,
+            blockClipboard = blockClipboard
         )
     }
     
@@ -82,6 +124,14 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
         com.example.util.LiveTestState.dispatchMarksheet(rollNumber)
     }
 
+    fun pardonCandidate(rollNumber: String) {
+        com.example.util.LiveTestState.pardonCandidate(rollNumber)
+    }
+
+    fun forceDisqualifyCandidate(rollNumber: String) {
+        com.example.util.LiveTestState.forceDisqualify(rollNumber)
+    }
+
     fun clearLiveTestSessions() {
         com.example.util.LiveTestState.clearSessions()
     }
@@ -93,6 +143,7 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
     val questions: StateFlow<List<QuestionEntity>>
     val books: StateFlow<List<BookEntity>>
     val papers: StateFlow<List<PaperEntity>>
+    val testAttempts: StateFlow<List<TestAttemptEntity>>
 
     // Search and filter states
     private val _searchQuery = MutableStateFlow("")
@@ -166,6 +217,17 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
             emptyList()
         )
 
+        testAttempts = repository.allAttempts.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            emptyList()
+        )
+
+        // Database Cloud Sharing State
+        if (settingsManager.isGoogleSignedIn && settingsManager.googleAccountEmail.isNotBlank()) {
+            initSharingListeners(settingsManager.googleAccountEmail)
+        }
+
         viewModelScope.launch {
             repository.seedSampleDataIfEmpty()
             questions.collect { qList ->
@@ -173,6 +235,37 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         startAutoSyncLoop()
+    }
+
+    // --- DATABASE CLOUD SHARING STATE & FLOWS ---
+    private val _receivedShares = MutableStateFlow<List<SharedDatabaseItem>>(emptyList())
+    val receivedShares: StateFlow<List<SharedDatabaseItem>> = _receivedShares.asStateFlow()
+
+    private val _sentShares = MutableStateFlow<List<SharedDatabaseItem>>(emptyList())
+    val sentShares: StateFlow<List<SharedDatabaseItem>> = _sentShares.asStateFlow()
+
+    val unreadReceivedSharesCount: StateFlow<Int> = _receivedShares.map { list ->
+        list.count { it.status == "shared" }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    private var sharingJob: kotlinx.coroutines.Job? = null
+
+    fun initSharingListeners(userEmail: String) {
+        val clean = userEmail.trim().lowercase()
+        if (clean.isBlank()) return
+        sharingJob?.cancel()
+        sharingJob = viewModelScope.launch {
+            launch {
+                DatabaseSharingManager.getReceivedSharesFlow(clean).collect {
+                    _receivedShares.value = it
+                }
+            }
+            launch {
+                DatabaseSharingManager.getSentSharesFlow(clean).collect {
+                    _sentShares.value = it
+                }
+            }
+        }
     }
 
     fun setSearchQuery(query: String) {
@@ -570,6 +663,220 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
     fun prevPracticeQuestion() {
         if (_practiceIndex.value > 0) {
             jumpToPracticeQuestion(_practiceIndex.value - 1, questions.value.size)
+        }
+    }
+
+    fun exportFullDatabaseBundle(selectedBookIds: Set<String>? = null): Triple<String, Int, Int> {
+        val allB = books.value
+        val allQ = questions.value
+        val allP = papers.value
+
+        val targetBooks = if (selectedBookIds != null) allB.filter { it.id in selectedBookIds } else allB
+        val targetBookTitles = targetBooks.map { it.title.trim().lowercase() }.toSet()
+        val targetBookIds = targetBooks.map { it.id }.toSet()
+
+        val targetQuestions = if (selectedBookIds != null) {
+            allQ.filter { it.bookId in targetBookIds || it.bookTitle.trim().lowercase() in targetBookTitles }
+        } else {
+            allQ
+        }
+        val targetQuestionIds = targetQuestions.map { it.id }.toSet()
+
+        val targetPapers = if (selectedBookIds != null) {
+            allP.filter { paper ->
+                try {
+                    val qIds = JSONArray(paper.questionIdsJson)
+                    var hasMatch = false
+                    for (i in 0 until qIds.length()) {
+                        if (qIds.getString(i) in targetQuestionIds) {
+                            hasMatch = true
+                            break
+                        }
+                    }
+                    hasMatch
+                } catch (_: Exception) { false }
+            }
+        } else {
+            allP
+        }
+
+        val root = JSONObject()
+        root.put("version", 1)
+        root.put("type", "database_bundle")
+        root.put("exportedAt", System.currentTimeMillis())
+
+        val booksArr = JSONArray()
+        targetBooks.forEach { b ->
+            val bObj = JSONObject()
+            bObj.put("id", b.id)
+            bObj.put("title", b.title)
+            bObj.put("chapterCount", b.chapterCount)
+            booksArr.put(bObj)
+        }
+        root.put("books", booksArr)
+
+        val questionsArr = JSONArray()
+        targetQuestions.forEach { q ->
+            val qObj = JSONObject()
+            qObj.put("id", q.id)
+            qObj.put("bookId", q.bookId)
+            qObj.put("bookTitle", q.bookTitle)
+            qObj.put("chapter", q.chapter)
+            qObj.put("type", q.type)
+            qObj.put("difficulty", q.difficulty)
+            qObj.put("question", q.question)
+            qObj.put("optionsJson", q.optionsJson)
+            qObj.put("answer", q.answer)
+            qObj.put("explanation", q.explanation)
+            qObj.put("marks", q.marks)
+            qObj.put("isBookmarked", q.isBookmarked)
+            qObj.put("createdAt", q.createdAt)
+            questionsArr.put(qObj)
+        }
+        root.put("questions", questionsArr)
+
+        val papersArr = JSONArray()
+        targetPapers.forEach { p ->
+            val pObj = JSONObject()
+            pObj.put("id", p.id)
+            pObj.put("title", p.title)
+            pObj.put("subject", p.subject)
+            pObj.put("durationMinutes", p.durationMinutes)
+            pObj.put("totalMarks", p.totalMarks)
+            pObj.put("questionIdsJson", p.questionIdsJson)
+            pObj.put("createdAt", p.createdAt)
+            papersArr.put(pObj)
+        }
+        root.put("papers", papersArr)
+
+        return Triple(root.toString(2), targetQuestions.size, targetPapers.size)
+    }
+
+    suspend fun importFullDatabaseBundle(jsonStr: String): DatabaseImportResult {
+        return try {
+            val trimmed = jsonStr.trim()
+            if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+                return DatabaseImportResult(false, 0, 0, 0, "Invalid JSON data")
+            }
+
+            if (trimmed.startsWith("{")) {
+                val root = JSONObject(trimmed)
+                if (root.has("type") && root.getString("type") == "database_bundle") {
+                    // Import bundle
+                    var booksCount = 0
+                    val booksArr = root.optJSONArray("books") ?: JSONArray()
+                    for (i in 0 until booksArr.length()) {
+                        val bObj = booksArr.getJSONObject(i)
+                        val title = bObj.optString("title", "").trim()
+                        if (title.isNotBlank()) {
+                            val id = bObj.optString("id", "b_" + UUID.randomUUID().toString().take(8))
+                            val chapters = bObj.optInt("chapterCount", 5)
+                            val book = BookEntity(id, title, chapters)
+                            repository.insertBook(book)
+                            booksCount++
+                        }
+                    }
+
+                    val questionsArr = root.optJSONArray("questions") ?: JSONArray()
+                    val rawQuestionsJson = questionsArr.toString()
+                    val qImportPair = importQuestionsFromJson(rawQuestionsJson)
+
+                    var papersCount = 0
+                    val papersArr = root.optJSONArray("papers") ?: JSONArray()
+                    for (i in 0 until papersArr.length()) {
+                        val pObj = papersArr.getJSONObject(i)
+                        val title = pObj.optString("title", "").trim()
+                        if (title.isNotBlank()) {
+                            val id = pObj.optString("id", "p_" + UUID.randomUUID().toString().take(8))
+                            val subject = pObj.optString("subject", "General")
+                            val duration = pObj.optInt("durationMinutes", 30)
+                            val totalMarks = pObj.optInt("totalMarks", 0)
+                            val qIds = pObj.optString("questionIdsJson", "[]")
+                            val paper = PaperEntity(id, title, subject, duration, totalMarks, qIds)
+                            repository.insertPaper(paper)
+                            papersCount++
+                        }
+                    }
+
+                    onDatabaseChanged()
+                    return DatabaseImportResult(true, booksCount, qImportPair.second, papersCount)
+                }
+            }
+
+            // Fallback to importing standard questions
+            val qRes = importQuestionsFromJson(jsonStr)
+            if (qRes.first) {
+                onDatabaseChanged()
+                return DatabaseImportResult(true, 0, qRes.second, 0)
+            } else {
+                return DatabaseImportResult(false, 0, 0, 0, "Could not parse question data")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return DatabaseImportResult(false, 0, 0, 0, e.localizedMessage ?: e.message)
+        }
+    }
+
+    fun shareDatabaseWithUser(
+        senderEmail: String,
+        senderName: String,
+        recipientEmail: String,
+        title: String,
+        description: String,
+        selectedBookIds: Set<String>? = null,
+        onResult: (Boolean, String) -> Unit
+    ) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val bundle = exportFullDatabaseBundle(selectedBookIds)
+                val jsonPayload = bundle.first
+                val qCount = bundle.second
+                val pCount = bundle.third
+                val allB = books.value
+                val bCount = if (selectedBookIds != null) allB.count { it.id in selectedBookIds } else allB.size
+
+                val res = DatabaseSharingManager.shareDatabasePackage(
+                    senderEmail = senderEmail,
+                    senderName = senderName,
+                    recipientEmail = recipientEmail,
+                    title = title,
+                    description = description,
+                    payloadJson = jsonPayload,
+                    questionsCount = qCount,
+                    booksCount = bCount,
+                    papersCount = pCount
+                )
+
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    res.fold(
+                        onSuccess = { shareId ->
+                            onResult(true, "Database successfully shared with $recipientEmail!")
+                        },
+                        onFailure = { err ->
+                            onResult(false, "Sharing failed: ${err.localizedMessage ?: err.message}")
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    onResult(false, "Error: ${e.localizedMessage ?: e.message}")
+                }
+            }
+        }
+    }
+
+    fun markShareImported(shareId: String) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            DatabaseSharingManager.markShareAsImported(shareId)
+        }
+    }
+
+    fun deleteOrRevokeShare(shareId: String, onResult: ((Boolean) -> Unit)? = null) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val res = DatabaseSharingManager.deleteShare(shareId)
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                onResult?.invoke(res.isSuccess)
+            }
         }
     }
 

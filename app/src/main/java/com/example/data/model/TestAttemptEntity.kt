@@ -7,12 +7,18 @@ import androidx.room.PrimaryKey
 data class TestAttemptEntity(
     @PrimaryKey
     val id: String,
-    val paperId: String,
-    val paperTitle: String,
+    val paperId: String = "",
+    val paperTitle: String = "",
     val candidateName: String,
-    val score: Int,
-    val maxMarks: Int,
-    val totalQuestions: Int,
-    val correctAnswers: Int,
+    val rollNumber: String = "",
+    val status: String = "Submitted", // "Testing", "Submitted", "Disqualified"
+    val score: Int = 0,
+    val maxMarks: Int = 0,
+    val totalQuestions: Int = 0,
+    val correctAnswers: Int = 0,
+    val warningCount: Int = 0,
+    val violationsJson: String = "[]",
+    val portraitBase64: String = "",
+    val submittedAnswersJson: String = "{}",
     val timestamp: Long = System.currentTimeMillis()
 )

@@ -59,6 +59,7 @@ fun SettingsScreen(
     viewModel: OtsViewModel,
     settingsManager: SettingsManager,
     onLockAppNow: () -> Unit,
+    onNavigateToDatabaseSharing: () -> Unit = {},
     onGoogleSignOut: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -521,7 +522,62 @@ fun SettingsScreen(
                                 }
                             }
                         }
-                                    }
+                    }
+            }
+        }
+
+        // --- 3.7. CLOUD DATABASE SHARING WITH USERS ---
+        item {
+            val unreadSharesCount by viewModel.unreadReceivedSharesCount.collectAsState()
+            val receivedShares by viewModel.receivedShares.collectAsState()
+            val sentShares by viewModel.sentShares.collectAsState()
+
+            SettingsCategory(
+                title = "Cloud Database Sharing with Users",
+                icon = { Icon(Icons.Default.CloudSync, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+            ) {
+                Text(
+                    text = "Share questions, subjects, and exam papers with other logged-in colleagues via email address, or import packages received from other users.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Card(
+                        modifier = Modifier.weight(1f),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text("Received", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                            Text("${receivedShares.size} Packages", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                            if (unreadSharesCount > 0) {
+                                Text("$unreadSharesCount New", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
+                    Card(
+                        modifier = Modifier.weight(1f),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text("Sent", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                            Text("${sentShares.size} Outgoing", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+
+                Button(
+                    onClick = onNavigateToDatabaseSharing,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Open Database Sharing Center")
+                }
             }
         }
 

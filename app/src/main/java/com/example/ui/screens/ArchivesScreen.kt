@@ -10,6 +10,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -84,9 +86,66 @@ fun ArchivesScreen(viewModel: OtsViewModel, settingsManager: SettingsManager) {
             val liveFibCount by viewModel.liveTestFibCount.collectAsState()
             val liveTfCount by viewModel.liveTestTfCount.collectAsState()
             val liveDuration by viewModel.liveTestDuration.collectAsState()
+            val liveMaxStrikes by viewModel.liveTestMaxStrikes.collectAsState()
+            val liveCameraProctoring by viewModel.liveTestCameraProctoring.collectAsState()
+            val liveStrictTabLock by viewModel.liveTestStrictTabLock.collectAsState()
+            val liveBlockClipboard by viewModel.liveTestBlockClipboard.collectAsState()
             
             var reviewCandidate by remember { mutableStateOf<com.example.util.CandidateSession?>(null) }
             var marksheetCandidate by remember { mutableStateOf<com.example.util.CandidateSession?>(null) }
+            var auditLogsCandidate by remember { mutableStateOf<com.example.util.CandidateSession?>(null) }
+
+            // Dialog: Candidate Security Audit Logs
+            if (auditLogsCandidate != null) {
+                val candidate = auditLogsCandidate!!
+                val violations = remember(candidate) {
+                    try {
+                        kotlinx.serialization.json.Json.decodeFromString<List<com.example.util.ViolationEvent>>(candidate.violationsJson)
+                    } catch (e: Exception) {
+                        emptyList()
+                    }
+                }
+
+                AlertDialog(
+                    onDismissRequest = { auditLogsCandidate = null },
+                    title = { Text("Security Audit: ${candidate.name} (${candidate.rollNumber})") },
+                    text = {
+                        Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+                            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                                Text("Total Strikes: ${candidate.warningCount} / $liveMaxStrikes", fontWeight = FontWeight.Bold, color = if (candidate.warningCount >= liveMaxStrikes) Color.Red else Color(0xFFD97706))
+                                Text("Status: ${candidate.status}", fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            HorizontalDivider()
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (violations.isEmpty()) {
+                                Text("No violations recorded. Candidate followed all exam protocols.", color = Color.Gray)
+                            } else {
+                                violations.forEachIndexed { i, event ->
+                                    val timeStr = remember(event.timestamp) {
+                                        SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(event.timestamp))
+                                    }
+                                    Card(
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                                    ) {
+                                        Column(modifier = Modifier.padding(8.dp)) {
+                                            Text("#${i+1} • $timeStr • ${event.type}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.error)
+                                            Text(event.details, style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { auditLogsCandidate = null }) {
+                            Text("Close")
+                        }
+                    }
+                )
+            }
 
             // Dialog: Candidate Review Answers
             if (reviewCandidate != null) {
@@ -532,11 +591,10 @@ fun ArchivesScreen(viewModel: OtsViewModel, settingsManager: SettingsManager) {
                                                     }
                                                     
                                                     Spacer(modifier = Modifier.height(8.dp))
-                                                    
-                                                    if (session.warningCount > 0) {
+                                                                                                      if (session.warningCount > 0) {
                                                         Text(
-                                                            text = "⚠️ Warnings: ${session.warningCount} / 3",
-                                                            color = Color(0xFFB91C1C),
+                                                            text = "⚠️ Security Strikes: ${session.warningCount} / $liveMaxStrikes",
+                                                            color = if (session.warningCount >= liveMaxStrikes) Color.Red else Color(0xFFD97706),
                                                             style = MaterialTheme.typography.labelSmall,
                                                             fontWeight = FontWeight.Bold,
                                                             modifier = Modifier.padding(bottom = 8.dp)
@@ -559,40 +617,81 @@ fun ArchivesScreen(viewModel: OtsViewModel, settingsManager: SettingsManager) {
                                                     ) {
                                                         OutlinedButton(
                                                             onClick = { reviewCandidate = session },
-                                                            modifier = Modifier.weight(1.1f).height(36.dp),
+                                                            modifier = Modifier.weight(1f).height(36.dp),
                                                             contentPadding = PaddingValues(0.dp)
                                                         ) {
                                                             Text("Review", style = MaterialTheme.typography.bodySmall)
                                                         }
                                                         OutlinedButton(
                                                             onClick = { marksheetCandidate = session },
-                                                            modifier = Modifier.weight(1.3f).height(36.dp),
+                                                            modifier = Modifier.weight(1.1f).height(36.dp),
                                                             contentPadding = PaddingValues(0.dp)
                                                         ) {
                                                             Text("Marksheet", style = MaterialTheme.typography.bodySmall)
                                                         }
-                                                        
-                                                        if (session.isDispatched) {
-                                                            Button(
-                                                                onClick = {},
-                                                                enabled = false,
-                                                                modifier = Modifier.weight(1.5f).height(36.dp),
-                                                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
-                                                                contentPadding = PaddingValues(0.dp)
-                                                            ) {
-                                                                Text("Dispatched ✓", style = MaterialTheme.typography.bodySmall, color = Color.White)
+                                                        OutlinedButton(
+                                                            onClick = { auditLogsCandidate = session },
+                                                            modifier = Modifier.weight(1.1f).height(36.dp),
+                                                            contentPadding = PaddingValues(0.dp)
+                                                        ) {
+                                                            Text("Audit", style = MaterialTheme.typography.bodySmall)
+                                                        }
+                                                    }
+
+                                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                    ) {
+                                                        if (session.status == "Testing") {
+                                                            if (session.warningCount > 0) {
+                                                                Button(
+                                                                    onClick = {
+                                                                        viewModel.pardonCandidate(session.rollNumber)
+                                                                        Toast.makeText(context, "Pardoned strikes for ${session.name}", Toast.LENGTH_SHORT).show()
+                                                                    },
+                                                                    modifier = Modifier.weight(1f).height(36.dp),
+                                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                                                                    contentPadding = PaddingValues(0.dp)
+                                                                ) {
+                                                                    Text("Pardon", style = MaterialTheme.typography.bodySmall, color = Color.White)
+                                                                }
                                                             }
-                                                        } else {
                                                             Button(
                                                                 onClick = {
-                                                                    viewModel.dispatchCandidateMarksheet(session.rollNumber)
-                                                                    Toast.makeText(context, "Marksheet successfully dispatched to candidate ${session.name}!", Toast.LENGTH_SHORT).show()
+                                                                    viewModel.forceDisqualifyCandidate(session.rollNumber)
+                                                                    Toast.makeText(context, "Disqualified ${session.name}", Toast.LENGTH_SHORT).show()
                                                                 },
-                                                                modifier = Modifier.weight(1.5f).height(36.dp),
-                                                                contentPadding = PaddingValues(0.dp),
-                                                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                                                                modifier = Modifier.weight(1f).height(36.dp),
+                                                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                                                                contentPadding = PaddingValues(0.dp)
                                                             ) {
-                                                                Text("Dispatch", style = MaterialTheme.typography.bodySmall)
+                                                                Text("Disqualify", style = MaterialTheme.typography.bodySmall, color = Color.White)
+                                                            }
+                                                        } else {
+                                                            if (session.isDispatched) {
+                                                                Button(
+                                                                    onClick = {},
+                                                                    enabled = false,
+                                                                    modifier = Modifier.fillMaxWidth().height(36.dp),
+                                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
+                                                                    contentPadding = PaddingValues(0.dp)
+                                                                ) {
+                                                                    Text("Dispatched ✓", style = MaterialTheme.typography.bodySmall, color = Color.White)
+                                                                }
+                                                            } else {
+                                                                Button(
+                                                                    onClick = {
+                                                                        viewModel.dispatchCandidateMarksheet(session.rollNumber)
+                                                                        Toast.makeText(context, "Marksheet successfully dispatched to candidate ${session.name}!", Toast.LENGTH_SHORT).show()
+                                                                    },
+                                                                    modifier = Modifier.fillMaxWidth().height(36.dp),
+                                                                    contentPadding = PaddingValues(0.dp),
+                                                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                                                                ) {
+                                                                    Text("Dispatch & SMS", style = MaterialTheme.typography.bodySmall)
+                                                                }
                                                             }
                                                         }
                                                     }
@@ -720,18 +819,66 @@ fun ArchivesScreen(viewModel: OtsViewModel, settingsManager: SettingsManager) {
                             
                             Spacer(modifier = Modifier.height(12.dp))
                             
-                            // 3. Duration input
-                            OutlinedTextField(
-                                value = liveDuration.toString(),
-                                onValueChange = {
-                                    val mins = it.toIntOrNull() ?: 30
-                                    viewModel.updateLiveTestConfig(liveExamName, liveSubject, liveMcqCount, liveFibCount, liveTfCount, mins)
-                                },
-                                label = { Text("Exam Duration (Minutes)") },
-                                trailingIcon = { Icon(Icons.Default.Timer, contentDescription = null) },
-                                modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
-                            )
+                            // 3. Duration & Strike limit input
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedTextField(
+                                    value = liveDuration.toString(),
+                                    onValueChange = {
+                                        val mins = it.toIntOrNull() ?: 30
+                                        viewModel.updateLiveTestConfig(liveExamName, liveSubject, liveMcqCount, liveFibCount, liveTfCount, mins, liveMaxStrikes, liveCameraProctoring, liveStrictTabLock, liveBlockClipboard)
+                                    },
+                                    label = { Text("Duration (Mins)") },
+                                    modifier = Modifier.weight(1f),
+                                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                                )
+                                OutlinedTextField(
+                                    value = liveMaxStrikes.toString(),
+                                    onValueChange = {
+                                        val strikes = it.toIntOrNull() ?: 3
+                                        viewModel.updateLiveTestConfig(liveExamName, liveSubject, liveMcqCount, liveFibCount, liveTfCount, liveDuration, strikes, liveCameraProctoring, liveStrictTabLock, liveBlockClipboard)
+                                    },
+                                    label = { Text("Max Strikes") },
+                                    modifier = Modifier.weight(1f),
+                                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                            HorizontalDivider()
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text("Anti-Cheating & Proctoring Options", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                            
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text("Live Webcam Proctoring", style = MaterialTheme.typography.bodyMedium)
+                                Switch(
+                                    checked = liveCameraProctoring,
+                                    onCheckedChange = {
+                                        viewModel.updateLiveTestConfig(liveExamName, liveSubject, liveMcqCount, liveFibCount, liveTfCount, liveDuration, liveMaxStrikes, it, liveStrictTabLock, liveBlockClipboard)
+                                    }
+                                )
+                            }
+                            
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text("Strict Fullscreen & Tab Lock", style = MaterialTheme.typography.bodyMedium)
+                                Switch(
+                                    checked = liveStrictTabLock,
+                                    onCheckedChange = {
+                                        viewModel.updateLiveTestConfig(liveExamName, liveSubject, liveMcqCount, liveFibCount, liveTfCount, liveDuration, liveMaxStrikes, liveCameraProctoring, it, liveBlockClipboard)
+                                    }
+                                )
+                            }
+
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text("Block Clipboard & DevTools Keys", style = MaterialTheme.typography.bodyMedium)
+                                Switch(
+                                    checked = liveBlockClipboard,
+                                    onCheckedChange = {
+                                        viewModel.updateLiveTestConfig(liveExamName, liveSubject, liveMcqCount, liveFibCount, liveTfCount, liveDuration, liveMaxStrikes, liveCameraProctoring, liveStrictTabLock, it)
+                                    }
+                                )
+                            }
                         }
                     }
 
@@ -792,13 +939,12 @@ fun ArchivesScreen(viewModel: OtsViewModel, settingsManager: SettingsManager) {
                     }
                 }
             }
-        
-                }
-            }
-        } else {
-            ArchivesTabContent(padding)
         }
     }
+} else {
+    ArchivesTabContent(padding)
+}
+}
 }
 
 @Composable

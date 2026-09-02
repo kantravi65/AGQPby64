@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "920425507159",
+    "project_id": "proud-apogee-247219",
+    "storage_bucket": "proud-apogee-247219.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:920425507159:android:301a98cc3fed155606f612",
+        "android_client_info": {
+          "package_name": "com.aistudio.questionbank.v1.zelcbr"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "920425507159-plg7opd822pjan4a2dnp10m0h48b78cp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.questionbank.v1.zelcbr",
+            "certificate_hash": "7d144d59720ae83a2ff2c3b7221ec9c3a8e4cf71"
+          }
+        },
+        {
+          "client_id": "920425507159-5h5fvp8hpsdmmrerjthqd9aadkpmt0f2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCw9PBQiQBGJFgsmmUnC6Ve3iEs8ZoZ5HA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "920425507159-5h5fvp8hpsdmmrerjthqd9aadkpmt0f2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

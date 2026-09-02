@@ -114,6 +114,47 @@ class WebServerManager(private val appContext: Context, private val repository: 
                             LiveTestState.setWarning(roll, msg)
                             call.respond(HttpStatusCode.OK, "Warning Set")
                         }
+
+                        post("/api/admin/pardon") {
+                            if (!checkAuth(call)) return@post
+                            val request = call.receive<Map<String, String>>()
+                            val roll = request["rollNumber"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                            LiveTestState.pardonCandidate(roll)
+                            call.respond(HttpStatusCode.OK, "Pardoned")
+                        }
+
+                        post("/api/admin/force-submit") {
+                            if (!checkAuth(call)) return@post
+                            val request = call.receive<Map<String, String>>()
+                            val roll = request["rollNumber"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                            val candidate = LiveTestState.candidates.value.find { it.rollNumber == roll }
+                            if (candidate != null) {
+                                LiveTestState.forceDisqualify(roll)
+                                try {
+                                    val attempt = com.example.data.model.TestAttemptEntity(
+                                        id = candidate.id,
+                                        paperId = LiveTestState.config.subject,
+                                        paperTitle = LiveTestState.config.examName,
+                                        candidateName = candidate.name,
+                                        rollNumber = candidate.rollNumber,
+                                        status = "Disqualified",
+                                        score = candidate.score,
+                                        maxMarks = candidate.totalMarks,
+                                        totalQuestions = try { kotlinx.serialization.json.Json.decodeFromString<List<QuestionDto>>(candidate.questionsJson).size } catch(e: Exception) { 0 },
+                                        correctAnswers = 0,
+                                        warningCount = candidate.warningCount,
+                                        violationsJson = candidate.violationsJson,
+                                        portraitBase64 = candidate.portraitBase64,
+                                        submittedAnswersJson = candidate.answersJson,
+                                        timestamp = System.currentTimeMillis()
+                                    )
+                                    repository.recordTestAttempt(attempt)
+                                } catch (e: Exception) {
+                                    Log.e("WebServerManager", "Error saving force-submitted attempt: ${e.message}", e)
+                                }
+                            }
+                            call.respond(HttpStatusCode.OK, "Force Submitted")
+                        }
                         
                         post("/api/admin/dispatch") {
                             if (!checkAuth(call)) return@post
@@ -342,16 +383,33 @@ class WebServerManager(private val appContext: Context, private val repository: 
                 @Serializable
                 data class SubmitRequest(val rollNumber: String, val answers: Map<String, String>, val status: String)
 
-                                        post("/api/livetest/heartbeat") {
-                            val request = call.receive<Map<String, String>>()
-                            val roll = request["rollNumber"] ?: return@post call.respond(HttpStatusCode.BadRequest)
-                            val frameBase64 = request["frameBase64"] ?: ""
-                            
-                            val warningMsg = LiveTestState.updateFrame(roll, frameBase64)
-                            call.respond(mapOf("warningMessage" to warningMsg))
-                        }
+                @Serializable
+                data class ViolationReportRequest(val rollNumber: String, val type: String = "WARNING", val details: String = "")
 
-                        post("/api/livetest/submit") {
+                post("/api/livetest/heartbeat") {
+                    val request = call.receive<Map<String, String>>()
+                    val roll = request["rollNumber"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+                    val frameBase64 = request["frameBase64"] ?: ""
+                    
+                    val response = LiveTestState.updateFrameAndGetStatus(roll, frameBase64)
+                    call.respond(response)
+                }
+
+                post("/api/livetest/violation") {
+                    try {
+                        val req = call.receive<ViolationReportRequest>()
+                        val currentWarnings = LiveTestState.recordViolation(req.rollNumber, req.type, req.details)
+                        call.respond(mapOf(
+                            "warningCount" to currentWarnings,
+                            "maxStrikes" to LiveTestState.config.maxStrikes,
+                            "isDisqualified" to (currentWarnings >= LiveTestState.config.maxStrikes)
+                        ))
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, e.message ?: "Error")
+                    }
+                }
+
+                post("/api/livetest/submit") {
                     try {
                         val req = call.receive<SubmitRequest>()
                         val candidate = LiveTestState.candidates.value.find { it.rollNumber == req.rollNumber }
@@ -361,11 +419,13 @@ class WebServerManager(private val appContext: Context, private val repository: 
                         
                         var score = 0
                         var totalMarks = 0
+                        var correctCount = 0
                         assignedQuestions.forEach { q ->
                             totalMarks += q.marks
                             val studentAns = req.answers[q.id]?.trim() ?: ""
                             if (studentAns.isNotEmpty() && studentAns.equals(q.answer.trim(), ignoreCase = true)) {
                                 score += q.marks
+                                correctCount++
                             }
                         }
                         
@@ -377,6 +437,31 @@ class WebServerManager(private val appContext: Context, private val repository: 
                             totalMarks = totalMarks,
                             warnings = candidate.warningCount
                         )
+
+                        // Persist attempt to Room DB
+                        try {
+                            val attempt = com.example.data.model.TestAttemptEntity(
+                                id = candidate.id,
+                                paperId = LiveTestState.config.subject,
+                                paperTitle = LiveTestState.config.examName,
+                                candidateName = candidate.name,
+                                rollNumber = candidate.rollNumber,
+                                status = req.status,
+                                score = score,
+                                maxMarks = totalMarks,
+                                totalQuestions = assignedQuestions.size,
+                                correctAnswers = correctCount,
+                                warningCount = candidate.warningCount,
+                                violationsJson = candidate.violationsJson,
+                                portraitBase64 = candidate.portraitBase64,
+                                submittedAnswersJson = kotlinx.serialization.json.Json.encodeToString(req.answers),
+                                timestamp = System.currentTimeMillis()
+                            )
+                            repository.recordTestAttempt(attempt)
+                        } catch (e: Exception) {
+                            Log.e("WebServerManager", "Error recording test attempt in Room: ${e.message}", e)
+                        }
+
                         call.respond(HttpStatusCode.OK)
                     } catch (e: Exception) {
                         Log.e("WebServerManager", "Error in submit: ${e.message}", e)
