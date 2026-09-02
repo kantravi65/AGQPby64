@@ -53,14 +53,14 @@ jobs:
 
       - name: Rename Release APKs
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/QPby64-debug.apk || echo "Already renamed"
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/QB4EnGby64-debug.apk || echo "Already renamed"
           ls -la app/build/outputs/apk/debug/
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QPby64-Offline-APK
-          path: app/build/outputs/apk/debug/QPby64-debug.apk
+          name: QB4EnGby64-Offline-APK
+          path: app/build/outputs/apk/debug/QB4EnGby64-debug.apk
 
       - name: Update Latest Tag
         run: |
@@ -82,6 +82,6 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            app/build/outputs/apk/debug/QPby64-debug.apk
+            app/build/outputs/apk/debug/QB4EnGby64-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
