@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 
 object GoogleSignInHelper {
 
-    const val HARDCODED_WEB_CLIENT_ID = "920425507159-on5ht1er2505ptvt5sj4k59ip8bul2th.apps.googleusercontent.com"
+    const val HARDCODED_WEB_CLIENT_ID = "122400723541-257dubi3l1abck2ltpa2190gguvuuout.apps.googleusercontent.com"
 
     fun getGoogleSignInClient(context: Context, webClientId: String? = null): GoogleSignInClient {
         val cid = if (webClientId.isNullOrBlank()) HARDCODED_WEB_CLIENT_ID else webClientId.trim()

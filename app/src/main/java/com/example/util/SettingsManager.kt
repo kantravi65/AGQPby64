@@ -59,7 +59,7 @@ class SettingsManager(context: Context) {
         private const val KEY_GOOGLE_DRIVE_LAST_SYNC = "google_drive_last_sync"
         private const val KEY_GOOGLE_DRIVE_CLOUD_JSON = "google_drive_cloud_json"
         private const val KEY_GOOGLE_WEB_CLIENT_ID = "google_web_client_id"
-        const val HARDCODED_WEB_CLIENT_ID = "920425507159-on5ht1er2505ptvt5sj4k59ip8bul2th.apps.googleusercontent.com"
+        const val HARDCODED_WEB_CLIENT_ID = "122400723541-257dubi3l1abck2ltpa2190gguvuuout.apps.googleusercontent.com"
     }
 
     // Profile Settings
