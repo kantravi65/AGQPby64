@@ -7,7 +7,7 @@ object WhitelistManager {
     val owners = listOf("kantravi65@gmail.com", "myslv409@gmail.com")
 
     fun isOwner(email: String?): Boolean {
-        return email != null && owners.contains(email)
+        return email != null && owners.contains(email.trim().lowercase())
     }
 
     suspend fun isWhitelisted(email: String): Boolean {
