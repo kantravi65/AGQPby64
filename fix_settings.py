@@ -1,23 +1,81 @@
 import re
 
-with open('app/src/main/java/com/example/ui/screens/SettingsScreen.kt', 'r') as f:
+with open('app/src/main/java/com/example/ui/screens/SettingsScreen.kt', 'r', encoding='utf-8') as f:
     content = f.read()
 
-# Fix missing imports
-missing = """import android.telephony.SmsManager
-import android.graphics.BitmapFactory
-import android.util.Base64
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
-import androidx.compose.ui.layout.ContentScale
-import com.example.util.LiveTestState"""
-
-content = content.replace('import com.example.util.SettingsManager', missing + '\nimport com.example.util.SettingsManager')
-
-# Fix unresolved references to `session` (probably due to multiple replacements in the loop, wait...
-# Wait, the error is:
-# e: file:///app/src/main/java/com/example/ui/screens/SettingsScreen.kt:1249:57 Unresolved reference 'session'.
-# Ah, I replaced something globally or multiple times in my script!
-
-# Let's just restore from git and do it properly with sed or targeted replacements
+if 'WEB DASHBOARD MANAGER' not in content:
+    dashboard_code = '''
+        // --- WEB DASHBOARD MANAGER ---
+        item {
+            val webServerUrl by viewModel.webServerUrl.collectAsState()
+            
+            SettingsCategory(
+                title = "Remote Web Dashboard",
+                icon = { Icon(Icons.Default.Language, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+            ) {
+                Text(
+                    text = "Manage your database (Questions, Papers, Books) directly from your PC browser on the same Wi-Fi network.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                if (webServerUrl != null) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Server is running!", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("Open this URL on your PC:", style = MaterialTheme.typography.bodySmall)
+                            Text(webServerUrl ?: "", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { viewModel.stopWebServer() },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Stop, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Stop Web Server")
+                    }
+                } else {
+                    Button(
+                        onClick = { viewModel.startWebServer("admin") },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Start Admin Server")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { viewModel.startWebServer("expert") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Start Expert Review Server")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { viewModel.startWebServer("livetest") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Start Live Test Server")
+                    }
+                }
+            }
+        }
+'''
+    content = content.replace('        // --- 10. ABOUT DEVELOPER ---', dashboard_code + '\n        // --- 10. ABOUT DEVELOPER ---')
+    with open('app/src/main/java/com/example/ui/screens/SettingsScreen.kt', 'w', encoding='utf-8') as f:
+        f.write(content)

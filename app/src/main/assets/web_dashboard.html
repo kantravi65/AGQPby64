@@ -310,16 +310,28 @@
                 <label>Question Text</label>
                 <textarea id="q_question" rows="3" required></textarea>
             </div>
-            <div class="form-group">
-                <label>Options (For MCQ)</label>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="q_opt_1" placeholder="Option A">
-                    <input type="text" id="q_opt_2" placeholder="Option B">
-                    <input type="text" id="q_opt_3" placeholder="Option C">
-                    <input type="text" id="q_opt_4" placeholder="Option D">
+            <div class="form-group" id="q_options_container">
+                <label>Options & Correct Answer (Tick the correct one)</label>
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="radio" name="modal_correct_ans" id="q_radio_1" onclick="document.getElementById('q_answer').value = document.getElementById('q_opt_1').value">
+                        <input type="text" id="q_opt_1" placeholder="Option A" style="flex:1" onkeyup="if(document.getElementById('q_radio_1').checked) document.getElementById('q_answer').value = this.value">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="radio" name="modal_correct_ans" id="q_radio_2" onclick="document.getElementById('q_answer').value = document.getElementById('q_opt_2').value">
+                        <input type="text" id="q_opt_2" placeholder="Option B" style="flex:1" onkeyup="if(document.getElementById('q_radio_2').checked) document.getElementById('q_answer').value = this.value">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="radio" name="modal_correct_ans" id="q_radio_3" onclick="document.getElementById('q_answer').value = document.getElementById('q_opt_3').value">
+                        <input type="text" id="q_opt_3" placeholder="Option C" style="flex:1" onkeyup="if(document.getElementById('q_radio_3').checked) document.getElementById('q_answer').value = this.value">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="radio" name="modal_correct_ans" id="q_radio_4" onclick="document.getElementById('q_answer').value = document.getElementById('q_opt_4').value">
+                        <input type="text" id="q_opt_4" placeholder="Option D" style="flex:1" onkeyup="if(document.getElementById('q_radio_4').checked) document.getElementById('q_answer').value = this.value">
+                    </div>
                 </div>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="q_answer_container" style="display:none;">
                 <label>Correct Answer</label>
                 <input type="text" id="q_answer" required>
             </div>
@@ -485,6 +497,26 @@
         }
     }
 
+    function setInlineAns(id, radioEl) {
+        const tr = document.getElementById(`qrow_${id}`);
+        if (!tr) return;
+        const inputEl = radioEl.nextElementSibling;
+        const ansInput = tr.querySelector('.q-answer');
+        if (ansInput && inputEl) {
+            ansInput.value = inputEl.value;
+        }
+    }
+    
+    function syncInlineAns(id, inputEl) {
+        const tr = document.getElementById(`qrow_${id}`);
+        if (!tr) return;
+        const radioEl = inputEl.previousElementSibling;
+        const ansInput = tr.querySelector('.q-answer');
+        if (radioEl && radioEl.checked && ansInput) {
+            ansInput.value = inputEl.value;
+        }
+    }
+
     function updateAnswerDropdown(id, isTypeChange = false) {
         const tr = document.getElementById(`qrow_${id}`);
         if(!tr) return;
@@ -500,10 +532,22 @@
                 if (!optsContainer.querySelector('.q-opt-item')) {
                     optsContainer.innerHTML = `
                         <div style="display:flex; flex-direction:column; gap:2px;">
-                            <input class="inline-input q-opt-item" placeholder="Opt A" value="" onkeyup="updateAnswerDropdown('${id}')">
-                            <input class="inline-input q-opt-item" placeholder="Opt B" value="" onkeyup="updateAnswerDropdown('${id}')">
-                            <input class="inline-input q-opt-item" placeholder="Opt C" value="" onkeyup="updateAnswerDropdown('${id}')">
-                            <input class="inline-input q-opt-item" placeholder="Opt D" value="" onkeyup="updateAnswerDropdown('${id}')">
+                            <div style="display:flex; align-items:center; gap:4px;">
+                                <input type="radio" name="inline_ans_${id}" onclick="setInlineAns('${id}', this)">
+                                <input class="inline-input q-opt-item" placeholder="Opt A" value="" onkeyup="syncInlineAns('${id}', this)">
+                            </div>
+                            <div style="display:flex; align-items:center; gap:4px;">
+                                <input type="radio" name="inline_ans_${id}" onclick="setInlineAns('${id}', this)">
+                                <input class="inline-input q-opt-item" placeholder="Opt B" value="" onkeyup="syncInlineAns('${id}', this)">
+                            </div>
+                            <div style="display:flex; align-items:center; gap:4px;">
+                                <input type="radio" name="inline_ans_${id}" onclick="setInlineAns('${id}', this)">
+                                <input class="inline-input q-opt-item" placeholder="Opt C" value="" onkeyup="syncInlineAns('${id}', this)">
+                            </div>
+                            <div style="display:flex; align-items:center; gap:4px;">
+                                <input type="radio" name="inline_ans_${id}" onclick="setInlineAns('${id}', this)">
+                                <input class="inline-input q-opt-item" placeholder="Opt D" value="" onkeyup="syncInlineAns('${id}', this)">
+                            </div>
                         </div>
                     `;
                 }
@@ -514,17 +558,17 @@
 
         if (type === 'mcq') {
             const optInputs = tr.querySelectorAll('.q-opt-item');
+            const radios = tr.querySelectorAll(`input[name="inline_ans_${id}"]`);
             let opts = [];
-            optInputs.forEach(inp => { if(inp.value.trim()) opts.push(inp.value.trim()); });
-            
-            let html = '<select class="inline-input q-answer">';
-            if(opts.length === 0) html += `<option value="${currentAns.replace(/"/g, '&quot;')}">${currentAns}</option>`;
-            opts.forEach(opt => {
-                const sel = (opt === currentAns) ? 'selected' : '';
-                html += `<option value="${opt.replace(/"/g, '&quot;')}" ${sel}>${opt}</option>`;
+            optInputs.forEach((inp, idx) => { 
+                if(inp.value.trim()) opts.push(inp.value.trim()); 
+                if (inp.value.trim() !== '' && inp.value.trim() === currentAns) {
+                    radios[idx].checked = true;
+                }
             });
-            html += '</select>';
-            ansContainer.innerHTML = html;
+            
+            // Hidden input to store answer
+            ansContainer.innerHTML = `<input type="text" class="inline-input q-answer" value="${currentAns.replace(/"/g, '&quot;')}" style="background-color:#eee;" readonly>`;
         } else if (type === 'tf') {
             if (isTypeChange) {
                 ansContainer.innerHTML = `<select class="inline-input q-answer">
@@ -679,6 +723,11 @@
         document.getElementById('q_opt_2').value = opts[1] || '';
         document.getElementById('q_opt_3').value = opts[2] || '';
         document.getElementById('q_opt_4').value = opts[3] || '';
+
+        document.getElementById('q_radio_1').checked = (q.answer && q.answer === opts[0]);
+        document.getElementById('q_radio_2').checked = (q.answer && q.answer === opts[1]);
+        document.getElementById('q_radio_3').checked = (q.answer && q.answer === opts[2]);
+        document.getElementById('q_radio_4').checked = (q.answer && q.answer === opts[3]);
         
         document.getElementById('q_answer').value = q.answer;
         document.getElementById('q_explanation').value = q.explanation;
