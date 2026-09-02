@@ -64,9 +64,9 @@ fun LockScreen(
             scope.launch {
                 isAuthenticating = true
                 errorMessage = "Authenticating with Firebase..."
-                val firebaseSuccess = com.example.util.FirebaseAuthHelper.authenticateWithFirebase(account)
-                if (!firebaseSuccess) {
-                    errorMessage = "Firebase Authentication failed."
+                val firebaseResult = com.example.util.FirebaseAuthHelper.authenticateWithFirebase(account)
+                if (firebaseResult.isFailure) {
+                    errorMessage = "Firebase Auth failed: ${firebaseResult.exceptionOrNull()?.message}"
                     com.example.util.FirebaseAuthHelper.signOut()
                     try { GoogleSignInHelper.signOut(context) } catch (_: Exception) {}
                     isAuthenticating = false

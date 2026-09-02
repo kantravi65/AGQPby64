@@ -6,15 +6,15 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import kotlinx.coroutines.tasks.await
 
 object FirebaseAuthHelper {
-    suspend fun authenticateWithFirebase(account: GoogleSignInAccount): Boolean {
+    suspend fun authenticateWithFirebase(account: GoogleSignInAccount): Result<Boolean> {
         val auth = FirebaseAuth.getInstance()
         val credential = GoogleAuthProvider.getCredential(account.idToken, null)
         return try {
             auth.signInWithCredential(credential).await()
-            true
+            Result.success(true)
         } catch (e: Exception) {
             e.printStackTrace()
-            false
+            Result.failure(e)
         }
     }
     
