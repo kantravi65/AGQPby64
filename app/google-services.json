@@ -7,12 +7,25 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:122400723541:android:8acd991ef80dc9037cfadc",
+        "mobilesdk_app_id": "1:122400723541:android:7e07c3201ac4fc327cfadc",
         "android_client_info": {
-          "package_name": "com.aistudio.questionbank.v1.zelcbr"
+          "package_name": "com.aistudio.questionbank.v1.agqpby64"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "122400723541-f4apl135uqlu6lj8o3l9h8svcbmfvl4m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.questionbank.v1.agqpby64",
+            "certificate_hash": "7d144d59720ae83a2ff2c3b7221ec9c3a8e4cf71"
+          }
+        },
+        {
+          "client_id": "122400723541-257dubi3l1abck2ltpa2190gguvuuout.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC9lNkU6IKUzYWiKgvZdtOARlkL1EhhiGo"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "122400723541-257dubi3l1abck2ltpa2190gguvuuout.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
