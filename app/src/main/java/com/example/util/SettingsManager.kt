@@ -249,4 +249,12 @@ class SettingsManager(context: Context) {
     var autoSyncIntervalMins: Int
         get() = prefs.getInt("auto_sync_interval_mins", 30)
         set(value) = prefs.edit().putInt("auto_sync_interval_mins", value).apply()
+
+    var githubUpdateRepo: String
+        get() = prefs.getString("github_update_repo", "") ?: ""
+        set(value) = prefs.edit().putString("github_update_repo", value).apply()
+
+    var githubUpdateToken: String
+        get() = prefs.getString("github_update_token", "") ?: ""
+        set(value) = prefs.edit().putString("github_update_token", value).apply()
 }

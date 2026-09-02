@@ -1208,56 +1208,97 @@ fun SettingsScreen(
                 title = "App Update",
                 icon = { Icon(Icons.Default.SystemUpdate, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
             ) {
+                var updateStatus by remember { mutableStateOf("") }
+                var repoText by remember { mutableStateOf(settingsManager.githubUpdateRepo.ifBlank { com.example.util.AppUpdater.getUpdateRepo(context) }) }
+                var tokenText by remember { mutableStateOf(settingsManager.githubUpdateToken) }
+                var showConfigFields by remember { mutableStateOf(false) }
 
-                    var updateStatus by remember { mutableStateOf("") }
-                    
-                    Text(
-                        text = "Check for and download the latest application update from the configured GitHub repository.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                Text(
+                    text = "Check for and download the latest application updates from GitHub ($repoText).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                if (showConfigFields) {
+                    OutlinedTextField(
+                        value = repoText,
+                        onValueChange = {
+                            repoText = it
+                            settingsManager.githubUpdateRepo = it
+                        },
+                        label = { Text("GitHub Repository (owner/repo)") },
+                        placeholder = { Text("kantravi65/AGQPby64") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
-                    
-                    if (updateStatus.isNotBlank()) {
-                        Text(
-                            text = updateStatus,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
-                        val matchResult = Regex("(\\d+)%").find(updateStatus)
-                        if (matchResult != null) {
-                            val progressPercent = matchResult.groupValues[1].toFloatOrNull() ?: 0f
-                            LinearProgressIndicator(
-                                progress = { progressPercent / 100f },
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                    OutlinedTextField(
+                        value = tokenText,
+                        onValueChange = {
+                            tokenText = it
+                            settingsManager.githubUpdateToken = it
+                        },
+                        label = { Text("GitHub Personal Access Token (Optional)") },
+                        placeholder = { Text("ghp_...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(
+                            onClick = { showConfigFields = true }
+                        ) {
+                            Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Configure Repository", style = MaterialTheme.typography.labelSmall)
                         }
                     }
-                    
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                com.example.util.AppUpdater.checkForUpdatesAndPrompt(context, showToastIfNoUpdate = true) { status ->
-                                    updateStatus = status
-                                }
+                }
+
+                if (updateStatus.isNotBlank()) {
+                    Text(
+                        text = updateStatus,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                    val matchResult = Regex("(\\d+)%").find(updateStatus)
+                    if (matchResult != null) {
+                        val progressPercent = matchResult.groupValues[1].toFloatOrNull() ?: 0f
+                        LinearProgressIndicator(
+                            progress = { progressPercent / 100f },
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        scope.launch {
+                            com.example.util.AppUpdater.checkForUpdatesAndPrompt(context, showToastIfNoUpdate = true) { status ->
+                                updateStatus = status
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = updateStatus.isBlank()
-                    ) {
-                        if (updateStatus.isNotBlank()) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
                         }
-                        Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = updateStatus.isBlank()
+                ) {
+                    if (updateStatus.isNotBlank()) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (updateStatus.isNotBlank()) "Downloading..." else "Check for Updates")
-                                    }
+                    }
+                    Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (updateStatus.isNotBlank()) "Downloading..." else "Check for Updates")
+                }
             }
         }
 

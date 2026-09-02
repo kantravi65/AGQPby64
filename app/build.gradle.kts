@@ -59,14 +59,14 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "APP_UPDATE_REPO", "\"${getSecret("APP_UPDATE_REPO", "myslv409-debug/OTSNGG")}\"")
+            buildConfigField("String", "APP_UPDATE_REPO", "\"${getSecret("APP_UPDATE_REPO", "kantravi65/AGQPby64")}\"")
             buildConfigField("String", "APP_UPDATE_TOKEN", "\"${getSecret("APP_UPDATE_TOKEN")}\"")
             buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
             buildConfigField("String", "APP_GITHUB_SHA", "\"${getSecret("APP_GITHUB_SHA")}\"")
         }
         debug {
             signingConfig = signingConfigs.getByName("debug")
-            buildConfigField("String", "APP_UPDATE_REPO", "\"${getSecret("APP_UPDATE_REPO", "myslv409-debug/OTSNGG")}\"")
+            buildConfigField("String", "APP_UPDATE_REPO", "\"${getSecret("APP_UPDATE_REPO", "kantravi65/AGQPby64")}\"")
             buildConfigField("String", "APP_UPDATE_TOKEN", "\"${getSecret("APP_UPDATE_TOKEN")}\"")
             buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
             buildConfigField("String", "APP_GITHUB_SHA", "\"${getSecret("APP_GITHUB_SHA")}\"")
