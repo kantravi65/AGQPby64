@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "122400723541-8pb63p7fp2b4ppdjdea4o63jr59vd7gd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.questionbank.v1.agqpby64",
+            "certificate_hash": "ce761ee1f1d6439793cc3ac7eafcc2cc81ddaf20"
+          }
+        },
+        {
           "client_id": "122400723541-f4apl135uqlu6lj8o3l9h8svcbmfvl4m.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
