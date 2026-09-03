@@ -168,7 +168,7 @@ class WebServerManager(private val appContext: Context, private val repository: 
                         masking = false
                     }
                     install(ContentNegotiation) {
-                        json(kotlinx.serialization.json.Json { prettyPrint = true; isLenient = true; ignoreUnknownKeys = true })
+                        json(kotlinx.serialization.json.Json { prettyPrint = true; isLenient = true; ignoreUnknownKeys = true; encodeDefaults = true })
                     }
                     install(CORS) {
                         anyHost()

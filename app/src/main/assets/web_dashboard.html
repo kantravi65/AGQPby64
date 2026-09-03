@@ -721,11 +721,20 @@
             tr.id = `qrow_${q.id}`;
             let opts=[]; try{opts=JSON.parse(q.optionsJson);}catch(e){}
             
+            // Normalize question type:
+            const rawType = (q.type || '').toLowerCase().trim();
+            const isMcq = rawType === 'mcq' || rawType === 'single_choice' || rawType === 'multiple_choice' || (!rawType && Array.isArray(opts) && opts.length >= 2);
+            const isTf = rawType === 'tf' || rawType === 'true_false' || rawType === 'true/false';
+            const isFib = rawType === 'fib' || rawType === 'fill_in_the_blank' || rawType === 'fill_in_blank';
+            const isSubj = rawType === 'subjective' || rawType === 'descriptive';
+            
+            const qType = isMcq ? 'mcq' : (isTf ? 'tf' : (isFib ? 'fib' : (isSubj ? 'subjective' : (opts.length >= 2 ? 'mcq' : 'subjective'))));
+            
             let rowBg = '#ffffff';
-            if (q.type === 'mcq') rowBg = '#f1fcf4';
-            else if (q.type === 'subjective') rowBg = '#fffaf4';
-            else if (q.type === 'tf') rowBg = '#f4fdfd';
-            else if (q.type === 'fib') rowBg = '#fdfbfd';
+            if (qType === 'mcq') rowBg = '#f1fcf4';
+            else if (qType === 'subjective') rowBg = '#fffaf4';
+            else if (qType === 'tf') rowBg = '#f4fdfd';
+            else if (qType === 'fib') rowBg = '#fdfbfd';
             tr.style.backgroundColor = rowBg;
             
             tr.innerHTML = `
@@ -735,15 +744,15 @@
                 </td>
                 <td>
                     <select class="inline-input q-type" onchange="updateAnswerDropdown('${q.id}', true)">
-                        <option value="mcq" ${q.type==='mcq'?'selected':''}>MCQ</option>
-                        <option value="subjective" ${q.type==='subjective'?'selected':''}>Subj</option>
-                        <option value="tf" ${q.type==='tf'?'selected':''}>T/F</option>
-                        <option value="fib" ${q.type==='fib'?'selected':''}>FIB</option>
+                        <option value="mcq" ${qType==='mcq'?'selected':''}>MCQ</option>
+                        <option value="subjective" ${qType==='subjective'?'selected':''}>Subj</option>
+                        <option value="tf" ${qType==='tf'?'selected':''}>T/F</option>
+                        <option value="fib" ${qType==='fib'?'selected':''}>FIB</option>
                     </select>
                 </td>
                 <td><textarea class="inline-input q-question" rows="2">${q.question}</textarea></td>
                 <td class="q-opts-container">
-                    ${q.type === 'mcq' ? `
+                    ${qType === 'mcq' ? `
                     <div style="display:flex; flex-direction:column; gap:4px;">
                         <div style="display:flex; align-items:center; gap:6px;">
                             <input type="radio" name="correct_${q.id}" class="q-opt-correct" value="0" ${opts[0] && q.answer === opts[0] ? 'checked data-was-checked="true"' : 'data-was-checked="false"'} onclick="toggleDashboardRadio(this, '${q.id}')">
@@ -765,9 +774,9 @@
                     ` : `<span style="color:#aaa; font-style:italic;">N/A (Not MCQ)</span>`}
                 </td>
                 <td class="q-answer-container">
-                    ${q.type === 'mcq' ? 
+                    ${qType === 'mcq' ? 
                         `<input type="hidden" class="q-answer" value="${q.answer.replace(/"/g, '&quot;')}">` : 
-                        q.type === 'tf' ? 
+                        qType === 'tf' ? 
                         `
                         <div style="display:flex; gap:12px; align-items:center;">
                             <label style="display:flex; align-items:center; gap:4px; font-weight:normal; cursor:pointer;">
