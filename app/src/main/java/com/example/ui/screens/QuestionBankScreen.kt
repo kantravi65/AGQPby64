@@ -874,6 +874,15 @@ fun QuestionBankScreen(viewModel: OtsViewModel, initialMode: String = "manage") 
                                 onSelectToggle = { selected ->
                                     if (selected) selectedQuestionIds = selectedQuestionIds + q.id
                                     else selectedQuestionIds = selectedQuestionIds - q.id
+                                },
+                                onQuickEditAnswer = { newAns ->
+                                    val opts = try {
+                                        val arr = org.json.JSONArray(q.optionsJson)
+                                        List(arr.length()) { i -> arr.getString(i) }
+                                    } catch (e: Exception) { emptyList<String>() }
+                                    viewModel.updateQuestion(
+                                        q.id, q.bookId, q.bookTitle, q.chapter, q.type, q.difficulty, q.question, opts, newAns, q.explanation, q.marks, q.isBookmarked
+                                    )
                                 }
                             )
                         }
@@ -888,6 +897,7 @@ fun QuestionBankScreen(viewModel: OtsViewModel, initialMode: String = "manage") 
         AddEditQuestionDialog(
             books = books,
             existingQuestion = null,
+            defaultBookIdOrTitle = selectedBookFilter,
             onDismiss = { showAddModal = false },
             onConfirm = { bookId, bookTitle, chapter, type, difficulty, qText, options, ans, exp, marks, isBookmarked ->
                 viewModel.addQuestion(
@@ -1013,9 +1023,12 @@ fun QuestionCardItem(
     onToggleBookmark: () -> Unit,
     isBatchMode: Boolean = false,
     isSelected: Boolean = false,
-    onSelectToggle: ((Boolean) -> Unit)? = null
+    onSelectToggle: ((Boolean) -> Unit)? = null,
+    onQuickEditAnswer: ((String) -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var tempAnswer by remember(question.answer) { mutableStateOf(question.answer) }
+    val isDirty = tempAnswer != question.answer
 
     val difficultyColor = when (question.difficulty.lowercase()) {
         "easy" -> Color(0xFF2E7D32)
@@ -1153,77 +1166,129 @@ fun QuestionCardItem(
                 }
             }
 
-            if (optionsList.isNotEmpty()) {
+            if (question.type == "mcq" && optionsList.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     optionsList.forEachIndexed { idx, opt ->
-                        val isCorrect = opt.trim().equals(question.answer.trim(), ignoreCase = true)
+                        val isCorrect = opt.trim().equals(tempAnswer.trim(), ignoreCase = true)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(
-                                    if (isCorrect && expanded) Color(0xFFE8F5E9)
+                                    if (isCorrect) Color(0xFFE8F5E9)
                                     else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                                 )
+                                .clickable { tempAnswer = opt }
                                 .padding(horizontal = 10.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            IconButton(
+                                onClick = { tempAnswer = opt },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Mark as correct",
+                                    tint = if (isCorrect) Color(0xFF2E7D32) else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                )
+                            }
                             Text(
                                 text = "${('A' + idx)}. ",
                                 fontWeight = FontWeight.Bold,
-                                color = if (isCorrect && expanded) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isCorrect) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
                                 text = opt,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = if (isCorrect && expanded) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isCorrect) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 }
+            } else if (question.type == "tf") {
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    listOf("True", "False").forEach { opt ->
+                        val isCorrect = opt.equals(tempAnswer, ignoreCase = true)
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isCorrect) Color(0xFFE8F5E9) else Color.Transparent)
+                                .clickable { tempAnswer = opt }
+                                .padding(end = 12.dp, top = 4.dp, bottom = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(
+                                onClick = { tempAnswer = opt },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Mark $opt as correct",
+                                    tint = if (isCorrect) Color(0xFF2E7D32) else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                )
+                            }
+                            Text(opt, fontWeight = FontWeight.Bold, color = if (isCorrect) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            } else if (question.type == "fib" || question.type == "subjective") {
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = tempAnswer,
+                    onValueChange = { tempAnswer = it },
+                    label = { Text("Correct Answer") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = if (question.type == "subjective") 2 else 1,
+                    singleLine = question.type == "fib"
+                )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = !expanded },
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = if (expanded) "Hide Answer & Explanation" else "Show Answer & Explanation",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
-                Icon(
-                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            if (isDirty) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { onQuickEditAnswer?.invoke(tempAnswer) },
+                    modifier = Modifier.align(Alignment.End),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text("Save Answer")
+                }
             }
 
-            AnimatedVisibility(visible = expanded) {
-                Column(
+            if (question.explanation.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .padding(12.dp)
+                        .clickable { expanded = !expanded },
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Correct Answer: ${question.answer}",
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        text = if (expanded) "Hide Explanation" else "Show Explanation",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
                     )
-                    if (question.explanation.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                AnimatedVisibility(visible = expanded) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp)
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(12.dp)
+                    ) {
                         Text(
                             text = "Explanation: ${question.explanation}",
                             style = MaterialTheme.typography.bodySmall,
@@ -1974,6 +2039,7 @@ fun PracticeModeView(
 fun AddEditQuestionDialog(
     books: List<BookEntity>,
     existingQuestion: QuestionEntity?,
+    defaultBookIdOrTitle: String? = null,
     onDismiss: () -> Unit,
     onConfirm: (
         bookId: String,
@@ -1989,9 +2055,41 @@ fun AddEditQuestionDialog(
         isBookmarked: Boolean
     ) -> Unit
 ) {
-    var selectedBook by remember { mutableStateOf(books.find { it.id == existingQuestion?.bookId } ?: books.firstOrNull()) }
+    val displayBooks = remember(books, existingQuestion, defaultBookIdOrTitle) {
+        val list = books.toMutableList()
+        if (existingQuestion != null && existingQuestion.bookTitle.isNotBlank()) {
+            val alreadyExists = books.any { 
+                it.id == existingQuestion.bookId || 
+                it.title.equals(existingQuestion.bookTitle, ignoreCase = true) 
+            }
+            if (!alreadyExists) {
+                list.add(BookEntity(id = existingQuestion.bookId, title = existingQuestion.bookTitle, chapterCount = 5))
+            }
+        } else if (defaultBookIdOrTitle != null && defaultBookIdOrTitle.isNotBlank()) {
+            val alreadyExists = books.any { 
+                it.id == defaultBookIdOrTitle || 
+                it.title.equals(defaultBookIdOrTitle, ignoreCase = true) 
+            }
+            if (!alreadyExists) {
+                list.add(BookEntity(id = "b_" + UUID.randomUUID().toString().take(8), title = defaultBookIdOrTitle, chapterCount = 5))
+            }
+        }
+        list
+    }
+
+    val initialBook = remember(existingQuestion, displayBooks, defaultBookIdOrTitle) {
+        if (existingQuestion != null) {
+            displayBooks.find { it.id == existingQuestion.bookId || it.title.equals(existingQuestion.bookTitle, ignoreCase = true) }
+        } else if (defaultBookIdOrTitle != null) {
+            displayBooks.find { it.id == defaultBookIdOrTitle || it.title.equals(defaultBookIdOrTitle, ignoreCase = true) } ?: displayBooks.firstOrNull()
+        } else {
+            displayBooks.firstOrNull()
+        }
+    }
+
     var isCreatingNewSubject by remember { mutableStateOf(false) }
     var newSubjectName by remember { mutableStateOf("") }
+    var selectedBook by remember { mutableStateOf(initialBook) }
 
     var chapter by remember { mutableStateOf(existingQuestion?.chapter ?: "Chapter 1") }
     var type by remember { mutableStateOf(existingQuestion?.type ?: "mcq") } // mcq, fib, tf, subjective
@@ -2051,26 +2149,50 @@ fun AddEditQuestionDialog(
                     }
                 }
 
-                // 2. Subject Selector / Creation with Deduplication
+                // 2. Subject Selector / Creation with Deduplication (Dropdown style)
                 item {
+                    var expandedBookDropdown by remember { mutableStateOf(false) }
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("Subject / Book", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            items(books) { book ->
-                                FilterChip(
-                                    selected = !isCreatingNewSubject && selectedBook?.id == book.id,
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            OutlinedTextField(
+                                value = if (isCreatingNewSubject) "➕ New Subject" else (selectedBook?.title ?: "Select Subject"),
+                                onValueChange = {},
+                                readOnly = true,
+                                trailingIcon = {
+                                    IconButton(onClick = { expandedBookDropdown = true }) {
+                                        Icon(Icons.Default.ArrowDropDown, contentDescription = "Toggle Subject Dropdown")
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            // Transparent overlay to safely capture clicks across the whole text field
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clickable { expandedBookDropdown = true }
+                            )
+                            DropdownMenu(
+                                expanded = expandedBookDropdown,
+                                onDismissRequest = { expandedBookDropdown = false },
+                                modifier = Modifier.fillMaxWidth(0.9f)
+                            ) {
+                                displayBooks.forEach { book ->
+                                    DropdownMenuItem(
+                                        text = { Text(book.title) },
+                                        onClick = {
+                                            isCreatingNewSubject = false
+                                            selectedBook = book
+                                            expandedBookDropdown = false
+                                        }
+                                    )
+                                }
+                                DropdownMenuItem(
+                                    text = { Text("➕ New Subject") },
                                     onClick = {
-                                        isCreatingNewSubject = false
-                                        selectedBook = book
-                                    },
-                                    label = { Text(book.title) }
-                                )
-                            }
-                            item {
-                                FilterChip(
-                                    selected = isCreatingNewSubject,
-                                    onClick = { isCreatingNewSubject = true },
-                                    label = { Text("➕ New Subject") }
+                                        isCreatingNewSubject = true
+                                        expandedBookDropdown = false
+                                    }
                                 )
                             }
                         }
@@ -2157,59 +2279,51 @@ fun AddEditQuestionDialog(
                 when (type) {
                     "mcq" -> {
                         item {
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text("MCQ Options & Correct Answer (Tick the correct one)", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    RadioButton(
-                                        selected = selectedAnswer == optionA && optionA.isNotBlank(),
-                                        onClick = { if (optionA.isNotBlank()) selectedAnswer = optionA }
-                                    )
-                                    OutlinedTextField(
-                                        value = optionA,
-                                        onValueChange = { optionA = it },
-                                        label = { Text("Option A") },
-                                        modifier = Modifier.weight(1f),
-                                        singleLine = true
-                                    )
-                                }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    RadioButton(
-                                        selected = selectedAnswer == optionB && optionB.isNotBlank(),
-                                        onClick = { if (optionB.isNotBlank()) selectedAnswer = optionB }
-                                    )
-                                    OutlinedTextField(
-                                        value = optionB,
-                                        onValueChange = { optionB = it },
-                                        label = { Text("Option B") },
-                                        modifier = Modifier.weight(1f),
-                                        singleLine = true
-                                    )
-                                }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    RadioButton(
-                                        selected = selectedAnswer == optionC && optionC.isNotBlank(),
-                                        onClick = { if (optionC.isNotBlank()) selectedAnswer = optionC }
-                                    )
-                                    OutlinedTextField(
-                                        value = optionC,
-                                        onValueChange = { optionC = it },
-                                        label = { Text("Option C") },
-                                        modifier = Modifier.weight(1f),
-                                        singleLine = true
-                                    )
-                                }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    RadioButton(
-                                        selected = selectedAnswer == optionD && optionD.isNotBlank(),
-                                        onClick = { if (optionD.isNotBlank()) selectedAnswer = optionD }
-                                    )
-                                    OutlinedTextField(
-                                        value = optionD,
-                                        onValueChange = { optionD = it },
-                                        label = { Text("Option D") },
-                                        modifier = Modifier.weight(1f),
-                                        singleLine = true
-                                    )
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("MCQ Options (Tick correct option)", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                                
+                                listOf(
+                                    Triple(optionA, { v: String -> optionA = v }, "Option A"),
+                                    Triple(optionB, { v: String -> optionB = v }, "Option B"),
+                                    Triple(optionC, { v: String -> optionC = v }, "Option C"),
+                                    Triple(optionD, { v: String -> optionD = v }, "Option D")
+                                ).forEach { (optVal, setOpt, placeholder) ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        IconButton(
+                                            onClick = {
+                                                if (optVal.isNotBlank()) {
+                                                    selectedAnswer = if (selectedAnswer == optVal) "" else optVal
+                                                }
+                                            },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.CheckCircle,
+                                                contentDescription = "Mark as correct",
+                                                tint = if (selectedAnswer.isNotBlank() && selectedAnswer == optVal) 
+                                                    MaterialTheme.colorScheme.primary 
+                                                else 
+                                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                            )
+                                        }
+                                        OutlinedTextField(
+                                            value = optVal,
+                                            onValueChange = { newValue ->
+                                                val oldVal = optVal
+                                                setOpt(newValue)
+                                                if (selectedAnswer == oldVal) {
+                                                    selectedAnswer = newValue
+                                                }
+                                            },
+                                            label = { Text(placeholder) },
+                                            modifier = Modifier.weight(1f),
+                                            singleLine = true
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -2228,19 +2342,45 @@ fun AddEditQuestionDialog(
                     }
                     "tf" -> {
                         item {
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("Correct Answer", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    FilterChip(
-                                        selected = tfAnswer == "True",
-                                        onClick = { tfAnswer = "True" },
-                                        label = { Text("TRUE", fontWeight = FontWeight.Bold) }
-                                    )
-                                    FilterChip(
-                                        selected = tfAnswer == "False",
-                                        onClick = { tfAnswer = "False" },
-                                        label = { Text("FALSE", fontWeight = FontWeight.Bold) }
-                                    )
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Correct Answer (Tick correct option)", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.clickable { tfAnswer = "True" }
+                                    ) {
+                                        IconButton(
+                                            onClick = { tfAnswer = "True" },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.CheckCircle,
+                                                contentDescription = "Mark True as correct",
+                                                tint = if (tfAnswer == "True") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                            )
+                                        }
+                                        Text("TRUE", fontWeight = FontWeight.Bold)
+                                    }
+                                    
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.clickable { tfAnswer = "False" }
+                                    ) {
+                                        IconButton(
+                                            onClick = { tfAnswer = "False" },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.CheckCircle,
+                                                contentDescription = "Mark False as correct",
+                                                tint = if (tfAnswer == "False") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                            )
+                                        }
+                                        Text("FALSE", fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
                         }
@@ -2298,7 +2438,7 @@ fun AddEditQuestionDialog(
                     when (type) {
                         "mcq" -> {
                             finalOptions = listOf(optionA, optionB, optionC, optionD).filter { it.isNotBlank() }
-                            finalAnswer = if (selectedAnswer.isNotBlank()) selectedAnswer else optionA
+                            finalAnswer = if (selectedAnswer.isNotBlank()) selectedAnswer else "N/A"
                         }
                         "tf" -> {
                             finalOptions = listOf("True", "False")
@@ -2636,7 +2776,7 @@ fun ImportExportDialog(
                         Button(
                             onClick = {
                                 dataText = if (activeFormatTab == 0) {
-                                    viewModel.exportQuestionsToJson()
+                                    viewModel.exportAllDataToJson()
                                 } else {
                                     viewModel.exportQuestionsToCsv()
                                 }
@@ -2762,7 +2902,7 @@ fun ImportExportDialog(
                         if (dataText.isNotBlank()) {
                             scope.launch {
                                 val (success, count) = if (activeFormatTab == 0) {
-                                    viewModel.importQuestionsFromJson(dataText)
+                                    viewModel.importAllDataFromJson(dataText)
                                 } else {
                                     viewModel.importQuestionsFromCsv(dataText)
                                 }

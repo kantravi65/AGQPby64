@@ -44,38 +44,74 @@ class WebServerService : Service() {
             startForeground(NOTIFICATION_ID, notification)
         }
 
-        if (webServerManager == null) {
-            val database = AppDatabase.getDatabase(applicationContext)
-            val repository = OtsRepository(
-                database.questionDao(),
-                database.bookDao(),
-                database.paperDao(),
-                database.testAttemptDao()
-            )
-            webServerManager = WebServerManager(applicationContext, repository, mode)
-            webServerManager?.startServer(adminUser, adminPass) { url ->
-                WebServerState.setUrl(url, mode)
-            }
+        if (webServerManager != null) {
+            webServerManager?.stopServer()
+            webServerManager = null
         }
+        
+        val database = AppDatabase.getDatabase(applicationContext)
+        val repository = OtsRepository(
+            database.questionDao(),
+            database.bookDao(),
+            database.paperDao(),
+            database.testAttemptDao(),
+            database.testSubmissionDao()
+        )
+        val settingsManager = com.example.util.SettingsManager(applicationContext)
+        val publicUrl = settingsManager.publicTunnelUrl.ifBlank { null }
+        webServerManager = WebServerManager(applicationContext, repository, mode)
+        WebServerState.setError(null)
+        webServerManager?.startServer(adminUser, adminPass, onStarted = { httpsUrl, httpUrl ->
+            WebServerState.setUrl(httpsUrl, mode, httpUrl, publicUrl)
+            val updatedNotification = createNotification(mode, httpsUrl, publicUrl)
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.notify(NOTIFICATION_ID, updatedNotification)
+        }, onError = { err ->
+            WebServerState.setError(err)
+        })
+        
         return START_STICKY
     }
 
+    private var isStopping = false
+
     private fun stopServerAndService() {
-        webServerManager?.stopServer()
-        webServerManager = null
+        if (isStopping) return
+        isStopping = true
+
         WebServerState.setUrl(null)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            stopForeground(true)
+        try {
+            webServerManager?.stopServer()
+        } catch (e: Throwable) {
+            android.util.Log.e("WebServerService", "Error stopping web server", e)
+        }
+        webServerManager = null
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } else {
+                @Suppress("DEPRECATION")
+                stopForeground(true)
+            }
+        } catch (e: Throwable) {
+            android.util.Log.e("WebServerService", "Error removing foreground", e)
         }
         stopSelf()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        stopServerAndService()
+        if (!isStopping) {
+            isStopping = true
+            WebServerState.setUrl(null)
+            try {
+                webServerManager?.stopServer()
+            } catch (e: Throwable) {
+                android.util.Log.e("WebServerService", "Error stopping web server", e)
+            }
+            webServerManager = null
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -94,7 +130,7 @@ class WebServerService : Service() {
         }
     }
 
-    private fun createNotification(mode: String): Notification {
+    private fun createNotification(mode: String, url: String? = null, publicUrl: String? = null): Notification {
         val pendingIntent = PendingIntent.getActivity(
             this,
             0,
@@ -117,12 +153,19 @@ class WebServerService : Service() {
         val modeLabel = when(mode) {
             "expert" -> "Expert Review"
             "livetest" -> "Live Test Portal"
+            "all" -> "Unified Portal (All Services)"
             else -> "Admin Dashboard"
+        }
+        
+        val contentText = when {
+            publicUrl != null && url != null -> "Internet: $publicUrl | LAN: $url"
+            url != null -> "Running at $url"
+            else -> "Starting server..."
         }
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Web Server: $modeLabel")
-            .setContentText("Running in the background on port 8080")
+            .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentIntent(pendingIntent)
             .addAction(0, "Stop Server", stopPendingIntent)

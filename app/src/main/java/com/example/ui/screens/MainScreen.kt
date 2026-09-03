@@ -25,8 +25,9 @@ fun MainScreen(viewModel: OtsViewModel) {
 
     val scope = rememberCoroutineScope()
 
-    // Screen states: "home", "quiz", "manage_bank", "build_bank", "assemble_paper", "saved_papers", "recycle_bin", "settings"
+    // Screen states: "home", "quiz", "manage_bank", "build_bank", "assemble_paper", "saved_papers", "recycle_bin", "settings", "live_test_portal", "admin_mode", "expert_review", "monitor"
     var currentScreen by remember { mutableStateOf("home") }
+    var previousScreenBeforeMonitor by remember { mutableStateOf("home") }
 
     LaunchedEffect(Unit) {
         com.example.util.AppUpdater.checkForUpdatesAndPrompt(context, showToastIfNoUpdate = false)
@@ -142,6 +143,10 @@ fun MainScreen(viewModel: OtsViewModel) {
                                         "recycle_bin" -> "Recycle Bin"
                                         "settings" -> "Settings"
                                         "archives" -> "Exam Archives"
+                                        "live_test_portal" -> "Live Test Portal"
+                                        "admin_mode" -> "Admin Mode"
+                                        "expert_review" -> "Expert Review System"
+                                        "monitor" -> "Live A/V Monitor"
                                         else -> "Question Bank"
                                     },
                                     fontWeight = FontWeight.SemiBold,
@@ -151,10 +156,16 @@ fun MainScreen(viewModel: OtsViewModel) {
                         },
                         navigationIcon = {
                             if (currentScreen != "home") {
-                                IconButton(onClick = { currentScreen = "home" }) {
+                                IconButton(onClick = {
+                                    if (currentScreen == "monitor") {
+                                        currentScreen = previousScreenBeforeMonitor
+                                    } else {
+                                        currentScreen = "home"
+                                    }
+                                }) {
                                     Icon(
                                         Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Back to Home"
+                                        contentDescription = "Back"
                                     )
                                 }
                             } else {
@@ -311,7 +322,43 @@ fun MainScreen(viewModel: OtsViewModel) {
                         "assemble_paper" -> AssemblePaperScreen(viewModel = viewModel, initialTab = 0)
                         "saved_papers" -> AssemblePaperScreen(viewModel = viewModel, initialTab = 1)
                         "recycle_bin" -> QuestionBankScreen(viewModel = viewModel, initialMode = "backup")
-                        "archives" -> ArchivesScreen(viewModel = viewModel, settingsManager = settingsManager)
+                        "archives" -> ArchivesScreen(
+                            viewModel = viewModel,
+                            settingsManager = settingsManager,
+                            screenMode = "livetest",
+                            onOpenMonitor = {
+                                previousScreenBeforeMonitor = "archives"
+                                currentScreen = "monitor"
+                            }
+                        )
+                        "live_test_portal" -> ArchivesScreen(
+                            viewModel = viewModel,
+                            settingsManager = settingsManager,
+                            screenMode = "livetest",
+                            onOpenMonitor = {
+                                previousScreenBeforeMonitor = "live_test_portal"
+                                currentScreen = "monitor"
+                            }
+                        )
+                        "admin_mode" -> ArchivesScreen(
+                            viewModel = viewModel,
+                            settingsManager = settingsManager,
+                            screenMode = "admin",
+                            onOpenMonitor = {
+                                previousScreenBeforeMonitor = "admin_mode"
+                                currentScreen = "monitor"
+                            }
+                        )
+                        "expert_review" -> ArchivesScreen(
+                            viewModel = viewModel,
+                            settingsManager = settingsManager,
+                            screenMode = "expert",
+                            onOpenMonitor = {
+                                previousScreenBeforeMonitor = "expert_review"
+                                currentScreen = "monitor"
+                            }
+                        )
+                        "monitor" -> MonitorScreen(onBack = { currentScreen = previousScreenBeforeMonitor })
                         "settings" -> SettingsScreen(
                             viewModel = viewModel,
                             settingsManager = settingsManager,

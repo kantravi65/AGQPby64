@@ -38,6 +38,15 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
     private var autoSyncJob: kotlinx.coroutines.Job? = null
     
     val webServerUrl: StateFlow<String?> = WebServerState.url
+    val webServerHttpUrl: StateFlow<String?> = WebServerState.httpUrl
+    val webServerPublicUrl: StateFlow<String?> = WebServerState.publicUrl
+
+    var publicTunnelUrl: String
+        get() = settingsManager.publicTunnelUrl
+        set(value) {
+            settingsManager.publicTunnelUrl = value
+            WebServerState.setPublicUrl(value)
+        }
 
     // Live Test Configuration State
     private val _liveTestExamName = MutableStateFlow("Online Secured Exam")
@@ -57,20 +66,13 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
     private val _liveTestDuration = MutableStateFlow(30)
     val liveTestDuration: StateFlow<Int> = _liveTestDuration.asStateFlow()
 
-    private val _liveTestMaxStrikes = MutableStateFlow(3)
-    val liveTestMaxStrikes: StateFlow<Int> = _liveTestMaxStrikes.asStateFlow()
-
-    private val _liveTestCameraProctoring = MutableStateFlow(true)
-    val liveTestCameraProctoring: StateFlow<Boolean> = _liveTestCameraProctoring.asStateFlow()
-
-    private val _liveTestStrictTabLock = MutableStateFlow(true)
-    val liveTestStrictTabLock: StateFlow<Boolean> = _liveTestStrictTabLock.asStateFlow()
-
-    private val _liveTestBlockClipboard = MutableStateFlow(true)
-    val liveTestBlockClipboard: StateFlow<Boolean> = _liveTestBlockClipboard.asStateFlow()
+    private val _selectedLivePaperId = MutableStateFlow<String?>(null)
+    val selectedLivePaperId: StateFlow<String?> = _selectedLivePaperId.asStateFlow()
 
     // Expose candidates session list from LiveTestState
     val liveCandidates: StateFlow<List<com.example.util.CandidateSession>> = com.example.util.LiveTestState.candidates
+
+    var liveStartTimeInput = androidx.compose.runtime.mutableStateOf("")
 
     fun updateLiveTestConfig(
         examName: String,
@@ -79,21 +81,29 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
         fibs: Int,
         tfs: Int,
         duration: Int,
-        maxStrikes: Int = _liveTestMaxStrikes.value,
-        cameraProctoring: Boolean = _liveTestCameraProctoring.value,
-        strictTabLock: Boolean = _liveTestStrictTabLock.value,
-        blockClipboard: Boolean = _liveTestBlockClipboard.value
+        startTimeInput: String = "",
+        keepPaper: Boolean = false
     ) {
+        if (!keepPaper) {
+            _selectedLivePaperId.value = null // Deselect paper since user edited manually
+        }
         _liveTestExamName.value = examName
         _liveTestSubject.value = subject
         _liveTestMcqCount.value = mcqs
         _liveTestFibCount.value = fibs
         _liveTestTfCount.value = tfs
         _liveTestDuration.value = duration
-        _liveTestMaxStrikes.value = maxStrikes
-        _liveTestCameraProctoring.value = cameraProctoring
-        _liveTestStrictTabLock.value = strictTabLock
-        _liveTestBlockClipboard.value = blockClipboard
+        liveStartTimeInput.value = startTimeInput
+        
+        var startTimeMillis = 0L
+        try {
+            if (startTimeInput.isNotBlank()) {
+                val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+                startTimeMillis = sdf.parse(startTimeInput)?.time ?: 0L
+            }
+        } catch (e: Exception) {
+            startTimeMillis = 0L
+        }
         
         com.example.util.LiveTestState.config = com.example.util.LiveTestConfig(
             examName = examName,
@@ -102,11 +112,67 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
             fibCount = fibs,
             tfCount = tfs,
             durationMinutes = duration,
-            maxStrikes = maxStrikes,
-            cameraProctoringEnabled = cameraProctoring,
-            strictTabLock = strictTabLock,
-            blockClipboard = blockClipboard
+            startTimeMillis = startTimeMillis,
+            paperId = if (keepPaper) _selectedLivePaperId.value else null
         )
+    }
+
+    fun selectPaperForLiveTest(paper: PaperEntity?) {
+        _selectedLivePaperId.value = paper?.id
+        if (paper != null) {
+            _liveTestExamName.value = paper.title
+            _liveTestSubject.value = paper.subject
+            _liveTestMcqCount.value = 0
+            _liveTestFibCount.value = 0
+            _liveTestTfCount.value = 0
+            _liveTestDuration.value = paper.durationMinutes
+            
+            var startTimeMillis = 0L
+            try {
+                if (liveStartTimeInput.value.isNotBlank()) {
+                    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+                    startTimeMillis = sdf.parse(liveStartTimeInput.value)?.time ?: 0L
+                }
+            } catch (e: Exception) {
+                startTimeMillis = 0L
+            }
+            
+            com.example.util.LiveTestState.config = com.example.util.LiveTestConfig(
+                examName = paper.title,
+                subject = paper.subject,
+                mcqCount = 0,
+                fibCount = 0,
+                tfCount = 0,
+                durationMinutes = paper.durationMinutes,
+                startTimeMillis = startTimeMillis,
+                paperId = paper.id
+            )
+        } else {
+            _liveTestMcqCount.value = 10
+            _liveTestFibCount.value = 0
+            _liveTestTfCount.value = 0
+            
+            var startTimeMillis = 0L
+            try {
+                if (liveStartTimeInput.value.isNotBlank()) {
+                    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+                    startTimeMillis = sdf.parse(liveStartTimeInput.value)?.time ?: 0L
+                }
+            } catch (e: Exception) {
+                startTimeMillis = 0L
+            }
+            
+            com.example.util.LiveTestState.config = com.example.util.LiveTestConfig(
+                examName = _liveTestExamName.value,
+                subject = _liveTestSubject.value,
+                mcqCount = 10,
+                fibCount = 0,
+                tfCount = 0,
+                durationMinutes = _liveTestDuration.value,
+                startTimeMillis = startTimeMillis,
+                paperId = null
+            )
+        }
     }
     
     fun generateMeritListPdf(context: android.content.Context) {
@@ -124,12 +190,125 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
         com.example.util.LiveTestState.dispatchMarksheet(rollNumber)
     }
 
-    fun pardonCandidate(rollNumber: String) {
-        com.example.util.LiveTestState.pardonCandidate(rollNumber)
+    fun dispatchAllCompletedCandidates(context: android.content.Context) {
+        val candidates = com.example.util.LiveTestState.candidates.value
+        val toDispatch = candidates.filter { it.status != "Testing" && !it.isDispatched }
+        toDispatch.forEach { c ->
+            com.example.util.LiveTestState.dispatchMarksheet(c.rollNumber)
+            if (c.mobile.isNotEmpty()) {
+                try {
+                    val msg = "Exam Result: Dear ${c.name} (Roll: ${c.rollNumber}), score ${c.score}/${c.totalMarks}. Status: ${c.status}."
+                    val smsManager = android.telephony.SmsManager.getDefault()
+                    val parts = smsManager.divideMessage(msg)
+                    smsManager.sendMultipartTextMessage(c.mobile, null, parts, null, null)
+                } catch (e: Exception) {
+                    android.util.Log.e("OtsViewModel", "SMS error for ${c.rollNumber}", e)
+                }
+            }
+        }
+        android.widget.Toast.makeText(context, "Dispatched ${toDispatch.size} candidate marksheet(s)!", android.widget.Toast.LENGTH_SHORT).show()
     }
 
-    fun forceDisqualifyCandidate(rollNumber: String) {
-        com.example.util.LiveTestState.forceDisqualify(rollNumber)
+    fun resolveDispute(submissionId: String, newScore: Int, proctorRemarks: String, disputeStatus: String) {
+        viewModelScope.launch {
+            val sub = repository.getSubmissionById(submissionId)
+            if (sub != null) {
+                repository.updateSubmission(sub.copy(
+                    score = newScore,
+                    proctorRemarks = proctorRemarks,
+                    disputeStatus = disputeStatus,
+                    evaluatedBy = "${settingsManager.activeSupervisorName} (${settingsManager.activeSupervisorRole})"
+                ))
+            }
+        }
+    }
+
+    fun declareAllResults(onComplete: ((Int) -> Unit)? = null) {
+        viewModelScope.launch {
+            val subs = repository.allSubmissions.first()
+            val toDeclare = subs
+                .filter { it.status != "In-Progress" }
+                .sortedWith(
+                    compareByDescending<com.example.data.model.TestSubmissionEntity> { it.score }
+                        .thenBy { it.warningCount }
+                        .thenBy { it.submitTime }
+                )
+            toDeclare.forEachIndexed { index, s ->
+                repository.updateSubmission(s.copy(
+                    isResultDeclared = true,
+                    rank = index + 1,
+                    evaluatedBy = "${settingsManager.activeSupervisorName} (${settingsManager.activeSupervisorRole})"
+                ))
+            }
+            onComplete?.invoke(toDeclare.size)
+        }
+    }
+
+    fun dispatchSubmissionResultSms(context: android.content.Context, sub: com.example.data.model.TestSubmissionEntity) {
+        if (sub.candidateMobile.isBlank()) {
+            android.widget.Toast.makeText(context, "No mobile number recorded for candidate.", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        try {
+            val rankText = if (sub.rank > 0) " Rank: #${sub.rank}." else ""
+            val msg = "Exam Result: Dear ${sub.candidateName} (Roll: ${sub.candidateRollNumber}), score ${sub.score}/${sub.maxMarks}.$rankText Status: ${sub.status}."
+            val smsManager = android.telephony.SmsManager.getDefault()
+            val parts = smsManager.divideMessage(msg)
+            smsManager.sendMultipartTextMessage(sub.candidateMobile, null, parts, null, null)
+            android.widget.Toast.makeText(context, "SMS sent to ${sub.candidateRollNumber}!", android.widget.Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(context, "Failed to send SMS: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun dispatchAllDeclaredResultsSms(context: android.content.Context) {
+        viewModelScope.launch {
+            val declared = repository.allSubmissions.first().filter { it.isResultDeclared && it.candidateMobile.isNotBlank() }
+            var count = 0
+            declared.forEach { sub ->
+                try {
+                    val rankText = if (sub.rank > 0) " Rank: #${sub.rank}." else ""
+                    val msg = "Exam Result: Dear ${sub.candidateName} (Roll: ${sub.candidateRollNumber}), score ${sub.score}/${sub.maxMarks}.$rankText Status: ${sub.status}."
+                    val smsManager = android.telephony.SmsManager.getDefault()
+                    val parts = smsManager.divideMessage(msg)
+                    smsManager.sendMultipartTextMessage(sub.candidateMobile, null, parts, null, null)
+                    count++
+                } catch (e: Exception) {
+                    android.util.Log.e("OtsViewModel", "SMS error for ${sub.candidateRollNumber}", e)
+                }
+            }
+            android.widget.Toast.makeText(context, "Sent results SMS to $count candidates!", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun generateSubmissionsMeritGazette(context: android.content.Context, examTitle: String = "Online Exam") {
+        viewModelScope.launch {
+            val subs = repository.allSubmissions.first().filter { it.status != "In-Progress" }
+            val file = com.example.util.PdfPrintUtils.generateSubmissionsMeritGazettePdf(context, subs, examTitle)
+            if (file != null) {
+                android.widget.Toast.makeText(context, "Merit Gazette Generated: ${file.name}", android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                android.widget.Toast.makeText(context, "Failed to generate Merit Gazette.", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun generateCandidateMarksheetPdf(context: android.content.Context, sub: com.example.data.model.TestSubmissionEntity) {
+        viewModelScope.launch {
+            val file = com.example.util.PdfPrintUtils.generateCandidateMarksheetPdf(context, sub)
+            if (file != null) {
+                android.widget.Toast.makeText(context, "Marksheet Generated: ${file.name}", android.widget.Toast.LENGTH_SHORT).show()
+                com.example.util.PdfPrintUtils.viewPdf(context, file)
+            } else {
+                android.widget.Toast.makeText(context, "Failed to generate Marksheet.", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun deleteSubmission(id: String) {
+        viewModelScope.launch {
+            repository.deleteSubmission(id)
+        }
     }
 
     fun clearLiveTestSessions() {
@@ -144,6 +323,7 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
     val books: StateFlow<List<BookEntity>>
     val papers: StateFlow<List<PaperEntity>>
     val testAttempts: StateFlow<List<TestAttemptEntity>>
+    val testSubmissions: StateFlow<List<com.example.data.model.TestSubmissionEntity>>
 
     // Search and filter states
     private val _searchQuery = MutableStateFlow("")
@@ -196,7 +376,8 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
             database.questionDao(),
             database.bookDao(),
             database.paperDao(),
-            database.testAttemptDao()
+            database.testAttemptDao(),
+            database.testSubmissionDao()
         )
 
         questions = repository.allQuestions.stateIn(
@@ -218,6 +399,12 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
         )
 
         testAttempts = repository.allAttempts.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            emptyList()
+        )
+
+        testSubmissions = repository.allSubmissions.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
             emptyList()
@@ -880,6 +1067,168 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun exportAllDataToJson(): String {
+        val rootObj = JSONObject()
+        rootObj.put("questions", JSONArray(exportQuestionsToJson()))
+        
+        val booksArr = JSONArray()
+        books.value.forEach { b ->
+            val o = JSONObject()
+            o.put("id", b.id)
+            o.put("title", b.title)
+            o.put("chapterCount", b.chapterCount)
+            booksArr.put(o)
+        }
+        rootObj.put("books", booksArr)
+        
+        val papersArr = JSONArray()
+        papers.value.forEach { p ->
+            val o = JSONObject()
+            o.put("id", p.id)
+            o.put("title", p.title)
+            o.put("subject", p.subject)
+            o.put("durationMinutes", p.durationMinutes)
+            o.put("totalMarks", p.totalMarks)
+            o.put("questionIdsJson", p.questionIdsJson)
+            papersArr.put(o)
+        }
+        rootObj.put("papers", papersArr)
+        
+        val attemptsArr = JSONArray()
+        testAttempts.value.forEach { a ->
+            val o = JSONObject()
+            o.put("id", a.id)
+            o.put("paperId", a.paperId)
+            o.put("paperTitle", a.paperTitle)
+            o.put("candidateName", a.candidateName)
+            o.put("score", a.score)
+            o.put("maxMarks", a.maxMarks)
+            o.put("totalQuestions", a.totalQuestions)
+            o.put("correctAnswers", a.correctAnswers)
+            o.put("timestamp", a.timestamp)
+            attemptsArr.put(o)
+        }
+        rootObj.put("testAttempts", attemptsArr)
+        
+        val submissionsArr = JSONArray()
+        testSubmissions.value.forEach { s ->
+            val o = JSONObject()
+            o.put("id", s.id)
+            o.put("paperId", s.paperId)
+            o.put("paperTitle", s.paperTitle)
+            o.put("candidateName", s.candidateName)
+            o.put("candidateRollNumber", s.candidateRollNumber)
+            o.put("candidateEmail", s.candidateEmail)
+            o.put("candidateMobile", s.candidateMobile)
+            o.put("portraitBase64", s.portraitBase64)
+            o.put("status", s.status)
+            o.put("questionsJson", s.questionsJson)
+            o.put("answersJson", s.answersJson)
+            o.put("score", s.score)
+            o.put("maxMarks", s.maxMarks)
+            o.put("warningCount", s.warningCount)
+            o.put("loginTime", s.loginTime)
+            o.put("submitTime", s.submitTime)
+            submissionsArr.put(o)
+        }
+        rootObj.put("testSubmissions", submissionsArr)
+        
+        return rootObj.toString(2)
+    }
+
+    suspend fun importAllDataFromJson(jsonStr: String): Pair<Boolean, Int> {
+        return try {
+            val rootObj = JSONObject(jsonStr)
+            var totalImported = 0
+            
+            if (rootObj.has("questions")) {
+                val qArr = rootObj.getJSONArray("questions")
+                val (qSuccess, qCount) = importQuestionsFromJson(qArr.toString())
+                if (qSuccess) totalImported += qCount
+            }
+            
+            if (rootObj.has("books")) {
+                val booksArr = rootObj.getJSONArray("books")
+                for (i in 0 until booksArr.length()) {
+                    val o = booksArr.getJSONObject(i)
+                    repository.insertBook(BookEntity(
+                        id = o.getString("id"),
+                        title = o.getString("title"),
+                        chapterCount = o.optInt("chapterCount", 0)
+                    ))
+                    totalImported++
+                }
+            }
+            
+            if (rootObj.has("papers")) {
+                val papersArr = rootObj.getJSONArray("papers")
+                for (i in 0 until papersArr.length()) {
+                    val o = papersArr.getJSONObject(i)
+                    repository.insertPaper(PaperEntity(
+                        id = o.getString("id"),
+                        title = o.getString("title"),
+                        subject = o.optString("subject", ""),
+                        durationMinutes = o.optInt("durationMinutes", 30),
+                        totalMarks = o.optInt("totalMarks", 0),
+                        questionIdsJson = o.optString("questionIdsJson", "[]")
+                    ))
+                    totalImported++
+                }
+            }
+            
+            if (rootObj.has("testAttempts")) {
+                val attemptsArr = rootObj.getJSONArray("testAttempts")
+                for (i in 0 until attemptsArr.length()) {
+                    val o = attemptsArr.getJSONObject(i)
+                    repository.recordTestAttempt(com.example.data.model.TestAttemptEntity(
+                        id = o.getString("id"),
+                        paperId = o.getString("paperId"),
+                        paperTitle = o.getString("paperTitle"),
+                        candidateName = o.getString("candidateName"),
+                        score = o.optInt("score", 0),
+                        maxMarks = o.optInt("maxMarks", 0),
+                        totalQuestions = o.optInt("totalQuestions", 0),
+                        correctAnswers = o.optInt("correctAnswers", 0),
+                        timestamp = o.optLong("timestamp", System.currentTimeMillis())
+                    ))
+                    totalImported++
+                }
+            }
+            
+            if (rootObj.has("testSubmissions")) {
+                val subArr = rootObj.getJSONArray("testSubmissions")
+                for (i in 0 until subArr.length()) {
+                    val o = subArr.getJSONObject(i)
+                    repository.insertSubmission(com.example.data.model.TestSubmissionEntity(
+                        id = o.getString("id"),
+                        paperId = o.optString("paperId", null),
+                        paperTitle = o.getString("paperTitle"),
+                        candidateName = o.getString("candidateName"),
+                        candidateRollNumber = o.getString("candidateRollNumber"),
+                        candidateEmail = o.optString("candidateEmail", ""),
+                        candidateMobile = o.optString("candidateMobile", ""),
+                        portraitBase64 = o.optString("portraitBase64", ""),
+                        status = o.getString("status"),
+                        questionsJson = o.optString("questionsJson", "[]"),
+                        answersJson = o.optString("answersJson", "{}"),
+                        score = o.optInt("score", 0),
+                        maxMarks = o.optInt("maxMarks", 0),
+                        warningCount = o.optInt("warningCount", 0),
+                        loginTime = o.optLong("loginTime", System.currentTimeMillis()),
+                        submitTime = o.optLong("submitTime", System.currentTimeMillis())
+                    ))
+                    totalImported++
+                }
+            }
+            
+            Pair(true, totalImported)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Fallback to importing just questions if the root is an array
+            importQuestionsFromJson(jsonStr)
+        }
+    }
+
     fun exportQuestionsToJson(): String {
         val list = questions.value
         val jsonArray = JSONArray()
@@ -1500,8 +1849,15 @@ Question,BookTitle,Chapter,Type,Difficulty,Options,Answer,Explanation,Marks
     }
 
     fun stopWebServer() {
-        val intent = Intent(getApplication(), WebServerService::class.java)
-        getApplication<Application>().stopService(intent)
+        val app = getApplication<Application>()
+        val intent = Intent(app, WebServerService::class.java).apply {
+            action = WebServerService.ACTION_STOP
+        }
+        try {
+            app.startService(intent)
+        } catch (e: Exception) {
+            app.stopService(intent)
+        }
     }
 
     override fun onCleared() {

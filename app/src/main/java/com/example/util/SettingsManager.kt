@@ -14,6 +14,7 @@ class SettingsManager(context: Context) {
         private const val KEY_AVATAR_PRESET = "avatar_preset"
         private const val KEY_CUSTOM_AVATAR_URI = "custom_avatar_uri"
         private const val KEY_AVATAR_BG_COLOR = "avatar_bg_color"
+        private const val KEY_SUPERVISOR_SIGNATURE_BASE64 = "supervisor_signature_base64"
 
         private const val KEY_APP_LOCK_ENABLED = "app_lock_enabled"
         private const val KEY_BIOMETRIC_ENABLED = "biometric_enabled"
@@ -90,6 +91,22 @@ class SettingsManager(context: Context) {
     var avatarBgColorHex: String
         get() = prefs.getString(KEY_AVATAR_BG_COLOR, "#3F51B5") ?: "#3F51B5"
         set(value) = prefs.edit().putString(KEY_AVATAR_BG_COLOR, value).apply()
+
+    var supervisorSignatureBase64: String
+        get() = prefs.getString(KEY_SUPERVISOR_SIGNATURE_BASE64, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_SUPERVISOR_SIGNATURE_BASE64, value).apply()
+
+    val activeSupervisorName: String
+        get() = if (isGoogleSignedIn && googleAccountName.isNotBlank()) googleAccountName else userName
+
+    val activeSupervisorEmail: String
+        get() = if (isGoogleSignedIn && googleAccountEmail.isNotBlank()) googleAccountEmail else userEmail
+
+    val activeSupervisorRole: String
+        get() = userRole.ifBlank { "Head of Examination Board" }
+
+    val activeSupervisorInstitution: String
+        get() = userInstitution.ifBlank { "Department of Academic Science" }
 
     // App Lock & Security
     var isAppLockEnabled: Boolean
@@ -257,4 +274,8 @@ class SettingsManager(context: Context) {
     var githubUpdateToken: String
         get() = prefs.getString("github_update_token", "") ?: ""
         set(value) = prefs.edit().putString("github_update_token", value).apply()
+
+    var publicTunnelUrl: String
+        get() = prefs.getString("public_tunnel_url", "") ?: ""
+        set(value) = prefs.edit().putString("public_tunnel_url", value.trim().trimEnd('/')).apply()
 }

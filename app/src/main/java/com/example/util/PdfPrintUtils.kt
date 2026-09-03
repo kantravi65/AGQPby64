@@ -570,6 +570,24 @@ object PdfPrintUtils {
         }
     }
 
+    fun viewPdf(context: Context, pdfFile: File) {
+        try {
+            val uri: Uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                pdfFile
+            )
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/pdf")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(Intent.createChooser(intent, "Open PDF"))
+        } catch (e: Exception) {
+            sharePdf(context, pdfFile, pdfFile.name)
+        }
+    }
+
     fun sharePdf(context: Context, pdfFile: File, title: String) {
         try {
             val uri: Uri = FileProvider.getUriForFile(
@@ -854,6 +872,88 @@ object PdfPrintUtils {
                 currentY += 120
             }
 
+            checkNewPage(105f)
+
+            val sm = SettingsManager(context)
+            val supName = sm.activeSupervisorName
+            val supRole = sm.activeSupervisorRole
+            val supInst = sm.activeSupervisorInstitution
+            val supEmail = sm.activeSupervisorEmail
+            val dateStamp = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
+            val sigHash = "SHA256:" + java.util.UUID.nameUUIDFromBytes("${subject}-${candidates.size}-$supEmail".toByteArray()).toString().replace("-", "").take(16).uppercase()
+
+            val sigBoxHeight = 80f
+            val sigBgPaint = Paint().apply {
+                color = Color.parseColor("#F0F9FF")
+                style = Paint.Style.FILL
+            }
+            val sigBorderPaint = Paint().apply {
+                color = Color.parseColor("#0284C7")
+                style = Paint.Style.STROKE
+                strokeWidth = 1.2f
+            }
+            val sigTitlePaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textSize = 9.5f
+                color = Color.parseColor("#0369A1")
+                isAntiAlias = true
+            }
+            val sigDetailPaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+                textSize = 8f
+                color = Color.parseColor("#334155")
+                isAntiAlias = true
+            }
+            val sigSubPaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+                textSize = 7.5f
+                color = Color.parseColor("#64748B")
+                isAntiAlias = true
+            }
+            val sigCursivePaint = Paint().apply {
+                typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC)
+                textSize = 15f
+                color = Color.parseColor("#0369A1")
+                isAntiAlias = true
+            }
+
+            canvas.drawRect(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY + sigBoxHeight, sigBgPaint)
+            canvas.drawRect(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY + sigBoxHeight, sigBorderPaint)
+
+            val leftSigX = marginPt.toFloat() + 12f
+            canvas.drawText("✓ MERIT LIST OFFICIALLY CERTIFIED & DIGITALLY SIGNED", leftSigX, currentY + 16f, sigTitlePaint)
+            canvas.drawText("Supervisor: $supName", leftSigX, currentY + 30f, sigDetailPaint)
+            canvas.drawText("Designation: $supRole | $supInst", leftSigX, currentY + 44f, sigDetailPaint)
+            canvas.drawText("Authorized Account: $supEmail", leftSigX, currentY + 58f, sigSubPaint)
+            canvas.drawText("Security Hash: $sigHash | Timestamp: $dateStamp", leftSigX, currentY + 70f, sigSubPaint)
+
+            val rightSigX = (widthPt - marginPt - 160).toFloat()
+            canvas.drawLine(rightSigX - 10f, currentY + 8f, rightSigX - 10f, currentY + sigBoxHeight - 8f, sigBorderPaint)
+
+            var sigDrawn = false
+            if (sm.supervisorSignatureBase64.isNotBlank()) {
+                try {
+                    val cleanBase64 = if (sm.supervisorSignatureBase64.contains(",")) sm.supervisorSignatureBase64.substringAfter(",") else sm.supervisorSignatureBase64
+                    val bytes = android.util.Base64.decode(cleanBase64, android.util.Base64.DEFAULT)
+                    val sigBitmap = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    if (sigBitmap != null) {
+                        val destRect = android.graphics.RectF(rightSigX, currentY + 10f, (widthPt - marginPt - 15).toFloat(), currentY + 46f)
+                        canvas.drawBitmap(sigBitmap, null, destRect, null)
+                        sigDrawn = true
+                    }
+                } catch (e: Exception) {}
+            }
+
+            if (!sigDrawn) {
+                canvas.drawText(supName, rightSigX + 5f, currentY + 32f, sigCursivePaint)
+                canvas.drawLine(rightSigX + 5f, currentY + 37f, (widthPt - marginPt - 15).toFloat(), currentY + 37f, sigBorderPaint)
+            }
+
+            canvas.drawText("Head / Controller of Examinations", rightSigX + 5f, currentY + 52f, sigSubPaint)
+            canvas.drawText("Verified Digital Signature", rightSigX + 5f, currentY + 66f, sigSubPaint)
+
+            currentY += sigBoxHeight + 15f
+
             drawFooter()
             pdfDocument.finishPage(page)
 
@@ -866,6 +966,272 @@ object PdfPrintUtils {
             pdfDocument.close()
             file
         } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun generateSubmissionsMeritGazettePdf(
+        context: Context,
+        submissions: List<com.example.data.model.TestSubmissionEntity>,
+        examTitle: String = "Online Exam"
+    ): File? {
+        val sessions = submissions.map { sub ->
+            CandidateSession(
+                id = sub.id,
+                name = sub.candidateName,
+                rollNumber = sub.candidateRollNumber,
+                email = sub.candidateEmail,
+                mobile = sub.candidateMobile,
+                portraitBase64 = sub.portraitBase64,
+                latestFrameBase64 = "",
+                activeWarningMessage = "",
+                loginTime = sub.loginTime,
+                status = sub.status,
+                questionsJson = sub.questionsJson,
+                answersJson = sub.answersJson,
+                score = sub.score,
+                totalMarks = sub.maxMarks,
+                isDispatched = false,
+                warningCount = sub.warningCount
+            )
+        }
+        return generateLiveTestReportPdf(context, sessions, examTitle, 0)
+    }
+
+    fun generateCandidateMarksheetPdf(
+        context: Context,
+        sub: com.example.data.model.TestSubmissionEntity
+    ): File? {
+        return try {
+            val pdfDocument = PdfDocument()
+            val widthPt = 595
+            val heightPt = 842
+            val marginPt = 36
+            val printableWidth = widthPt - (marginPt * 2)
+
+            var pageNumber = 1
+            var pageInfo = PdfDocument.PageInfo.Builder(widthPt, heightPt, pageNumber).create()
+            var page = pdfDocument.startPage(pageInfo)
+            var canvas = page.canvas
+
+            val titlePaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textSize = 15f
+                color = Color.BLACK
+                isAntiAlias = true
+            }
+
+            val headerPaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textSize = 10f
+                color = Color.BLACK
+                isAntiAlias = true
+            }
+
+            val bodyPaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+                textSize = 9f
+                color = Color.BLACK
+                isAntiAlias = true
+            }
+
+            val grayPaint = Paint().apply {
+                color = Color.parseColor("#E2E8F0")
+                style = Paint.Style.STROKE
+                strokeWidth = 1f
+            }
+
+            val bgPaint = Paint().apply {
+                color = Color.parseColor("#F8FAFC")
+                style = Paint.Style.FILL
+            }
+
+            var currentY = marginPt.toFloat() + 20f
+
+            fun checkPage(neededHeight: Float) {
+                if (currentY + neededHeight > heightPt - marginPt - 30) {
+                    pdfDocument.finishPage(page)
+                    pageNumber++
+                    pageInfo = PdfDocument.PageInfo.Builder(widthPt, heightPt, pageNumber).create()
+                    page = pdfDocument.startPage(pageInfo)
+                    canvas = page.canvas
+                    currentY = marginPt.toFloat() + 20f
+                }
+            }
+
+            // Document Header
+            canvas.drawText("OFFICIAL EXAMINATION MARKSHEET & AUDIT REPORT", marginPt.toFloat(), currentY, titlePaint)
+            currentY += 16f
+            canvas.drawText("Paper: ${sub.paperTitle} | Candidate Roll: ${sub.candidateRollNumber}", marginPt.toFloat(), currentY, bodyPaint)
+            currentY += 15f
+            canvas.drawLine(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY, grayPaint)
+            currentY += 15f
+
+            // Candidate Summary Card
+            val cardHeight = 85f
+            canvas.drawRect(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY + cardHeight, bgPaint)
+            canvas.drawRect(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY + cardHeight, grayPaint)
+
+            val leftX = marginPt.toFloat() + 10f
+            val midX = marginPt.toFloat() + 200f
+            val rightX = marginPt.toFloat() + 380f
+
+            canvas.drawText("Name: ${sub.candidateName}", leftX, currentY + 18f, headerPaint)
+            canvas.drawText("Roll Number: ${sub.candidateRollNumber}", leftX, currentY + 34f, bodyPaint)
+            canvas.drawText("Mobile: ${sub.candidateMobile.ifEmpty { "N/A" }}", leftX, currentY + 50f, bodyPaint)
+            canvas.drawText("Email: ${sub.candidateEmail.ifEmpty { "N/A" }}", leftX, currentY + 66f, bodyPaint)
+
+            canvas.drawText("Score: ${sub.score} / ${sub.maxMarks}", midX, currentY + 18f, headerPaint)
+            val pct = if (sub.maxMarks > 0) (sub.score * 100) / sub.maxMarks else 0
+            canvas.drawText("Percentage: $pct%", midX, currentY + 34f, bodyPaint)
+            canvas.drawText("Merit Rank: ${if (sub.rank > 0) "#" + sub.rank else "N/A"}", midX, currentY + 50f, bodyPaint)
+            canvas.drawText("Verdict: ${if (pct >= 35) "PASSED" else "FAILED"}", midX, currentY + 66f, headerPaint)
+
+            canvas.drawText("Status: ${sub.status}", rightX, currentY + 18f, headerPaint)
+            canvas.drawText("Dispute: ${sub.disputeStatus}", rightX, currentY + 34f, bodyPaint)
+            canvas.drawText("Warnings: ${sub.warningCount}", rightX, currentY + 50f, bodyPaint)
+            val dateStr = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date(sub.submitTime))
+            canvas.drawText("Date: $dateStr", rightX, currentY + 66f, bodyPaint)
+
+            currentY += cardHeight + 20f
+
+            // Proctor Remarks
+            if (sub.proctorRemarks.isNotBlank()) {
+                canvas.drawText("Examiner / Proctor Notes: ${sub.proctorRemarks}", marginPt.toFloat(), currentY, headerPaint)
+                currentY += 18f
+            }
+
+            // Questions Breakdown
+            canvas.drawText("Evaluated Question Responses:", marginPt.toFloat(), currentY, headerPaint)
+            currentY += 15f
+
+            val answersMap: Map<String, String> = try {
+                val json = org.json.JSONObject(sub.answersJson)
+                val map = mutableMapOf<String, String>()
+                json.keys().forEach { k -> map[k] = json.optString(k) }
+                map
+            } catch (e: Exception) {
+                emptyMap()
+            }
+
+            val questions: List<com.example.util.QuestionDto> = try {
+                kotlinx.serialization.json.Json.decodeFromString(sub.questionsJson)
+            } catch (e: Exception) {
+                emptyList()
+            }
+
+            questions.forEachIndexed { idx, q ->
+                checkPage(45f)
+                val studentAns = answersMap[q.id]?.trim() ?: ""
+                val isCorrect = studentAns.isNotEmpty() && studentAns.equals(q.answer.trim(), ignoreCase = true)
+                val statusText = if (studentAns.isEmpty()) "[SKIPPED]" else if (isCorrect) "[CORRECT +${q.marks}]" else "[INCORRECT]"
+
+                canvas.drawText("Q${idx + 1}. ${q.question.take(90)}", marginPt.toFloat(), currentY, headerPaint)
+                currentY += 12f
+                canvas.drawText("Student Ans: ${studentAns.ifEmpty { "(None)" }} | Official Key: ${q.answer} | $statusText", marginPt.toFloat() + 10f, currentY, bodyPaint)
+                currentY += 16f
+            }
+
+            currentY += 15f
+            checkPage(110f)
+
+            val sm = SettingsManager(context)
+            val supName = sm.activeSupervisorName
+            val supRole = sm.activeSupervisorRole
+            val supInst = sm.activeSupervisorInstitution
+            val supEmail = sm.activeSupervisorEmail
+            val dateStamp = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
+            val sigHash = "SHA256:" + java.util.UUID.nameUUIDFromBytes("${sub.id}-${sub.candidateRollNumber}-${sub.score}-$supEmail".toByteArray()).toString().replace("-", "").take(16).uppercase()
+
+            val sigBoxHeight = 82f
+            val sigBgPaint = Paint().apply {
+                color = Color.parseColor("#F0F9FF")
+                style = Paint.Style.FILL
+            }
+            val sigBorderPaint = Paint().apply {
+                color = Color.parseColor("#0284C7")
+                style = Paint.Style.STROKE
+                strokeWidth = 1.2f
+            }
+            val sigTitlePaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textSize = 9.5f
+                color = Color.parseColor("#0369A1")
+                isAntiAlias = true
+            }
+            val sigDetailPaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+                textSize = 8f
+                color = Color.parseColor("#334155")
+                isAntiAlias = true
+            }
+            val sigSubPaint = Paint().apply {
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+                textSize = 7.5f
+                color = Color.parseColor("#64748B")
+                isAntiAlias = true
+            }
+            val sigCursivePaint = Paint().apply {
+                typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC)
+                textSize = 15f
+                color = Color.parseColor("#0369A1")
+                isAntiAlias = true
+            }
+
+            // Box Container
+            canvas.drawRect(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY + sigBoxHeight, sigBgPaint)
+            canvas.drawRect(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY + sigBoxHeight, sigBorderPaint)
+
+            // Left: Official Stamp Text
+            val leftSigX = marginPt.toFloat() + 12f
+            canvas.drawText("✓ OFFICIALLY AUTHENTICATED & DIGITALLY SIGNED", leftSigX, currentY + 16f, sigTitlePaint)
+            canvas.drawText("Supervisor: $supName", leftSigX, currentY + 30f, sigDetailPaint)
+            canvas.drawText("Designation: $supRole | $supInst", leftSigX, currentY + 44f, sigDetailPaint)
+            canvas.drawText("Authorized Account: $supEmail", leftSigX, currentY + 58f, sigSubPaint)
+            canvas.drawText("Digital Token: $sigHash | Timestamp: $dateStamp", leftSigX, currentY + 70f, sigSubPaint)
+
+            // Right: Digital Signature Visual
+            val rightSigX = (widthPt - marginPt - 160).toFloat()
+            canvas.drawLine(rightSigX - 10f, currentY + 8f, rightSigX - 10f, currentY + sigBoxHeight - 8f, sigBorderPaint)
+
+            var signatureDrawn = false
+            if (sm.supervisorSignatureBase64.isNotBlank()) {
+                try {
+                    val cleanBase64 = if (sm.supervisorSignatureBase64.contains(",")) sm.supervisorSignatureBase64.substringAfter(",") else sm.supervisorSignatureBase64
+                    val bytes = android.util.Base64.decode(cleanBase64, android.util.Base64.DEFAULT)
+                    val sigBitmap = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    if (sigBitmap != null) {
+                        val destRect = android.graphics.RectF(rightSigX, currentY + 10f, (widthPt - marginPt - 15).toFloat(), currentY + 48f)
+                        canvas.drawBitmap(sigBitmap, null, destRect, null)
+                        signatureDrawn = true
+                    }
+                } catch (e: Exception) {}
+            }
+
+            if (!signatureDrawn) {
+                canvas.drawText(supName, rightSigX + 5f, currentY + 33f, sigCursivePaint)
+                canvas.drawLine(rightSigX + 5f, currentY + 38f, (widthPt - marginPt - 15).toFloat(), currentY + 38f, sigBorderPaint)
+            }
+
+            canvas.drawText("Controller of Examinations", rightSigX + 5f, currentY + 52f, sigSubPaint)
+            canvas.drawText("Valid Digital Verification", rightSigX + 5f, currentY + 66f, sigSubPaint)
+
+            currentY += sigBoxHeight + 15f
+            canvas.drawLine(marginPt.toFloat(), currentY, (widthPt - marginPt).toFloat(), currentY, grayPaint)
+            currentY += 12f
+            canvas.drawText("Official Examination Marksheet Generated by QPby64 Engine | Tamper-Evident Digital Record", marginPt.toFloat(), currentY, bodyPaint)
+
+            pdfDocument.finishPage(page)
+
+            val archiveDir = File(context.filesDir, "ExamArchives")
+            if (!archiveDir.exists()) archiveDir.mkdirs()
+            val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(java.util.Date())
+            val file = File(archiveDir, "Marksheet_${sub.candidateRollNumber}_$timestamp.pdf")
+            pdfDocument.writeTo(FileOutputStream(file))
+            pdfDocument.close()
+            file
+        } catch (e: Exception) {
             e.printStackTrace()
             null
         }

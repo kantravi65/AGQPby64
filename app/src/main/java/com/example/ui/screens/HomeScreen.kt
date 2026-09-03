@@ -112,13 +112,31 @@ fun HomeScreen(
             contentColor = MaterialTheme.colorScheme.onErrorContainer
         ),
         HomeTileItem(
-            id = "archives",
-            title = "Exam Archives",
-            description = "Post-exam marksheet & result storage",
-            icon = Icons.Outlined.Archive,
-            countBadge = "Results",
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+            id = "live_test_portal",
+            title = "Live Test Portal",
+            description = "Saved papers timing setup, web server & candidate supervisor",
+            icon = Icons.Default.Language,
+            countBadge = "Live",
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ),
+        HomeTileItem(
+            id = "admin_mode",
+            title = "Admin Mode",
+            description = "Secured admin portal & remote web server supervisor",
+            icon = Icons.Default.Security,
+            countBadge = "Admin",
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f),
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        ),
+        HomeTileItem(
+            id = "expert_review",
+            title = "Expert Review",
+            description = "Peer evaluation system & subjective answers analysis",
+            icon = Icons.Default.CheckCircle,
+            countBadge = "Review",
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.8f),
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
         ),
         HomeTileItem(
             id = "settings",

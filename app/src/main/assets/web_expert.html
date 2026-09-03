@@ -7,24 +7,24 @@
     <style>
         :root { --primary: #2e7d32; --primary-hover: #1b5e20; --bg: #f4f6f8; --text: #333; --border: #ddd; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--text); }
-        .header { background: var(--primary); color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { margin: 0; font-size: 24px; }
-        .header p { margin: 5px 0 0 0; opacity: 0.8; }
-        .container { max-width: 1200px; margin: 40px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .search-box { padding: 8px 12px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        .header { background: var(--primary); color: #fff; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; font-size: 20px; }
+        .header p { margin: 2px 0 0 0; opacity: 0.8; font-size: 13px; }
+        .container { max-width: 1300px; margin: 10px auto; padding: 12px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .search-box { padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
         table, th, td { border: 1px solid var(--border); }
-        th, td { padding: 10px 12px; text-align: left; }
+        th, td { padding: 6px 8px; text-align: left; }
         th { background-color: #f2f2f2; position: sticky; top: 0; }
         tr:hover { background-color: #f9f9f9; }
-        .btn { padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: 500; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: 500; transition: 0.2s; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
         .btn-primary { background: var(--primary); }
         .btn-primary:hover { background: var(--primary-hover); }
         .btn-success { background: #2e7d32; }
         .btn-success:hover { background: #1b5e20; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        .form-group { margin-bottom: 8px; }
+        .form-group label { display: block; margin-bottom: 3px; font-weight: bold; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -34,9 +34,26 @@
         <h1>QuestionBank Expert Review System</h1>
         <p>Review, Edit, and Approve Questions on a Large Screen</p>
     </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+            <span style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%; display: inline-block;"></span>
+            CONNECTED TO APP
+        </span>
+    </div>
 </div>
 
 <div class="container">
+    <div id="paper-indicator" style="display: none; background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 24px;">📝</span>
+            <div>
+                <h4 style="margin: 0; font-size: 16px; font-weight: bold;">Expert Active Paper Selected</h4>
+                <p style="margin: 3px 0 0 0; font-size: 14px;" id="active-paper-text">Loading selected paper details...</p>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="fetchData()" style="padding: 6px 12px; font-size: 13px;">Refresh Sync</button>
+    </div>
+
     <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #ddd;">
         <h3 style="margin-top:0; margin-bottom: 15px; color: var(--primary);">1. Filter Questions for Review</h3>
         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -87,6 +104,25 @@ let loadedQuestions = [];
 
 async function fetchData() {
     try {
+        try {
+            const paperRes = await fetch('/api/expert/paper');
+            const indicator = document.getElementById('paper-indicator');
+            if (paperRes.ok) {
+                const paper = await paperRes.json();
+                if (paper && paper.title) {
+                    indicator.style.display = 'flex';
+                    const qCount = JSON.parse(paper.questionIdsJson || "[]").length;
+                    document.getElementById('active-paper-text').innerText = `"${paper.title}" (${paper.subject}) — displaying only the ${qCount} questions belonging to this paper.`;
+                } else {
+                    indicator.style.display = 'none';
+                }
+            } else {
+                indicator.style.display = 'none';
+            }
+        } catch (err) {
+            document.getElementById('paper-indicator').style.display = 'none';
+        }
+
         const r = await fetch('/api/questions');
         allQuestions = await r.json();
         
@@ -96,6 +132,10 @@ async function fetchData() {
         
         // Initial answers population
         updateAnswerDropdown();
+        
+        // Auto-load and render questions immediately
+        loadedQuestions = [...allQuestions];
+        renderQuestions();
     } catch (e) {
         console.error("Error fetching data:", e);
     }
@@ -132,27 +172,61 @@ function loadQuestions() {
     renderQuestions();
 }
 
-function updateMcqDropdown(id) {
-    const select = document.getElementById(`ea_${id}`);
-    if (!select) return;
-    const currentVal = select.value;
-    select.innerHTML = '';
+window.toggleExpertRadio = function(el, id) {
+    if (el.dataset.wasChecked === 'true') {
+        el.checked = false;
+        el.dataset.wasChecked = 'false';
+        const ea = document.getElementById(`ea_${id}`);
+        if (ea) ea.value = '';
+    } else {
+        const radios = document.querySelectorAll(`input[name="${el.name}"]`);
+        radios.forEach(r => r.dataset.wasChecked = 'false');
+        el.dataset.wasChecked = 'true';
+        updateExpertAnswerFromTick(id);
+    }
+}
+
+window.updateExpertAnswerFromTick = function(id) {
+    const ea = document.getElementById(`ea_${id}`);
+    if (!ea) return;
+    const o1Input = document.getElementById(`eo1_${id}`);
+    const o2Input = document.getElementById(`eo2_${id}`);
+    const o3Input = document.getElementById(`eo3_${id}`);
+    const o4Input = document.getElementById(`eo4_${id}`);
+    if (!o1Input) return;
+
+    const o1 = o1Input.value.trim();
+    const o2 = o2Input.value.trim();
+    const o3 = o3Input.value.trim();
+    const o4 = o4Input.value.trim();
+    const opts = [o1, o2, o3, o4];
     
-    ['eo1', 'eo2', 'eo3', 'eo4'].forEach((optPrefix) => {
-        const input = document.getElementById(`${optPrefix}_${id}`);
-        if (input) {
-            const val = input.value.trim();
-            if (val) {
-                const option = document.createElement('option');
-                option.value = val;
-                option.text = val;
-                if (val === currentVal) {
-                    option.selected = true;
+    const checkedRadio = document.querySelector(`input[name="expert_correct_${id}"]:checked`);
+    if (checkedRadio) {
+        const idx = parseInt(checkedRadio.value) - 1;
+        ea.value = opts[idx] || '';
+    } else {
+        const currentAns = ea.value.trim();
+        if (currentAns && currentAns !== "N/A" && currentAns !== "") {
+            let found = false;
+            opts.forEach((opt, i) => {
+                if (opt === currentAns) {
+                    const r = document.querySelector(`input[name="expert_correct_${id}"][value="${i+1}"]`);
+                    if (r) {
+                        r.checked = true;
+                        found = true;
+                    }
                 }
-                select.appendChild(option);
+            });
+            if (!found) {
+                const radios = document.querySelectorAll(`input[name="expert_correct_${id}"]`);
+                radios.forEach(r => r.checked = false);
             }
+        } else {
+            const radios = document.querySelectorAll(`input[name="expert_correct_${id}"]`);
+            radios.forEach(r => r.checked = false);
         }
-    });
+    }
 }
 
 function renderQuestions() {
@@ -174,49 +248,95 @@ function renderQuestions() {
         }
         
         const div = document.createElement('div');
-        div.style.cssText = 'background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative;';
+        
+        let cardBg = '#ffffff';
+        let cardBorder = '#ccc';
+        let badgeBg = '#f1f1f1';
+        let badgeColor = '#555';
+        if (q.type === 'mcq') {
+            cardBg = '#f1fcf4'; cardBorder = '#c2e7cc'; badgeBg = '#e8f5e9'; badgeColor = '#1b5e20';
+        } else if (q.type === 'subjective') {
+            cardBg = '#fffaf4'; cardBorder = '#ffe0b2'; badgeBg = '#fff3e0'; badgeColor = '#e65100';
+        } else if (q.type === 'tf') {
+            cardBg = '#f4fdfd'; cardBorder = '#b2ebf2'; badgeBg = '#e0f7fa'; badgeColor = '#006064';
+        } else if (q.type === 'fib') {
+            cardBg = '#fdfbfd'; cardBorder = '#e1bee7'; badgeBg = '#f3e5f5'; badgeColor = '#4a148c';
+        }
+
+        div.style.cssText = `background: ${cardBg}; padding: 10px 14px; margin-bottom: 10px; border-radius: 6px; border: 1px solid ${cardBorder}; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative;`;
         
         let answerFieldHtml = '';
         if (q.type === 'mcq') {
             answerFieldHtml = `
-                <select id="ea_${q.id}" class="search-box" style="width:100%; height: 42px;">
-                </select>
+                <input type="hidden" id="ea_${q.id}" value="${q.answer.replace(/"/g, '&quot;')}">
+            `;
+        } else if (q.type === 'tf') {
+            answerFieldHtml = `
+                <div style="display:flex; gap:12px; align-items:center; height:28px;">
+                    <label style="display:flex; align-items:center; gap:4px; font-weight:normal; cursor:pointer; margin-bottom:0; font-size: 13px;">
+                        <input type="radio" name="expert_tf_${q.id}" value="True" ${q.answer.toLowerCase()==='true'?'checked':''} onclick="document.getElementById('ea_${q.id}').value = 'True'"> True
+                    </label>
+                    <label style="display:flex; align-items:center; gap:4px; font-weight:normal; cursor:pointer; margin-bottom:0; font-size: 13px;">
+                        <input type="radio" name="expert_tf_${q.id}" value="False" ${q.answer.toLowerCase()==='false'?'checked':''} onclick="document.getElementById('ea_${q.id}').value = 'False'"> False
+                    </label>
+                </div>
+                <input type="hidden" id="ea_${q.id}" value="${q.answer.replace(/"/g, '&quot;')}">
             `;
         } else {
             answerFieldHtml = `
-                <input type="text" id="ea_${q.id}" class="search-box" style="width:100%; height: 42px;" value="${q.answer.replace(/"/g, '&quot;')}">
+                <input type="text" id="ea_${q.id}" class="search-box" style="width:100%; height: 28px; padding: 2px 6px; font-size: 13px;" value="${q.answer.replace(/"/g, '&quot;')}">
             `;
         }
 
         div.innerHTML = `
-            <div style="font-weight:bold; color:#1b5e20; margin-bottom: 12px; font-size: 15px;">
-                Q${i+1} [${q.bookTitle}] - Chapter: ${q.chapter} &bull; Type: ${q.type.toUpperCase()}
-            </div>
-            <div style="display:flex; gap: 20px; flex-wrap: wrap;">
-                <div style="flex:2; min-width: 300px;">
-                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Question Text</label>
-                    <textarea id="eq_${q.id}" class="search-box" style="width:100%; font-family: inherit; font-size:14px;" rows="4">${q.question}</textarea>
+            <div style="font-weight:bold; margin-bottom: 8px; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; margin-right: 6px;">Q${i+1}</span>
+                    <span style="color:#444;">[${q.bookTitle}]</span> &bull; <span style="color:#666; font-weight:normal;">Chapter: ${q.chapter}</span>
                 </div>
-                <div style="flex:1; min-width: 250px;">
-                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Correct Answer</label>
-                    ${answerFieldHtml}
-                    <label style="margin-top:12px; display:block; font-weight:bold; margin-bottom:5px;">Marks</label>
-                    <input type="number" id="em_${q.id}" class="search-box" style="width:100%; height:42px;" value="${q.marks}">
+                <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold;">${q.type.toUpperCase()}</span>
+            </div>
+            <div style="display:flex; gap: 12px; flex-wrap: wrap; align-items: flex-start;">
+                <div style="flex:2; min-width: 300px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:3px; font-size: 12px; color: #555;">Question Text</label>
+                    <textarea id="eq_${q.id}" class="search-box" style="width:100%; font-family: inherit; font-size:13px; line-height: 1.3;" rows="2">${q.question}</textarea>
+                </div>
+                <div style="flex:1; min-width: 250px; display: flex; gap: 10px;">
+                    <div style="flex: 2;">
+                        <label style="display:block; font-weight:bold; margin-bottom:3px; font-size: 12px; color: #555;">Correct Answer</label>
+                        ${answerFieldHtml}
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display:block; font-weight:bold; margin-bottom:3px; font-size: 12px; color: #555;">Marks</label>
+                        <input type="number" id="em_${q.id}" class="search-box" style="width:100%; height:28px; padding: 2px 6px; font-size: 13px;" value="${q.marks}">
+                    </div>
                 </div>
             </div>
             ${q.type === 'mcq' ? `
-            <div style="margin-top:15px; background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px dashed #ccc;">
-                <label style="display:block; font-weight:bold; margin-bottom:8px;">MCQ Options</label>
-                <div style="display:flex; gap:12px;">
-                    <input type="text" id="eo1_${q.id}" class="search-box" style="width:25%;" value="${(opts[0]||'').replace(/"/g, '&quot;')}" oninput="updateMcqDropdown('${q.id}')" placeholder="Option 1">
-                    <input type="text" id="eo2_${q.id}" class="search-box" style="width:25%;" value="${(opts[1]||'').replace(/"/g, '&quot;')}" oninput="updateMcqDropdown('${q.id}')" placeholder="Option 2">
-                    <input type="text" id="eo3_${q.id}" class="search-box" style="width:25%;" value="${(opts[2]||'').replace(/"/g, '&quot;')}" oninput="updateMcqDropdown('${q.id}')" placeholder="Option 3">
-                    <input type="text" id="eo4_${q.id}" class="search-box" style="width:25%;" value="${(opts[3]||'').replace(/"/g, '&quot;')}" oninput="updateMcqDropdown('${q.id}')" placeholder="Option 4">
+            <div style="margin-top:8px; background: rgba(0,0,0,0.02); padding: 8px; border-radius: 4px; border: 1px dashed ${cardBorder};">
+                <label style="display:block; font-weight:bold; margin-bottom:4px; font-size:11px; color: #555;">MCQ Options (Tick correct option to toggle)</label>
+                <div style="display:flex; gap:10px;">
+                    <div style="display:flex; align-items:center; gap:4px; width:25%;">
+                        <input type="radio" name="expert_correct_${q.id}" value="1" ${opts[0] && q.answer === opts[0] ? 'checked data-was-checked="true"' : 'data-was-checked="false"'} onclick="toggleExpertRadio(this, '${q.id}')">
+                        <input type="text" id="eo1_${q.id}" class="search-box" style="flex:1; margin-bottom:0; height: 26px; padding: 2px 6px; font-size: 12px;" value="${(opts[0]||'').replace(/"/g, '&quot;')}" oninput="updateExpertAnswerFromTick('${q.id}')" placeholder="Option 1">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:4px; width:25%;">
+                        <input type="radio" name="expert_correct_${q.id}" value="2" ${opts[1] && q.answer === opts[1] ? 'checked data-was-checked="true"' : 'data-was-checked="false"'} onclick="toggleExpertRadio(this, '${q.id}')">
+                        <input type="text" id="eo2_${q.id}" class="search-box" style="flex:1; margin-bottom:0; height: 26px; padding: 2px 6px; font-size: 12px;" value="${(opts[1]||'').replace(/"/g, '&quot;')}" oninput="updateExpertAnswerFromTick('${q.id}')" placeholder="Option 2">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:4px; width:25%;">
+                        <input type="radio" name="expert_correct_${q.id}" value="3" ${opts[2] && q.answer === opts[2] ? 'checked data-was-checked="true"' : 'data-was-checked="false"'} onclick="toggleExpertRadio(this, '${q.id}')">
+                        <input type="text" id="eo3_${q.id}" class="search-box" style="flex:1; margin-bottom:0; height: 26px; padding: 2px 6px; font-size: 12px;" value="${(opts[2]||'').replace(/"/g, '&quot;')}" oninput="updateExpertAnswerFromTick('${q.id}')" placeholder="Option 3">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:4px; width:25%;">
+                        <input type="radio" name="expert_correct_${q.id}" value="4" ${opts[3] && q.answer === opts[3] ? 'checked data-was-checked="true"' : 'data-was-checked="false"'} onclick="toggleExpertRadio(this, '${q.id}')">
+                        <input type="text" id="eo4_${q.id}" class="search-box" style="flex:1; margin-bottom:0; height: 26px; padding: 2px 6px; font-size: 12px;" value="${(opts[3]||'').replace(/"/g, '&quot;')}" oninput="updateExpertAnswerFromTick('${q.id}')" placeholder="Option 4">
+                    </div>
                 </div>
             </div>
             ` : ''}
-            <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
-                <button id="btn_${q.id}" class="btn btn-success" style="padding: 10px 24px; font-size: 14px;" onclick="saveQuestion('${q.id}')">
+            <div style="margin-top: 6px; display: flex; justify-content: flex-end;">
+                <button id="btn_${q.id}" class="btn btn-success" style="padding: 4px 10px; font-size: 12px;" onclick="saveQuestion('${q.id}')">
                     Save & Approve
                 </button>
             </div>
@@ -224,27 +344,8 @@ function renderQuestions() {
         
         container.appendChild(div);
         
-        // If it's MCQ, initialize the dropdown
         if (q.type === 'mcq') {
-            initMcqDropdown(q.id, q.answer, opts);
-        }
-    });
-}
-
-function initMcqDropdown(qId, selectedAnswer, opts) {
-    const select = document.getElementById(`ea_${qId}`);
-    if (!select) return;
-    select.innerHTML = '';
-    
-    opts.forEach(opt => {
-        if (opt && opt.trim() !== "") {
-            const option = document.createElement('option');
-            option.value = opt;
-            option.text = opt;
-            if (opt === selectedAnswer) {
-                option.selected = true;
-            }
-            select.appendChild(option);
+            updateExpertAnswerFromTick(q.id);
         }
     });
 }

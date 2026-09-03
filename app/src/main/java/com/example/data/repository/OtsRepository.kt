@@ -7,19 +7,43 @@ import com.example.data.dao.TestAttemptDao
 import com.example.data.model.BookEntity
 import com.example.data.model.PaperEntity
 import com.example.data.model.QuestionEntity
+import com.example.data.dao.TestSubmissionDao
 import com.example.data.model.TestAttemptEntity
+import com.example.data.model.TestSubmissionEntity
 import kotlinx.coroutines.flow.Flow
 
 class OtsRepository(
     private val questionDao: QuestionDao,
     private val bookDao: BookDao,
     private val paperDao: PaperDao,
-    private val testAttemptDao: TestAttemptDao
+    private val testAttemptDao: TestAttemptDao,
+    private val testSubmissionDao: TestSubmissionDao
 ) {
     val allQuestions: Flow<List<QuestionEntity>> = questionDao.getAllQuestions()
     val allBooks: Flow<List<BookEntity>> = bookDao.getAllBooks()
     val allPapers: Flow<List<PaperEntity>> = paperDao.getAllPapers()
     val allAttempts: Flow<List<TestAttemptEntity>> = testAttemptDao.getAllAttempts()
+    val allSubmissions: Flow<List<TestSubmissionEntity>> = testSubmissionDao.getAllSubmissions()
+
+    suspend fun insertSubmission(submission: TestSubmissionEntity) {
+        testSubmissionDao.insertSubmission(submission)
+    }
+
+    suspend fun updateSubmission(submission: TestSubmissionEntity) {
+        testSubmissionDao.updateSubmission(submission)
+    }
+
+    suspend fun getSubmissionById(id: String): TestSubmissionEntity? {
+        return testSubmissionDao.getSubmissionById(id)
+    }
+
+    suspend fun getSubmissionByRollNumber(rollNumber: String): TestSubmissionEntity? {
+        return testSubmissionDao.getSubmissionByRollNumber(rollNumber)
+    }
+    
+    suspend fun deleteSubmission(id: String) {
+        testSubmissionDao.deleteSubmission(id)
+    }
 
     suspend fun insertQuestion(question: QuestionEntity) {
         questionDao.insertQuestion(question)

@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -138,6 +139,58 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
+
+                // Supervisor Digital Signature Preview
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Official Digital Signature & Seal", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            "This verified supervisor profile is automatically embedded as a digital signature on all examination marksheets, post-exam audit reports, and merit gazettes.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Surface(
+                            color = Color(0xFFF0F9FF),
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, Color(0xFFBAE6FD)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("✓ AUTHENTICATED DIGITAL STAMP", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color(0xFF0369A1))
+                                    Text("Supervisor: ${settingsManager.activeSupervisorName}", fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = Color(0xFF0C4A6E))
+                                    Text("${settingsManager.activeSupervisorRole} • ${settingsManager.activeSupervisorInstitution}", fontSize = 10.sp, color = Color(0xFF64748B))
+                                    Text("Account: ${settingsManager.activeSupervisorEmail}", fontSize = 9.sp, color = Color(0xFF94A3B8))
+                                }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        text = settingsManager.activeSupervisorName,
+                                        fontFamily = FontFamily.Cursive,
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0369A1)
+                                    )
+                                    Text("Authorised Signatory", fontSize = 9.sp, color = Color(0xFF64748B))
+                                }
+                            }
+                        }
+                    }
+                }
                 
                 Button(
                     onClick = onGoogleSignOut,
@@ -1305,18 +1358,45 @@ fun SettingsScreen(
         // --- WEB DASHBOARD MANAGER ---
         item {
             val webServerUrl by viewModel.webServerUrl.collectAsState()
+            val webServerPublicUrl by viewModel.webServerPublicUrl.collectAsState()
+            val webServerHttpUrl by viewModel.webServerHttpUrl.collectAsState()
+            var tunnelUrlInput by remember { mutableStateOf(viewModel.publicTunnelUrl) }
             
             SettingsCategory(
-                title = "Remote Web Dashboard",
+                title = "Remote Web Servers & Internet Portals",
                 icon = { Icon(Icons.Default.Language, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
             ) {
                 Text(
-                    text = "Manage your database (Questions, Papers, Books) directly from your PC browser on the same Wi-Fi network.",
+                    text = "Host exam, proctoring, and question bank portals. Access locally over Wi-Fi or globally over the internet via Cloudflare/Ngrok tunnel.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = tunnelUrlInput,
+                    onValueChange = {
+                        tunnelUrlInput = it
+                        viewModel.publicTunnelUrl = it
+                    },
+                    label = { Text("🌐 Public Tunnel URL (e.g. https://xxx.trycloudflare.com)") },
+                    placeholder = { Text("Leave blank for local Wi-Fi only") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    trailingIcon = {
+                        if (tunnelUrlInput.isNotBlank()) {
+                            IconButton(onClick = {
+                                tunnelUrlInput = ""
+                                viewModel.publicTunnelUrl = ""
+                            }) {
+                                Icon(Icons.Default.Clear, contentDescription = "Clear")
+                            }
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
                 
                 if (webServerUrl != null) {
                     Card(
@@ -1324,10 +1404,18 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Server is running!", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Open this URL on your PC:", style = MaterialTheme.typography.bodySmall)
+                            Text("Server is active!", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            if (webServerPublicUrl != null) {
+                                Text("🌐 Public Internet Link:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1B5E20))
+                                Text(webServerPublicUrl ?: "", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1B5E20))
+                                Spacer(modifier = Modifier.height(6.dp))
+                            }
+                            Text("🏠 Local LAN Wi-Fi URL:", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
                             Text(webServerUrl ?: "", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            if (webServerHttpUrl != null) {
+                                Text("Tunnel Target: $webServerHttpUrl (HTTP)", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            }
                         }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -1342,32 +1430,40 @@ fun SettingsScreen(
                     }
                 } else {
                     Button(
+                        onClick = { viewModel.startWebServer("all") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(Icons.Default.Language, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Start Unified Server (All 3 Portals)")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
                         onClick = { viewModel.startWebServer("admin") },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Start Admin Server")
+                        Text("Start Admin Server Only")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(
+                    OutlinedButton(
                         onClick = { viewModel.startWebServer("expert") },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Start Expert Review Server")
+                        Text("Start Expert Review Server Only")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(
+                    OutlinedButton(
                         onClick = { viewModel.startWebServer("livetest") },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Start Live Test Server")
+                        Text("Start Live Test Server Only")
                     }
                 }
             }

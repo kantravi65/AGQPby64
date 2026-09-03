@@ -10,23 +10,23 @@
         .header { background: var(--primary); color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
         .header h1 { margin: 0; font-size: 24px; }
         .header p { margin: 5px 0 0 0; opacity: 0.8; }
-        .container { max-width: 1400px; margin: 20px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .nav-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
-        .nav-tabs button { flex: 1; padding: 15px; background: none; border: none; font-size: 16px; cursor: pointer; border-bottom: 3px solid transparent; outline: none; transition: 0.2s; }
+        .container { max-width: 1400px; margin: 10px auto; padding: 12px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .nav-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 12px; }
+        .nav-tabs button { flex: 1; padding: 8px; background: none; border: none; font-size: 14px; cursor: pointer; border-bottom: 3px solid transparent; outline: none; transition: 0.2s; }
         .nav-tabs button:hover { background: #f9f9f9; }
         .nav-tabs button.active { border-bottom: 3px solid var(--primary); font-weight: bold; color: var(--primary); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .search-box { padding: 8px 12px; width: 300px; border: 1px solid var(--border); border-radius: 4px; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .search-box { padding: 5px 8px; width: 250px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; }
         .actions button { margin-left: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
         table, th, td { border: 1px solid var(--border); }
-        th, td { padding: 10px 12px; text-align: left; }
+        th, td { padding: 4px 6px; text-align: left; }
         th { background-color: #f2f2f2; position: sticky; top: 0; }
-        tr:hover { background-color: #f9f9f9; }
-        .table-container { max-height: 600px; overflow-y: auto; }
-        .btn { padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: 500; transition: 0.2s; }
+        tr:hover { filter: brightness(0.97); }
+        .table-container { max-height: 750px; overflow-y: auto; }
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: 500; transition: 0.2s; font-size: 13px; }
         .btn-primary { background: var(--primary); }
         .btn-primary:hover { background: var(--primary-hover); }
         .btn-danger { background: #d32f2f; }
@@ -35,17 +35,17 @@
         .btn-success:hover { background: #1b5e20; }
         .btn-warning { background: #f57c00; }
         .btn-warning:hover { background: #ef6c00; }
-        .btn-sm { padding: 5px 8px; font-size: 12px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        .btn-sm { padding: 3px 6px; font-size: 11px; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 13px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 13px; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
-        .modal-content { background-color: #fff; margin: 5% auto; padding: 25px; border-radius: 8px; width: 60%; max-width: 800px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-content { background-color: #fff; margin: 5% auto; padding: 20px; border-radius: 8px; width: 60%; max-width: 800px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .close { color: #aaa; float: right; font-size: 24px; font-weight: bold; cursor: pointer; }
         .close:hover { color: black; }
         .hidden { display: none !important; }
-        .stats { font-size: 14px; color: #666; margin-top: 5px; }
-        .inline-input { width: 100%; border: 1px solid transparent; background: transparent; font-family: inherit; font-size: inherit; padding: 4px; box-sizing: border-box; resize: vertical; }
+        .stats { font-size: 13px; color: #666; margin-top: 3px; }
+        .inline-input { width: 100%; border: 1px solid transparent; background: transparent; font-family: inherit; font-size: inherit; padding: 2px; box-sizing: border-box; resize: vertical; }
         .inline-input:focus { border: 1px solid var(--primary); background: #fff; outline: none; }
         .filters { display: flex; gap: 10px; }
     </style>
@@ -57,7 +57,11 @@
         <h1>QuestionBank Desktop Dashboard</h1>
         <p>Advanced Management, Bulk Import/Export, and Paper Assembly</p>
     </div>
-    <div class="header-actions">
+    <div class="header-actions" style="display: flex; align-items: center; gap: 8px;">
+        <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; margin-right: 8px;">
+            <span style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%; display: inline-block;"></span>
+            CONNECTED TO APP
+        </span>
         <button class="btn btn-warning" onclick="exportData()">Export Backup (JSON)</button>
         <button class="btn btn-success" onclick="document.getElementById('importFile').click()">Import Data (JSON)</button>
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
@@ -286,7 +290,7 @@
                 </div>
                 <div class="form-group" style="flex:1;">
                     <label>Type</label>
-                    <select id="q_type">
+                    <select id="q_type" onchange="handleModalTypeChange()">
                         <option value="mcq">MCQ</option>
                         <option value="subjective">Subjective</option>
                         <option value="tf">True/False</option>
@@ -310,28 +314,28 @@
                 <label>Question Text</label>
                 <textarea id="q_question" rows="3" required></textarea>
             </div>
-            <div class="form-group" id="q_options_container">
-                <label>Options & Correct Answer (Tick the correct one)</label>
-                <div style="display:flex; flex-direction:column; gap:5px;">
-                    <div style="display:flex; align-items:center; gap:5px;">
-                        <input type="radio" name="modal_correct_ans" id="q_radio_1" onclick="document.getElementById('q_answer').value = document.getElementById('q_opt_1').value">
-                        <input type="text" id="q_opt_1" placeholder="Option A" style="flex:1" onkeyup="if(document.getElementById('q_radio_1').checked) document.getElementById('q_answer').value = this.value">
+            <div class="form-group" id="q_mcq_options_group">
+                <label>Options (For MCQ) - Tick correct option to toggle</label>
+                <div style="display:flex; gap:10px;">
+                    <div style="display:flex; align-items:center; gap:4px; width:25%;">
+                        <input type="radio" name="modal_correct" value="1" data-was-checked="false" onclick="toggleModalRadio(this)">
+                        <input type="text" id="q_opt_1" placeholder="Option A" style="flex:1" oninput="updateModalAnswer()">
                     </div>
-                    <div style="display:flex; align-items:center; gap:5px;">
-                        <input type="radio" name="modal_correct_ans" id="q_radio_2" onclick="document.getElementById('q_answer').value = document.getElementById('q_opt_2').value">
-                        <input type="text" id="q_opt_2" placeholder="Option B" style="flex:1" onkeyup="if(document.getElementById('q_radio_2').checked) document.getElementById('q_answer').value = this.value">
+                    <div style="display:flex; align-items:center; gap:4px; width:25%;">
+                        <input type="radio" name="modal_correct" value="2" data-was-checked="false" onclick="toggleModalRadio(this)">
+                        <input type="text" id="q_opt_2" placeholder="Option B" style="flex:1" oninput="updateModalAnswer()">
                     </div>
-                    <div style="display:flex; align-items:center; gap:5px;">
-                        <input type="radio" name="modal_correct_ans" id="q_radio_3" onclick="document.getElementById('q_answer').value = document.getElementById('q_opt_3').value">
-                        <input type="text" id="q_opt_3" placeholder="Option C" style="flex:1" onkeyup="if(document.getElementById('q_radio_3').checked) document.getElementById('q_answer').value = this.value">
+                    <div style="display:flex; align-items:center; gap:4px; width:25%;">
+                        <input type="radio" name="modal_correct" value="3" data-was-checked="false" onclick="toggleModalRadio(this)">
+                        <input type="text" id="q_opt_3" placeholder="Option C" style="flex:1" oninput="updateModalAnswer()">
                     </div>
-                    <div style="display:flex; align-items:center; gap:5px;">
-                        <input type="radio" name="modal_correct_ans" id="q_radio_4" onclick="document.getElementById('q_answer').value = document.getElementById('q_opt_4').value">
-                        <input type="text" id="q_opt_4" placeholder="Option D" style="flex:1" onkeyup="if(document.getElementById('q_radio_4').checked) document.getElementById('q_answer').value = this.value">
+                    <div style="display:flex; align-items:center; gap:4px; width:25%;">
+                        <input type="radio" name="modal_correct" value="4" data-was-checked="false" onclick="toggleModalRadio(this)">
+                        <input type="text" id="q_opt_4" placeholder="Option D" style="flex:1" oninput="updateModalAnswer()">
                     </div>
                 </div>
             </div>
-            <div class="form-group" id="q_answer_container" style="display:none;">
+            <div class="form-group" id="q_answer_group">
                 <label>Correct Answer</label>
                 <input type="text" id="q_answer" required>
             </div>
@@ -434,7 +438,8 @@
                 document.getElementById('questionForm').reset();
                 document.getElementById('q_id').value = '';
                 document.getElementById('questionModalTitle').innerText = 'Add Question';
-                document.getElementById('q_options').value = '[]';
+                handleModalTypeChange();
+                refreshModalRadios();
             } else if (id === 'bookModal') {
                 document.getElementById('bookForm').reset();
                 document.getElementById('bookModalTitle').innerText = 'Add Book';
@@ -497,23 +502,120 @@
         }
     }
 
-    function setInlineAns(id, radioEl) {
-        const tr = document.getElementById(`qrow_${id}`);
-        if (!tr) return;
-        const inputEl = radioEl.nextElementSibling;
-        const ansInput = tr.querySelector('.q-answer');
-        if (ansInput && inputEl) {
-            ansInput.value = inputEl.value;
+    function toggleModalRadio(el) {
+        if (el.dataset.wasChecked === 'true') {
+            el.checked = false;
+            el.dataset.wasChecked = 'false';
+            document.getElementById('q_answer').value = '';
+        } else {
+            const radios = document.querySelectorAll(`input[name="modal_correct"]`);
+            radios.forEach(r => r.dataset.wasChecked = 'false');
+            el.dataset.wasChecked = 'true';
+            updateModalAnswer();
         }
     }
-    
-    function syncInlineAns(id, inputEl) {
+
+    function updateModalAnswer() {
+        const checked = document.querySelector(`input[name="modal_correct"]:checked`);
+        if (checked) {
+            const val = document.getElementById(`q_opt_${checked.value}`).value.trim();
+            document.getElementById('q_answer').value = val;
+        }
+    }
+
+    function refreshModalRadios() {
+        const ans = document.getElementById('q_answer').value.trim();
+        const radios = document.querySelectorAll(`input[name="modal_correct"]`);
+        let found = false;
+        if (ans) {
+            for (let i = 1; i <= 4; i++) {
+                const optVal = document.getElementById(`q_opt_${i}`).value.trim();
+                if (optVal === ans) {
+                    radios[i-1].checked = true;
+                    radios[i-1].dataset.wasChecked = 'true';
+                    found = true;
+                } else {
+                    radios[i-1].checked = false;
+                    radios[i-1].dataset.wasChecked = 'false';
+                }
+            }
+        }
+        if (!found) {
+            radios.forEach(r => {
+                r.checked = false;
+                r.dataset.wasChecked = 'false';
+            });
+        }
+    }
+
+    function handleModalTypeChange() {
+        const type = document.getElementById('q_type').value;
+        if (type === 'mcq') {
+            document.getElementById('q_mcq_options_group').style.display = 'block';
+            document.getElementById('q_answer_group').style.display = 'none';
+        } else {
+            document.getElementById('q_mcq_options_group').style.display = 'none';
+            document.getElementById('q_answer_group').style.display = 'block';
+        }
+    }
+
+    window.toggleDashboardRadio = function(el, id) {
+        if (el.dataset.wasChecked === 'true') {
+            el.checked = false;
+            el.dataset.wasChecked = 'false';
+            const tr = document.getElementById(`qrow_${id}`);
+            if(tr) {
+                const ansInput = tr.querySelector('.q-answer');
+                if(ansInput) ansInput.value = '';
+            }
+        } else {
+            const radios = document.querySelectorAll(`input[name="${el.name}"]`);
+            radios.forEach(r => r.dataset.wasChecked = 'false');
+            el.dataset.wasChecked = 'true';
+            updateAnswerFromTick(id);
+        }
+    }
+
+    window.updateAnswerFromTick = function(id) {
         const tr = document.getElementById(`qrow_${id}`);
-        if (!tr) return;
-        const radioEl = inputEl.previousElementSibling;
+        if(!tr) return;
+        const optInputs = tr.querySelectorAll('.q-opt-item');
+        const checkedRadio = tr.querySelector(`.q-opt-correct:checked`);
         const ansInput = tr.querySelector('.q-answer');
-        if (radioEl && radioEl.checked && ansInput) {
-            ansInput.value = inputEl.value;
+        if (checkedRadio && ansInput) {
+            const idx = parseInt(checkedRadio.value);
+            const selectedVal = optInputs[idx] ? optInputs[idx].value.trim() : '';
+            ansInput.value = selectedVal;
+        } else if (ansInput) {
+            const currentAns = ansInput.value.trim();
+            if (currentAns && currentAns !== "N/A" && currentAns !== "") {
+                let found = false;
+                optInputs.forEach((inp, i) => {
+                    if (inp.value.trim() === currentAns) {
+                        const radio = tr.querySelectorAll(`.q-opt-correct`)[i];
+                        if (radio) {
+                            radio.checked = true;
+                            found = true;
+                        }
+                    }
+                });
+                if (!found) {
+                    const radios = tr.querySelectorAll(`.q-opt-correct`);
+                    radios.forEach(r => r.checked = false);
+                }
+            } else {
+                const radios = tr.querySelectorAll(`.q-opt-correct`);
+                radios.forEach(r => r.checked = false);
+            }
+        }
+    }
+
+    window.updateTfAnswerFromTick = function(id, val) {
+        const tr = document.getElementById(`qrow_${id}`);
+        if(!tr) return;
+        const ansInput = tr.querySelector('.q-answer');
+        if (ansInput) {
+            ansInput.value = val;
         }
     }
 
@@ -531,22 +633,22 @@
             if (type === 'mcq') {
                 if (!optsContainer.querySelector('.q-opt-item')) {
                     optsContainer.innerHTML = `
-                        <div style="display:flex; flex-direction:column; gap:2px;">
-                            <div style="display:flex; align-items:center; gap:4px;">
-                                <input type="radio" name="inline_ans_${id}" onclick="setInlineAns('${id}', this)">
-                                <input class="inline-input q-opt-item" placeholder="Opt A" value="" onkeyup="syncInlineAns('${id}', this)">
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <input type="radio" name="correct_${id}" class="q-opt-correct" value="0" data-was-checked="false" onclick="toggleDashboardRadio(this, '${id}')">
+                                <input class="inline-input q-opt-item" placeholder="Opt A" value="" onkeyup="updateAnswerFromTick('${id}')">
                             </div>
-                            <div style="display:flex; align-items:center; gap:4px;">
-                                <input type="radio" name="inline_ans_${id}" onclick="setInlineAns('${id}', this)">
-                                <input class="inline-input q-opt-item" placeholder="Opt B" value="" onkeyup="syncInlineAns('${id}', this)">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <input type="radio" name="correct_${id}" class="q-opt-correct" value="1" data-was-checked="false" onclick="toggleDashboardRadio(this, '${id}')">
+                                <input class="inline-input q-opt-item" placeholder="Opt B" value="" onkeyup="updateAnswerFromTick('${id}')">
                             </div>
-                            <div style="display:flex; align-items:center; gap:4px;">
-                                <input type="radio" name="inline_ans_${id}" onclick="setInlineAns('${id}', this)">
-                                <input class="inline-input q-opt-item" placeholder="Opt C" value="" onkeyup="syncInlineAns('${id}', this)">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <input type="radio" name="correct_${id}" class="q-opt-correct" value="2" data-was-checked="false" onclick="toggleDashboardRadio(this, '${id}')">
+                                <input class="inline-input q-opt-item" placeholder="Opt C" value="" onkeyup="updateAnswerFromTick('${id}')">
                             </div>
-                            <div style="display:flex; align-items:center; gap:4px;">
-                                <input type="radio" name="inline_ans_${id}" onclick="setInlineAns('${id}', this)">
-                                <input class="inline-input q-opt-item" placeholder="Opt D" value="" onkeyup="syncInlineAns('${id}', this)">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <input type="radio" name="correct_${id}" class="q-opt-correct" value="3" data-was-checked="false" onclick="toggleDashboardRadio(this, '${id}')">
+                                <input class="inline-input q-opt-item" placeholder="Opt D" value="" onkeyup="updateAnswerFromTick('${id}')">
                             </div>
                         </div>
                     `;
@@ -557,25 +659,20 @@
         }
 
         if (type === 'mcq') {
-            const optInputs = tr.querySelectorAll('.q-opt-item');
-            const radios = tr.querySelectorAll(`input[name="inline_ans_${id}"]`);
-            let opts = [];
-            optInputs.forEach((inp, idx) => { 
-                if(inp.value.trim()) opts.push(inp.value.trim()); 
-                if (inp.value.trim() !== '' && inp.value.trim() === currentAns) {
-                    radios[idx].checked = true;
-                }
-            });
-            
-            // Hidden input to store answer
-            ansContainer.innerHTML = `<input type="text" class="inline-input q-answer" value="${currentAns.replace(/"/g, '&quot;')}" style="background-color:#eee;" readonly>`;
+            ansContainer.innerHTML = `<input type="hidden" class="q-answer" value="${currentAns.replace(/"/g, '&quot;')}">`;
+            updateAnswerFromTick(id);
         } else if (type === 'tf') {
-            if (isTypeChange) {
-                ansContainer.innerHTML = `<select class="inline-input q-answer">
-                    <option value="True" ${currentAns.toLowerCase()==='true'?'selected':''}>True</option>
-                    <option value="False" ${currentAns.toLowerCase()==='false'?'selected':''}>False</option>
-                 </select>`;
-            }
+            ansContainer.innerHTML = `
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <label style="display:flex; align-items:center; gap:4px; font-weight:normal; cursor:pointer;">
+                        <input type="radio" name="tf_correct_${id}" class="q-tf-correct" value="True" ${currentAns.toLowerCase()==='true'?'checked':''} onclick="updateTfAnswerFromTick('${id}', 'True')"> True
+                    </label>
+                    <label style="display:flex; align-items:center; gap:4px; font-weight:normal; cursor:pointer;">
+                        <input type="radio" name="tf_correct_${id}" class="q-tf-correct" value="False" ${currentAns.toLowerCase()==='false'?'checked':''} onclick="updateTfAnswerFromTick('${id}', 'False')"> False
+                    </label>
+                </div>
+                <input type="hidden" class="q-answer" value="${currentAns}">
+            `;
         } else {
             if (isTypeChange) {
                 ansContainer.innerHTML = `<input class="inline-input q-answer" value="${currentAns.replace(/"/g, '&quot;')}">`;
@@ -617,6 +714,13 @@
             tr.id = `qrow_${q.id}`;
             let opts=[]; try{opts=JSON.parse(q.optionsJson);}catch(e){}
             
+            let rowBg = '#ffffff';
+            if (q.type === 'mcq') rowBg = '#f1fcf4';
+            else if (q.type === 'subjective') rowBg = '#fffaf4';
+            else if (q.type === 'tf') rowBg = '#f4fdfd';
+            else if (q.type === 'fib') rowBg = '#fdfbfd';
+            tr.style.backgroundColor = rowBg;
+            
             tr.innerHTML = `
                 <td>
                     <input class="inline-input q-book" value="${q.bookTitle.replace(/"/g, '&quot;')}" placeholder="Book/Subject">
@@ -633,27 +737,41 @@
                 <td><textarea class="inline-input q-question" rows="2">${q.question}</textarea></td>
                 <td class="q-opts-container">
                     ${q.type === 'mcq' ? `
-                    <div style="display:flex; flex-direction:column; gap:2px;">
-                        <input class="inline-input q-opt-item" placeholder="Opt A" value="${(opts[0]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerDropdown('${q.id}')">
-                        <input class="inline-input q-opt-item" placeholder="Opt B" value="${(opts[1]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerDropdown('${q.id}')">
-                        <input class="inline-input q-opt-item" placeholder="Opt C" value="${(opts[2]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerDropdown('${q.id}')">
-                        <input class="inline-input q-opt-item" placeholder="Opt D" value="${(opts[3]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerDropdown('${q.id}')">
+                    <div style="display:flex; flex-direction:column; gap:4px;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <input type="radio" name="correct_${q.id}" class="q-opt-correct" value="0" ${opts[0] && q.answer === opts[0] ? 'checked data-was-checked="true"' : 'data-was-checked="false"'} onclick="toggleDashboardRadio(this, '${q.id}')">
+                            <input class="inline-input q-opt-item" placeholder="Opt A" value="${(opts[0]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerFromTick('${q.id}')">
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <input type="radio" name="correct_${q.id}" class="q-opt-correct" value="1" ${opts[1] && q.answer === opts[1] ? 'checked data-was-checked="true"' : 'data-was-checked="false"'} onclick="toggleDashboardRadio(this, '${q.id}')">
+                            <input class="inline-input q-opt-item" placeholder="Opt B" value="${(opts[1]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerFromTick('${q.id}')">
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <input type="radio" name="correct_${q.id}" class="q-opt-correct" value="2" ${opts[2] && q.answer === opts[2] ? 'checked data-was-checked="true"' : 'data-was-checked="false"'} onclick="toggleDashboardRadio(this, '${q.id}')">
+                            <input class="inline-input q-opt-item" placeholder="Opt C" value="${(opts[2]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerFromTick('${q.id}')">
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <input type="radio" name="correct_${q.id}" class="q-opt-correct" value="3" ${opts[3] && q.answer === opts[3] ? 'checked data-was-checked="true"' : 'data-was-checked="false"'} onclick="toggleDashboardRadio(this, '${q.id}')">
+                            <input class="inline-input q-opt-item" placeholder="Opt D" value="${(opts[3]||'').replace(/"/g, '&quot;')}" onkeyup="updateAnswerFromTick('${q.id}')">
+                        </div>
                     </div>
                     ` : `<span style="color:#aaa; font-style:italic;">N/A (Not MCQ)</span>`}
                 </td>
                 <td class="q-answer-container">
                     ${q.type === 'mcq' ? 
-                        `<select class="inline-input q-answer">${
-                            (() => {
-                                if(opts.length===0) return `<option value="${q.answer.replace(/"/g, '&quot;')}">${q.answer}</option>`;
-                                return opts.map(o => `<option value="${o.replace(/"/g, '&quot;')}" ${o===q.answer?'selected':''}>${o}</option>`).join('');
-                            })()
-                        }</select>` : 
+                        `<input type="hidden" class="q-answer" value="${q.answer.replace(/"/g, '&quot;')}">` : 
                         q.type === 'tf' ? 
-                        `<select class="inline-input q-answer">
-                            <option value="True" ${q.answer.toLowerCase()==='true'?'selected':''}>True</option>
-                            <option value="False" ${q.answer.toLowerCase()==='false'?'selected':''}>False</option>
-                         </select>` :
+                        `
+                        <div style="display:flex; gap:12px; align-items:center;">
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:normal; cursor:pointer;">
+                                <input type="radio" name="tf_correct_${q.id}" class="q-tf-correct" value="True" ${q.answer.toLowerCase()==='true'?'checked':''} onclick="updateTfAnswerFromTick('${q.id}', 'True')"> True
+                            </label>
+                            <label style="display:flex; align-items:center; gap:4px; font-weight:normal; cursor:pointer;">
+                                <input type="radio" name="tf_correct_${q.id}" class="q-tf-correct" value="False" ${q.answer.toLowerCase()==='false'?'checked':''} onclick="updateTfAnswerFromTick('${q.id}', 'False')"> False
+                            </label>
+                        </div>
+                        <input type="hidden" class="q-answer" value="${q.answer}">
+                        ` :
                         `<input class="inline-input q-answer" value="${q.answer.replace(/"/g, '&quot;')}">`
                     }
                 </td>
@@ -723,16 +841,13 @@
         document.getElementById('q_opt_2').value = opts[1] || '';
         document.getElementById('q_opt_3').value = opts[2] || '';
         document.getElementById('q_opt_4').value = opts[3] || '';
-
-        document.getElementById('q_radio_1').checked = (q.answer && q.answer === opts[0]);
-        document.getElementById('q_radio_2').checked = (q.answer && q.answer === opts[1]);
-        document.getElementById('q_radio_3').checked = (q.answer && q.answer === opts[2]);
-        document.getElementById('q_radio_4').checked = (q.answer && q.answer === opts[3]);
         
         document.getElementById('q_answer').value = q.answer;
         document.getElementById('q_explanation').value = q.explanation;
         document.getElementById('q_marks').value = q.marks;
         document.getElementById('questionModalTitle').innerText = 'Edit Question';
+        handleModalTypeChange();
+        refreshModalRadios();
         openModal('questionModal', false);
     }
 

@@ -29,6 +29,40 @@
             -ms-user-select: none;
         }
 
+        @media print {
+            body { display: none !important; }
+        }
+
+        /* Anti-Cheat Dynamic Security Watermark */
+        .security-watermark {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            opacity: 0.12;
+            transform: rotate(-25deg) scale(1.2);
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .watermark-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: 900;
+            color: #0f172a;
+            text-align: center;
+            letter-spacing: 1.5px;
+            white-space: nowrap;
+        }
+
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background-color: var(--bg);
@@ -600,6 +634,13 @@
     </style>
 </head>
 <body>
+    <!-- Pre-Exam Countdown Overlay -->
+    <div id="preExamOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; z-index: 10000; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+        <h1 style="font-size: 36px; color: #1e3c72; margin-bottom: 20px;">Waiting for Exam to Start</h1>
+        <p style="font-size: 24px; font-weight: bold; color: #333;" id="preExamCountdownText">Exam starts in 00m 00s</p>
+        <p style="font-size: 16px; color: #666; margin-top: 20px;">Please stay on this screen. The exam will start automatically.</p>
+    </div>
+
 
 <div class="header">
     <div>
@@ -660,17 +701,16 @@
 
         <!-- Right Column: Sidebar Stats -->
         <div class="sidebar">
+            <div class="proctor-video-box" style="margin-bottom: 12px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--border); position: relative;">
+                <video id="liveExamCamera" autoplay playsinline muted style="width: 100%; height: 110px; object-fit: cover; display: block;"></video>
+                <div style="position: absolute; bottom: 4px; left: 6px; background: rgba(0,0,0,0.7); color: #10b981; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+                    <span style="display:inline-block; width:6px; height:6px; background:#10b981; border-radius:50%;"></span> PROCTOR LIVE
+                </div>
+            </div>
+
             <div class="candidate-info">
                 <h3 id="sideName">Candidate</h3>
                 <p id="sideRoll">Roll No:</p>
-            </div>
-
-            <!-- PROCTOR LIVE FEED PREVIEW -->
-            <div style="margin-bottom: 15px; position: relative; border-radius: 8px; overflow: hidden; background: #000; border: 2px solid #3b82f6;">
-                <video id="proctorVideo" autoplay playsinline muted style="width: 100%; height: 110px; object-fit: cover; display: block;"></video>
-                <div style="position: absolute; top: 6px; left: 6px; background: rgba(220, 38, 38, 0.9); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; display: flex; align-items: center; gap: 4px;">
-                    <span style="width: 6px; height: 6px; background: white; border-radius: 50%; display: inline-block;"></span> PROCTORED
-                </div>
             </div>
 
             <div class="timer-box" id="timerBox">
@@ -694,7 +734,11 @@
                     <span class="shield-icon">🛡️</span> Security Shield: SECURED
                 </div>
                 <div style="font-size:12px; color: var(--text-secondary);" id="anticheatDesc">
-                    Full-screen and focus monitoring is active. Do not exit this page.
+                    Full-screen, audio, and focus monitoring is active. Do not exit this page.
+                </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-secondary);">
+                    <span>Room Audio Monitor:</span>
+                    <span id="micLevelText" style="color: #10b981; font-weight: bold;">● NORMAL</span>
                 </div>
                 <div style="margin-top:10px; font-weight:bold; font-size:13px; display:none; color: var(--danger);" id="warningCounter">
                     Security Violations: 0 / 3
@@ -717,6 +761,23 @@
     </div>
 </div>
 
+<!-- DYNAMIC SECURITY WATERMARK OVERLAY -->
+<div id="securityWatermark" class="security-watermark" style="display:none;"></div>
+
+<!-- PROCTOR SECURITY VIOLATION MODAL -->
+<div id="securityViolationModal" style="display: none; position: fixed; z-index: 10001; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.75); align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <div style="background: white; border-radius: 12px; padding: 28px; max-width: 480px; width: 90%; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); border-top: 6px solid #ef4444;">
+        <div style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
+        <h3 style="color: #b91c1c; font-size: 20px; font-weight: bold; margin-bottom: 10px;">SECURITY VIOLATION DETECTED</h3>
+        <p id="securityModalReason" style="color: #334155; font-size: 14px; margin-bottom: 15px; font-weight: 500;"></p>
+        <div id="securityModalCounter" style="display: inline-block; background: #fee2e2; color: #b91c1c; font-weight: bold; font-size: 13px; padding: 6px 14px; border-radius: 20px; margin-bottom: 20px;">
+            Violation 1 of 3
+        </div>
+        <p style="color: #64748b; font-size: 12px; margin-bottom: 20px;">Reaching 3 violations results in immediate exam termination and disqualification.</p>
+        <button class="btn btn-danger" onclick="acknowledgeSecurityViolation()" style="width: 100%; padding: 12px; font-weight: bold;">I Acknowledge & Return to Exam</button>
+    </div>
+</div>
+
 <!-- CHEAT DETECTED MODAL -->
 <div id="cheatModal" class="cheat-modal">
     <div class="cheat-content">
@@ -730,6 +791,23 @@
 let currentPortraitBase64 = null;
 let videoStream = null;
 let heartbeatInterval = null;
+let peerConnection = null;
+const config = { 
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun.cloudflare.com:3478' },
+        {
+            urls: [
+                'turn:openrelay.metered.ca:80',
+                'turn:openrelay.metered.ca:443',
+                'turn:openrelay.metered.ca:443?transport=tcp'
+            ],
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+        }
+    ]
+};
 
 async function initCamera() {
     try {
@@ -737,10 +815,27 @@ async function initCamera() {
             enableCameraFallback();
             return;
         }
-        videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        try {
+            videoStream = await navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+                audio: true
+            });
+        } catch (errAudio) {
+            console.warn("Audio+Video getUserMedia failed, retrying video only:", errAudio);
+            videoStream = await navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+                audio: false
+            });
+        }
         const videoElement = document.getElementById('cameraPreview');
-        if (videoElement) {
+        if (videoElement && videoStream) {
             videoElement.srcObject = videoStream;
+            videoElement.play().catch(e => console.log(e));
+        }
+        const examVideo = document.getElementById('liveExamCamera');
+        if (examVideo && videoStream) {
+            examVideo.srcObject = videoStream;
+            examVideo.play().catch(e => console.log(e));
         }
     } catch (err) {
         console.error("Camera error:", err);
@@ -781,118 +876,169 @@ window.addEventListener('load', initCamera);
 function captureFrame() {
     if (fallbackImageBase64) return fallbackImageBase64;
     const fallback = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
-    const videoElement = document.getElementById('proctorVideo') || document.getElementById('cameraPreview');
-    if (!videoStream || !videoElement) {
+    const videoElement = document.getElementById('liveExamCamera') || document.getElementById('cameraPreview');
+    if (!videoStream) {
         return fallback;
     }
-    const width = videoElement.videoWidth || 320;
-    const height = videoElement.videoHeight || 240;
-    if (width === 0 || height === 0) return fallback;
     
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg', 0.6);
+    if (videoElement && (!videoElement.srcObject || videoElement.srcObject !== videoStream)) {
+        videoElement.srcObject = videoStream;
+        videoElement.play().catch(e => {});
+    }
+
+    const width = (videoElement && videoElement.videoWidth > 0) ? videoElement.videoWidth : 320;
+    const height = (videoElement && videoElement.videoHeight > 0) ? videoElement.videoHeight : 240;
+    
+    if (videoElement && videoElement.videoWidth > 0 && videoElement.videoHeight > 0) {
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.min(width, 320);
+        canvas.height = Math.min(height, 240);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', 0.5);
+    }
+    return fallback;
+}
+
+
+let wsConnection = null;
+function initWebSocket() {
+    if (wsConnection && (wsConnection.readyState === WebSocket.OPEN || wsConnection.readyState === WebSocket.CONNECTING)) {
+        return;
+    }
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/api/livetest/ws`;
+    wsConnection = new WebSocket(wsUrl);
+    
+    wsConnection.onopen = () => {
+        console.log("WebSocket connected for candidate " + cNumber);
+        wsConnection.send("INIT:" + cNumber);
+        
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+        heartbeatInterval = setInterval(() => {
+            if (!cNumber || isSubmitted) return;
+            const frame = captureFrame();
+            if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+                if (frame && frame.length > 100) {
+                    wsConnection.send("FRAME:" + frame);
+                }
+                const currentQId = "Q" + (currentQIndex + 1);
+                
+                let liveAnswers = {};
+                testQuestions.forEach((q, i) => {
+                    if (q.type === 'mcq' || q.type === 'tf') {
+                        const checked = document.querySelector(`input[name="ans_${q.id}"]:checked`);
+                        if (checked) liveAnswers[q.id] = checked.value;
+                    } else if (q.type === 'fib') {
+                        const input = document.getElementById(`ans_${q.id}`);
+                        if (input && input.value) liveAnswers[q.id] = input.value;
+                    }
+                });
+                wsConnection.send("PROG:" + currentQId + ":" + JSON.stringify(liveAnswers));
+            }
+        }, 1500);
+    };
+
+    wsConnection.onclose = () => {
+        console.warn("Candidate WebSocket disconnected.");
+        if (!isSubmitted && cNumber) {
+            setTimeout(initWebSocket, 2000);
+        }
+    };
+
+    wsConnection.onerror = (err) => {
+        console.error("Candidate WebSocket error:", err);
+    };
+    
+    wsConnection.onmessage = (event) => {
+        const msg = event.data;
+        if (msg === "CMD:FORCE_SUBMIT") {
+            alert("SUPERVISOR ACTION: Your exam paper has been forcefully submitted by the administrator.");
+            submitTest(true);
+        } else if (msg.startsWith("CMD:WARNING:")) {
+            const warning = msg.replace("CMD:WARNING:", "");
+            alert("SUPERVISOR WARNING: " + warning);
+        } else if (msg.startsWith("WEBRTC_OFFER:")) {
+            handleWebRtcOffer(msg.substring(13));
+        } else if (msg.startsWith("WEBRTC_ICE:")) {
+            handleWebRtcIce(msg.substring(11));
+        }
+    };
+}
+
+
+function startExamNow() {
+    document.getElementById('preExamOverlay').style.display = 'none';
+    startTimer();
+    renderQuestions();
+    initWebSocket();
+}
+
+function showPreExamCountdown(timeMillis) {
+    const overlay = document.getElementById('preExamOverlay');
+    overlay.style.display = 'flex';
+    const countdownText = document.getElementById('preExamCountdownText');
+    
+    // Request full screen here so they are locked in even while waiting
+    if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(e => console.log(e));
+    }
+    
+    const countdownTimer = setInterval(() => {
+        const now = Date.now();
+        const diff = timeMillis - now;
+        if (diff <= 0) {
+            clearInterval(countdownTimer);
+            startExamNow();
+        } else {
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            let txt = "Exam starts in ";
+            if (hours > 0) txt += hours + "h ";
+            txt += minutes + "m " + seconds + "s";
+            countdownText.innerText = txt;
+        }
+    }, 1000);
 }
 
 async function sendHeartbeat() {
-    if (!cNumber || isSubmitted) return;
-    const frame = captureFrame();
-    try {
-        const response = await fetch('/api/livetest/heartbeat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rollNumber: cNumber, frameBase64: frame || "" })
-        });
-        if (response.ok) {
-            const data = await response.json();
-            if (data.maxStrikes !== undefined) maxWarnings = data.maxStrikes;
-            if (data.warningCount !== undefined) {
-                warnings = data.warningCount;
-                updateViolationUI();
-            }
-
-            if (data.forceAction === 'TERMINATE' || data.status === 'Disqualified') {
-                terminateExamForCheating();
-                return;
-            }
-
-            if (data.forceAction === 'PARDON') {
-                warnings = 0;
-                updateViolationUI();
-                showSupervisorToast("Supervisor has pardoned your security strikes.", "#10b981");
-            }
-
-            if (data.warningMessage && data.warningMessage.trim() !== "") {
-                showSupervisorToast("SUPERVISOR ALERT: " + data.warningMessage, "#f59e0b");
-            }
-        }
-    } catch (e) {
-        console.error("Heartbeat error", e);
-    }
+    // Disabled HTTP heartbeat in favor of WebSockets
 }
 
-function showSupervisorToast(msg, bgColor = "#dc2626") {
-    let toast = document.getElementById('supervisorToast');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'supervisorToast';
-        toast.style.cssText = `position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: ${bgColor}; color: white; padding: 14px 24px; border-radius: 8px; font-weight: bold; font-size: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 99999; text-align: center; max-width: 90%; animation: slideDown 0.3s ease;`;
-        document.body.appendChild(toast);
-    } else {
-        toast.style.background = bgColor;
-    }
-    toast.innerText = msg;
-    toast.style.display = 'block';
-    setTimeout(() => {
-        if (toast) toast.style.display = 'none';
-    }, 6000);
-}
 
 let testQuestions = [];
+let currentQIndex = 0;
 let cName = "";
 let cNumber = "";
 let warnings = 0;
-let maxWarnings = 3;
+const maxWarnings = 3;
 let examTimer = null;
 let timeLimitSeconds = 0;
+let startTimeMillis = 0;
 let isSubmitted = false;
-let lastViolationTime = 0;
 
-// Anti-cheating: Context Menu & Clipboard Blockers
+// Disable right click context menu
 document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
-    handleCheatViolation('CONTEXT_MENU', 'Candidate right-clicked to open context menu');
 }, false);
 
-document.addEventListener('copy', function(e) {
-    e.preventDefault();
-    handleCheatViolation('CLIPBOARD_BLOCKED', 'Candidate attempted to copy content');
-}, false);
+// Disable copying, cutting, pasting
+document.addEventListener('copy', function(e) { e.preventDefault(); }, false);
+document.addEventListener('cut', function(e) { e.preventDefault(); }, false);
+document.addEventListener('paste', function(e) { e.preventDefault(); }, false);
 
-document.addEventListener('cut', function(e) {
-    e.preventDefault();
-    handleCheatViolation('CLIPBOARD_BLOCKED', 'Candidate attempted to cut content');
-}, false);
-
-document.addEventListener('paste', function(e) {
-    e.preventDefault();
-    handleCheatViolation('CLIPBOARD_BLOCKED', 'Candidate attempted to paste content');
-}, false);
-
-document.addEventListener('keydown', function(e) {
-    // F12 or DevTools shortcuts
-    if (e.keyCode === 123 || 
-        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
-        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 80 || e.keyCode === 83))) {
-        e.preventDefault();
-        e.stopPropagation();
-        handleCheatViolation('DEVTOOLS_ATTEMPT', 'Candidate attempted browser inspect shortcut or source viewing');
-        return false;
-    }
-});
+// Disable keyboard developer shortcuts
+document.onkeydown = function (e) {
+    // F12 key
+    if (e.keyCode === 123) return false;
+    // Ctrl+Shift+I
+    if (e.ctrlKey && e.shiftKey && e.keyCode === 73) return false;
+    // Ctrl+Shift+J
+    if (e.ctrlKey && e.shiftKey && e.keyCode === 74) return false;
+    // Ctrl+U
+    if (e.ctrlKey && e.keyCode === 85) return false;
+};
 
 async function initiateRegistration() {
     cName = document.getElementById('lt_name').value.trim();
@@ -927,10 +1073,13 @@ async function initiateRegistration() {
         const data = await response.json();
         testQuestions = data.questions;
         timeLimitSeconds = data.durationMinutes * 60;
+        startTimeMillis = data.startTimeMillis || 0;
         
         document.getElementById('portalHeaderTitle').innerText = data.examName || 'Examination Portal';
         document.getElementById('portalHeaderSub').innerText = (data.subjectName && data.subjectName !== "") ? 'Subject: ' + data.subjectName : 'High Security Environment';
 
+        // Connect WebSocket early so signaling is ready
+        initWebSocket();
 
         if (!testQuestions || testQuestions.length === 0) {
             alert("There are no questions assigned for this exam currently. Please ask the administrator to configure the question parameters.");
@@ -946,36 +1095,89 @@ async function initiateRegistration() {
 }
 
 function requestFullScreenAndStart() {
+    // Enter Fullscreen on document
     const elem = document.documentElement;
     if (elem.requestFullscreen) {
-        elem.requestFullscreen().catch(()=>{});
-    } else if (elem.webkitRequestFullscreen) {
+        elem.requestFullscreen().catch(e => console.log(e));
+    } else if (elem.mozRequestFullScreen) { // Firefox
+        elem.mozRequestFullScreen();
+    } else if (elem.webkitRequestFullscreen) { // Chrome, Safari, Opera
         elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) {
+    } else if (elem.msRequestFullscreen) { // IE/Edge
         elem.msRequestFullscreen();
     }
 
-    // Attach stream to sidebar proctor preview
-    const proctorVideo = document.getElementById('proctorVideo');
-    if (proctorVideo && videoStream) {
-        proctorVideo.srcObject = videoStream;
-    }
-
+    // Hide fullscreen overlay and start exam
     document.getElementById('fullscreenOverlay').style.display = 'none';
     document.getElementById('testView').style.display = 'grid';
     document.body.classList.add('in-exam');
     
+    // Attach stream to proctor preview and ensure it is playing
+    const examVideo = document.getElementById('liveExamCamera');
+    if (examVideo && videoStream) {
+        examVideo.srcObject = videoStream;
+        examVideo.play().catch(e => console.log("Proctor play catch:", e));
+    }
+
+    // Ensure WebSocket is connected
+    initWebSocket();
+    
+    // Set headers
+    document.getElementById('portalHeaderTitle').innerText = "QuestionBank SECURED Active Exam";
+    document.getElementById('portalHeaderSub').innerText = "Warning: Exiting fullscreen or tab will trigger violation counters!";
     document.getElementById('sideName').innerText = cName;
     document.getElementById('sideRoll').innerText = "Roll No: " + cNumber;
 
+    // Start Cheat Monitoring, Watermark, and Audio Monitoring
     startCheatMonitoring();
+    createSecurityWatermark();
+    if (videoStream) {
+        startAudioMonitoring(videoStream);
+    }
+
+    // Render Paper
     renderTest();
     updateStats();
-    startTimer();
 
-    // Start background proctor heartbeat
-    sendHeartbeat();
-    heartbeatInterval = setInterval(sendHeartbeat, 4000);
+    // Start Timer and Autosave
+    startTimer();
+    startAutosave();
+}
+
+function collectCurrentAnswers() {
+    let answers = {};
+    if (!testQuestions) return answers;
+    testQuestions.forEach(q => {
+        let val = "";
+        if (q.type === 'mcq' || q.type === 'tf') {
+            const sel = document.querySelector(`input[name="ans_${q.id}"]:checked`);
+            if (sel) val = sel.value;
+        } else {
+            const inp = document.getElementById(`ans_${q.id}`);
+            if (inp) val = inp.value.trim();
+        }
+        answers[q.id] = val;
+    });
+    return answers;
+}
+
+let autosaveInterval = null;
+function startAutosave() {
+    if (autosaveInterval) clearInterval(autosaveInterval);
+    autosaveInterval = setInterval(async () => {
+        if (isSubmitted || !cNumber) return;
+        try {
+            const answers = collectCurrentAnswers();
+            await fetch('/api/livetest/heartbeat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    rollNumber: cNumber,
+                    answersJson: JSON.stringify(answers)
+                })
+            });
+        } catch(e) {}
+    }, 15000);
 }
 
 function renderTest() {
@@ -1000,78 +1202,98 @@ function renderTest() {
             try {
                 opts = JSON.parse(q.optionsJson);
                 if (!Array.isArray(opts)) opts = [];
-            } catch(e) {}
+            } catch(e) {
+                opts = [];
+            }
             
-            answersHtml = '<div class="options-list">';
-            opts.forEach((opt, optIdx) => {
-                const optId = `opt_${q.id}_${optIdx}`;
+            opts.forEach((opt, oIdx) => {
+                const optId = `q_${q.id}_opt_${oIdx}`;
                 answersHtml += `
-                    <label class="option-label" for="${optId}">
-                        <input type="radio" id="${optId}" name="ans_${q.id}" value="${opt}" onchange="updateStats()">
-                        <span>${opt}</span>
+                    <label class="option-label" id="lbl_${optId}" onclick="onOptionSelected('${q.id}', '${optId}'); currentQIndex = ${idx};">
+                        <input type="radio" name="ans_${q.id}" id="${optId}" value="${opt.replace(/"/g, '&quot;')}" onchange="updateStats()">
+                        ${opt}
                     </label>
                 `;
             });
-            answersHtml += '</div>';
+            headerHtml += `<div class="options-container">${answersHtml}</div>`;
         } else if (q.type === 'tf') {
-            answersHtml = `
-                <div class="options-list">
-                    <label class="option-label" for="tf_t_${q.id}">
-                        <input type="radio" id="tf_t_${q.id}" name="ans_${q.id}" value="True" onchange="updateStats()">
-                        <span>True</span>
+            headerHtml += `
+                <div class="options-container" style="flex-direction: row; gap: 20px;">
+                    <label class="option-label" style="flex:1; justify-content:center;" id="lbl_q_${q.id}_t" onclick="onOptionSelected('${q.id}', 'q_${q.id}_t'); currentQIndex = ${idx};">
+                        <input type="radio" name="ans_${q.id}" id="q_${q.id}_t" value="True" onchange="updateStats()"> True
                     </label>
-                    <label class="option-label" for="tf_f_${q.id}">
-                        <input type="radio" id="tf_f_${q.id}" name="ans_${q.id}" value="False" onchange="updateStats()">
-                        <span>False</span>
+                    <label class="option-label" style="flex:1; justify-content:center;" id="lbl_q_${q.id}_f" onclick="onOptionSelected('${q.id}', 'q_${q.id}_f'); currentQIndex = ${idx};">
+                        <input type="radio" name="ans_${q.id}" id="q_${q.id}_f" value="False" onchange="updateStats()"> False
                     </label>
                 </div>
             `;
         } else {
-            answersHtml = `
-                <div style="margin-top:15px;">
-                    <input type="text" id="ans_${q.id}" class="form-input" placeholder="Type your answer here..." oninput="updateStats()">
-                </div>
+            headerHtml += `
+                <input type="text" id="ans_${q.id}" class="text-answer-input" placeholder="Type your answer here..." onfocus="currentQIndex = ${idx}" oninput="updateStats()">
             `;
         }
         
-        card.innerHTML = headerHtml + answersHtml;
+        card.innerHTML = headerHtml;
         qDiv.appendChild(card);
     });
 }
 
+function onOptionSelected(qId, selectedInputId) {
+    // Styling helper for selected options
+    const radios = document.getElementsByName(`ans_${qId}`);
+    radios.forEach(r => {
+        const label = document.getElementById(`lbl_${r.id}`);
+        if (label) label.classList.remove('selected');
+    });
+    
+    const checkedInput = document.getElementById(selectedInputId);
+    if (checkedInput) {
+        checkedInput.checked = true;
+        const selectedLabel = document.getElementById(`lbl_${selectedInputId}`);
+        if (selectedLabel) selectedLabel.classList.add('selected');
+    }
+    updateStats();
+}
+
 function updateStats() {
     let attempted = 0;
+    
     testQuestions.forEach(q => {
         if (q.type === 'mcq' || q.type === 'tf') {
-            const checked = document.querySelector(`input[name="ans_${q.id}"]:checked`);
-            if (checked) attempted++;
+            const sel = document.querySelector(`input[name="ans_${q.id}"]:checked`);
+            if (sel) attempted++;
         } else {
             const inp = document.getElementById(`ans_${q.id}`);
             if (inp && inp.value.trim() !== '') attempted++;
         }
     });
-    
+
+    const left = testQuestions.length - attempted;
     document.getElementById('statAttempted').innerText = attempted;
-    document.getElementById('statLeft').innerText = (testQuestions.length - attempted);
+    document.getElementById('statLeft').innerText = left;
 }
 
 function startTimer() {
-    const timerBox = document.getElementById('timerBox');
     const timerText = document.getElementById('timeRemaining');
+    const timerBox = document.getElementById('timerBox');
     
     function tick() {
         if (isSubmitted) return;
+        
         if (timeLimitSeconds <= 0) {
             clearInterval(examTimer);
-            submitTest(true);
+            submitTest(true); // Auto-submit on expiry
             return;
         }
+        
         timeLimitSeconds--;
+        
         const mins = Math.floor(timeLimitSeconds / 60);
         const secs = timeLimitSeconds % 60;
+        
         timerText.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         
-        if (timeLimitSeconds <= 120) {
+        if (timeLimitSeconds <= 120) { // Warning under 2 minutes
             timerBox.classList.add('warning');
         }
     }
@@ -1080,95 +1302,285 @@ function startTimer() {
     examTimer = setInterval(tick, 1000);
 }
 
+// Dynamic Security Watermark Generator
+function createSecurityWatermark() {
+    const wm = document.getElementById('securityWatermark');
+    if (!wm) return;
+    wm.innerHTML = '';
+    const nameStr = cName || 'CANDIDATE';
+    const rollStr = cNumber || 'ROLL';
+    const nowStr = new Date().toLocaleTimeString();
+    for (let i = 0; i < 12; i++) {
+        const item = document.createElement('div');
+        item.className = 'watermark-item';
+        item.innerText = `${nameStr} • ${rollStr} • ${nowStr}`;
+        wm.appendChild(item);
+    }
+    wm.style.display = 'grid';
+
+    // Refresh watermark timestamp periodically
+    setInterval(() => {
+        if (isSubmitted) return;
+        const timeStr = new Date().toLocaleTimeString();
+        document.querySelectorAll('.watermark-item').forEach(el => {
+            el.innerText = `${nameStr} • ${rollStr} • ${timeStr}`;
+        });
+    }, 15000);
+}
+
+// Room Audio / Noise Level Monitoring (Web Audio API)
+let audioContext = null;
+let analyser = null;
+let micSource = null;
+let consecutiveLoudFrames = 0;
+
+function startAudioMonitoring(stream) {
+    try {
+        if (!stream || !stream.getAudioTracks || stream.getAudioTracks().length === 0) return;
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        micSource = audioContext.createMediaStreamSource(stream);
+        micSource.connect(analyser);
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const micText = document.getElementById('micLevelText');
+
+        setInterval(() => {
+            if (isSubmitted || !analyser) return;
+            analyser.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+            }
+            const avg = sum / dataArray.length;
+
+            if (micText) {
+                if (avg > 45) {
+                    micText.innerText = "● NOISE DETECTED";
+                    micText.style.color = "#ef4444";
+                } else {
+                    micText.innerText = "● NORMAL";
+                    micText.style.color = "#10b981";
+                }
+            }
+
+            if (avg > 45) {
+                consecutiveLoudFrames++;
+                if (consecutiveLoudFrames >= 3) {
+                    consecutiveLoudFrames = 0;
+                    recordCheatIncident("Suspicious speech or room noise detected by proctor audio!");
+                }
+            } else {
+                consecutiveLoudFrames = Math.max(0, consecutiveLoudFrames - 1);
+            }
+        }, 1200);
+    } catch (e) {
+        console.warn("Audio monitoring not supported:", e);
+    }
+}
+
+// Central Incident & Security Violation Dispatcher
+let lastIncidentTime = 0;
+function recordCheatIncident(reason) {
+    if (isSubmitted) return;
+    const now = Date.now();
+    if (now - lastIncidentTime < 1800) return; // Debounce rapid multi-events
+    lastIncidentTime = now;
+
+    warnings++;
+    reportWarningToServer(warnings, reason);
+
+    const anticheat = document.getElementById('anticheatBox');
+    if (anticheat) anticheat.classList.add('warn');
+    const titleEl = document.getElementById('anticheatTitle');
+    if (titleEl) titleEl.innerHTML = '<span class="shield-icon">⚠️</span> Security Breach Detected!';
+    const descEl = document.getElementById('anticheatDesc');
+    if (descEl) descEl.innerText = reason;
+    const counterEl = document.getElementById('warningCounter');
+    if (counterEl) {
+        counterEl.style.display = 'block';
+        counterEl.innerText = `Security Violations: ${warnings} / ${maxWarnings}`;
+    }
+
+    if (warnings >= maxWarnings) {
+        terminateExamForCheating();
+    } else {
+        showSecurityAlertModal(reason, warnings);
+    }
+}
+
+function showSecurityAlertModal(reason, count) {
+    const modal = document.getElementById('securityViolationModal');
+    if (!modal) return;
+    document.getElementById('securityModalReason').innerText = reason;
+    document.getElementById('securityModalCounter').innerText = `Violation ${count} of ${maxWarnings}`;
+    modal.style.display = 'flex';
+}
+
+function acknowledgeSecurityViolation() {
+    const modal = document.getElementById('securityViolationModal');
+    if (modal) modal.style.display = 'none';
+
+    // Force re-enter fullscreen
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
+    else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+}
+
+// Comprehensive Anti-cheat Monitoring Suite
 function startCheatMonitoring() {
     const warningText = document.getElementById('warningCounter');
-    warningText.style.display = 'block';
+    if (warningText) warningText.style.display = 'block';
 
+    // 1. Tab & Window Focus Loss Monitoring
     document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
-            handleCheatViolation('TAB_SWITCH', 'Candidate switched browser tab or minimized window');
+            recordCheatIncident("Switched away from examination tab or minimized window!");
         }
     });
-
     window.addEventListener("blur", () => {
-        handleCheatViolation('WINDOW_BLUR', 'Candidate window lost focus or switched application');
+        recordCheatIncident("Lost window focus (switched application or clicked outside)!");
     });
 
+    // 2. Fullscreen Exit Detection
     document.addEventListener("fullscreenchange", checkFullscreenExit);
     document.addEventListener("webkitfullscreenchange", checkFullscreenExit);
     document.addEventListener("mozfullscreenchange", checkFullscreenExit);
     document.addEventListener("MSFullscreenChange", checkFullscreenExit);
-}
 
-function handleCheatViolation(type = 'TAB_SWITCH', details = '') {
-    if (isSubmitted) return;
-    const now = Date.now();
-    if (now - lastViolationTime < 2000) return; // Debounce 2 seconds
-    lastViolationTime = now;
+    // 3. Prohibited Shortcuts & Developer Tools Block
+    window.addEventListener('keydown', (e) => {
+        if (isSubmitted) return;
 
-    reportViolationToServer(type, details);
+        // F12 or DevTools inspect combinations
+        const isDevTools = e.key === 'F12' || 
+            ((e.ctrlKey || e.metaKey) && e.shiftKey && ['I','i','J','j','C','c','K','k'].includes(e.key));
+
+        // Block View Source, Save, Print, Find, History
+        const isBrowserAction = (e.ctrlKey || e.metaKey) && ['u','U','s','S','p','P','h','H','f','F'].includes(e.key);
+
+        // Block Reload F5 / Ctrl+R
+        const isReload = e.key === 'F5' || ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R'));
+
+        // Block PrintScreen / Snapshot
+        const isPrintScreen = e.key === 'PrintScreen' || e.key === 'Snapshot';
+
+        // Block Alt+Tab or Alt+Arrows navigation
+        const isAltNav = e.altKey && ['Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key);
+
+        if (isDevTools || isBrowserAction || isReload || isPrintScreen || isAltNav) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (isPrintScreen) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText("");
+                }
+                recordCheatIncident("Screen capture (PrintScreen) attempt detected!");
+            } else if (isDevTools) {
+                recordCheatIncident("Developer Tools / Inspection shortcut blocked!");
+            } else if (isReload) {
+                recordCheatIncident("Page reload is prohibited during exam!");
+            } else {
+                recordCheatIncident("Prohibited shortcut/keystroke detected: " + e.key);
+            }
+            return false;
+        }
+    }, true);
+
+    // 4. Clipboard Lockdown (Copy, Cut, Paste)
+    document.addEventListener('copy', (e) => {
+        e.preventDefault();
+        recordCheatIncident("Copying text is strictly prohibited!");
+    });
+    document.addEventListener('cut', (e) => {
+        e.preventDefault();
+        recordCheatIncident("Cutting text is strictly prohibited!");
+    });
+    document.addEventListener('paste', (e) => {
+        e.preventDefault();
+        recordCheatIncident("Pasting external content is strictly prohibited!");
+    });
+
+    // 5. Context Menu & Right-click Disabled
+    document.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        recordCheatIncident("Right-click context menu is disabled!");
+    });
+
+    // 6. Drag & Drop Lockdown
+    document.addEventListener('dragstart', (e) => e.preventDefault());
+    document.addEventListener('drop', (e) => e.preventDefault());
+
+    // 7. Mouse Boundary Check (Multi-monitor evasion)
+    document.documentElement.addEventListener('mouseleave', () => {
+        if (!isSubmitted) {
+            recordCheatIncident("Mouse cursor exited the examination boundary!");
+        }
+    });
+
+    // 8. Navigation & History Lock (Back button)
+    history.pushState(null, null, location.href);
+    window.addEventListener('popstate', () => {
+        history.pushState(null, null, location.href);
+        recordCheatIncident("Browser Back/Forward navigation blocked!");
+    });
+
+    window.addEventListener('beforeunload', (e) => {
+        if (!isSubmitted) {
+            e.preventDefault();
+            e.returnValue = "Leaving this examination will result in immediate disqualification!";
+            return e.returnValue;
+        }
+    });
+
+    // 9. Camera Stream Integrity Monitoring
+    if (videoStream) {
+        const vTracks = videoStream.getVideoTracks();
+        if (vTracks && vTracks.length > 0) {
+            vTracks[0].onended = () => {
+                recordCheatIncident("Proctor camera stream was disconnected or terminated!");
+            };
+            vTracks[0].onmute = () => {
+                recordCheatIncident("Proctor camera feed was muted/covered!");
+            };
+        }
+    }
 }
 
 function checkFullscreenExit() {
     if (isSubmitted) return;
+
     const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
     if (!isFullscreen) {
-        handleCheatViolation('FULLSCREEN_EXIT', 'Candidate exited full-screen mode');
+        recordCheatIncident("Exited fullscreen mode! All tests must remain in full screen.");
         const elem = document.documentElement;
         if (elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
     }
 }
 
-async function reportViolationToServer(type, details) {
+async function reportWarningToServer(count, reason = "") {
     try {
-        const response = await fetch('/api/livetest/violation', {
+        await fetch('/api/livetest/warning', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rollNumber: cNumber, type: type, details: details })
+            body: JSON.stringify({ rollNumber: cNumber, warnings: count, reason: reason })
         });
-        if (response.ok) {
-            const data = await response.json();
-            warnings = data.warningCount || (warnings + 1);
-            if (data.maxStrikes) maxWarnings = data.maxStrikes;
-            updateViolationUI();
-
-            if (data.isDisqualified || warnings >= maxWarnings) {
-                terminateExamForCheating();
-            } else {
-                showSupervisorToast(`⚠️ Security Strike ${warnings} / ${maxWarnings}: Stay on the exam page in full-screen!`, "#dc2626");
-            }
-        }
-    } catch(e) {
-        warnings++;
-        updateViolationUI();
-        if (warnings >= maxWarnings) terminateExamForCheating();
-    }
-}
-
-function updateViolationUI() {
-    const anticheat = document.getElementById('anticheatBox');
-    const warningText = document.getElementById('warningCounter');
-    if (warnings > 0) {
-        anticheat.classList.add('warn');
-        document.getElementById('anticheatTitle').innerHTML = '<span class="shield-icon">⚠️</span> Security Breach Detected!';
-    } else {
-        anticheat.classList.remove('warn');
-        document.getElementById('anticheatTitle').innerHTML = '<span class="shield-icon">🛡️</span> Security Shield: SECURED';
-    }
-    warningText.innerText = `Security Violations: ${warnings} / ${maxWarnings}`;
+    } catch(e) {}
 }
 
 function terminateExamForCheating() {
-    if (isSubmitted) return;
     isSubmitted = true;
     clearInterval(examTimer);
-    if (heartbeatInterval) clearInterval(heartbeatInterval);
     
     // Auto-submit current answers silently
     submitAnswersPayload(true);
     
+    // Exit fullscreen
     if (document.exitFullscreen) document.exitFullscreen().catch(()=>{});
     
+    // Hide exam, show cheat terminal modal
     document.getElementById('testView').style.display = 'none';
     document.getElementById('cheatModal').style.display = 'flex';
 }
@@ -1189,8 +1601,8 @@ async function submitTest(isAutoSubmit = false) {
 
     isSubmitted = true;
     clearInterval(examTimer);
-    if (heartbeatInterval) clearInterval(heartbeatInterval);
     
+    // Exit fullscreen
     if (document.exitFullscreen) {
         document.exitFullscreen().catch(()=>{});
     }
@@ -1199,6 +1611,7 @@ async function submitTest(isAutoSubmit = false) {
 }
 
 async function submitAnswersPayload(cheated = false) {
+    if (autosaveInterval) clearInterval(autosaveInterval);
     let answers = {};
     
     testQuestions.forEach(q => {
@@ -1240,6 +1653,48 @@ async function submitAnswersPayload(cheated = false) {
 }
 
 fetchData();
+
+async function handleWebRtcOffer(sdpBase64) {
+    try {
+        const sdp = JSON.parse(atob(sdpBase64));
+        
+        if (peerConnection) {
+            try { peerConnection.close(); } catch(e){}
+        }
+        
+        peerConnection = new RTCPeerConnection(config);
+        
+        // Add local stream tracks
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, videoStream);
+            });
+        }
+        
+        peerConnection.onicecandidate = event => {
+            if (event.candidate && wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+                wsConnection.send("WEBRTC_ICE:" + btoa(JSON.stringify(event.candidate)));
+            }
+        };
+        
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(sdp));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        
+        if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+            wsConnection.send("WEBRTC_ANSWER:" + btoa(JSON.stringify(answer)));
+        }
+    } catch (err) {
+        console.error("Failed to handle WebRTC offer:", err);
+    }
+}
+
+async function handleWebRtcIce(iceBase64) {
+    if (peerConnection) {
+        const candidate = JSON.parse(atob(iceBase64));
+        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    }
+}
 </script>
 </body>
 </html>

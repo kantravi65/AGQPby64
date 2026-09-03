@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
 
     <application android:name=".MyApplication"
         android:allowBackup="false"
@@ -46,6 +47,14 @@
             android:name=".service.WebServerService"
             android:foregroundServiceType="dataSync"
             android:exported="false" />
+
+        <receiver
+            android:name=".service.TunnelUrlReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.example.SET_PUBLIC_TUNNEL_URL" />
+            </intent-filter>
+        </receiver>
 
     </application>
 
