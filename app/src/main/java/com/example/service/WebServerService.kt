@@ -33,9 +33,10 @@ class WebServerService : Service() {
             return START_NOT_STICKY
         }
 
+        val settingsManager = com.example.util.SettingsManager(applicationContext)
         val mode = intent?.getStringExtra("SERVER_MODE") ?: "admin"
-        val adminUser = intent?.getStringExtra("ADMIN_USER") ?: "admin"
-        val adminPass = intent?.getStringExtra("ADMIN_PASS") ?: "1234"
+        val adminUser = intent?.getStringExtra("ADMIN_USER") ?: settingsManager.webAdminUser
+        val adminPass = intent?.getStringExtra("ADMIN_PASS") ?: settingsManager.webAdminPass
         val notification = createNotification(mode)
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -57,7 +58,6 @@ class WebServerService : Service() {
             database.testAttemptDao(),
             database.testSubmissionDao()
         )
-        val settingsManager = com.example.util.SettingsManager(applicationContext)
         val publicUrl = settingsManager.publicTunnelUrl.ifBlank { null }
         webServerManager = WebServerManager(applicationContext, repository, mode)
         WebServerState.setError(null)

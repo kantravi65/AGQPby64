@@ -98,9 +98,14 @@ fun ArchivesScreen(
             val webServerHttpUrl by viewModel.webServerHttpUrl.collectAsState()
             val webServerPublicUrl by viewModel.webServerPublicUrl.collectAsState()
             var publicTunnelInput by remember { mutableStateOf(viewModel.publicTunnelUrl) }
+            LaunchedEffect(webServerPublicUrl) {
+                if (!webServerPublicUrl.isNullOrBlank()) {
+                    publicTunnelInput = webServerPublicUrl ?: ""
+                }
+            }
             val serverError by com.example.util.WebServerState.error.collectAsState()
-            var adminUser by remember { mutableStateOf("admin") }
-            var adminPass by remember { mutableStateOf("1234") }
+            var adminUser by remember { mutableStateOf(settingsManager.webAdminUser) }
+            var adminPass by remember { mutableStateOf(settingsManager.webAdminPass) }
             val serverMode by com.example.util.WebServerState.mode.collectAsState()
             val candidates by viewModel.liveCandidates.collectAsState()
             
@@ -1311,7 +1316,10 @@ fun ArchivesScreen(
                             Spacer(modifier = Modifier.height(8.dp))
                             OutlinedTextField(
                                 value = adminUser,
-                                onValueChange = { adminUser = it },
+                                onValueChange = { 
+                                    adminUser = it
+                                    settingsManager.webAdminUser = it
+                                },
                                 label = { Text("Username") },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true
@@ -1319,7 +1327,10 @@ fun ArchivesScreen(
                             Spacer(modifier = Modifier.height(8.dp))
                             OutlinedTextField(
                                 value = adminPass,
-                                onValueChange = { adminPass = it },
+                                onValueChange = { 
+                                    adminPass = it
+                                    settingsManager.webAdminPass = it
+                                },
                                 label = { Text("Password") },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true

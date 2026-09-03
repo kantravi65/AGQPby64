@@ -48,6 +48,12 @@ class OtsViewModel(application: Application) : AndroidViewModel(application) {
             WebServerState.setPublicUrl(value)
         }
 
+    init {
+        if (settingsManager.publicTunnelUrl.isNotBlank()) {
+            WebServerState.setPublicUrl(settingsManager.publicTunnelUrl)
+        }
+    }
+
     // Live Test Configuration State
     private val _liveTestExamName = MutableStateFlow("Online Secured Exam")
     val liveTestExamName: StateFlow<String> = _liveTestExamName.asStateFlow()
@@ -1835,7 +1841,13 @@ Question,BookTitle,Chapter,Type,Difficulty,Options,Answer,Explanation,Marks
         }
     }
 
-    fun startWebServer(mode: String = "admin", adminUser: String = "admin", adminPass: String = "1234") {
+    fun startWebServer(
+        mode: String = "admin",
+        adminUser: String = settingsManager.webAdminUser,
+        adminPass: String = settingsManager.webAdminPass
+    ) {
+        settingsManager.webAdminUser = adminUser
+        settingsManager.webAdminPass = adminPass
         val intent = Intent(getApplication(), WebServerService::class.java).apply {
             putExtra("SERVER_MODE", mode)
             putExtra("ADMIN_USER", adminUser)

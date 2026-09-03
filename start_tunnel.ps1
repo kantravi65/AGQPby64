@@ -19,8 +19,9 @@ Write-Host "[1/3] Checking connected Android device via ADB..." -ForegroundColor
 if (Test-Path $adb) {
     $devs = & $adb devices
     Write-Host $devs -ForegroundColor DarkGray
-    Write-Host "[2/3] Forwarding port 8080 (Phone -> PC)..." -ForegroundColor Cyan
-    & $adb reverse tcp:8080 tcp:8080 2>$null
+    Write-Host "[2/3] Forwarding port 8080 (PC -> Phone)..." -ForegroundColor Cyan
+    & $adb reverse --remove-all 2>$null
+    & $adb forward tcp:8080 tcp:8080 2>$null
 } else {
     Write-Host "[WARNING] ADB not found. Tunnel will connect to local network." -ForegroundColor Yellow
 }
@@ -64,9 +65,9 @@ if ($tunnelUrl) {
     # Copy to PC Clipboard
     try { Set-Clipboard -Value $tunnelUrl } catch {}
 
-    # Broadcast to Phone App
+    # Broadcast to Phone App (using explicit component for Android 8-15 compatibility)
     if (Test-Path $adb) {
-        & $adb shell am broadcast -a com.example.SET_PUBLIC_TUNNEL_URL --es url "$tunnelUrl" | Out-Null
+        & $adb shell am broadcast -a com.example.SET_PUBLIC_TUNNEL_URL -n com.aistudio.questionbank.v1.agqpby64/com.example.service.TunnelUrlReceiver --es url "$tunnelUrl" | Out-Null
     }
 
     Write-Host ""

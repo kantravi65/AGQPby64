@@ -12,11 +12,16 @@ namespace QPby64.TunnelGateway
     public class MainForm : Form
     {
         private Button btnToggle;
+        private Button btnRefreshDevice;
+        private Button btnClearLog;
         private Label lblStatus;
         private Label lblPublicUrl;
         private Label lblDevice;
+        private Label lblLogTitle;
         private TextBox txtLog;
         private Panel panelHeader;
+        private Panel cardStatus;
+        private Panel cardUrl;
         private Panel panelLinks;
         private NotifyIcon notifyIcon;
         private ContextMenuStrip trayMenu;
@@ -28,12 +33,13 @@ namespace QPby64.TunnelGateway
         private string adbPath = "";
         private string cloudflaredPath = "";
 
-        // UI Colors
+        // Modern Slate Dark Palette
         private Color clrBg = Color.FromArgb(15, 23, 42);          // Slate 900
         private Color clrCard = Color.FromArgb(30, 41, 59);        // Slate 800
         private Color clrCardBorder = Color.FromArgb(51, 65, 85);  // Slate 700
         private Color clrAccent = Color.FromArgb(14, 165, 233);    // Sky 500
         private Color clrSuccess = Color.FromArgb(16, 185, 129);   // Emerald 500
+        private Color clrWarning = Color.FromArgb(245, 158, 11);   // Amber 500
         private Color clrError = Color.FromArgb(239, 68, 68);      // Red 500
         private Color clrText = Color.FromArgb(248, 250, 252);     // Slate 50
         private Color clrSubtext = Color.FromArgb(148, 163, 184);  // Slate 400
@@ -61,8 +67,8 @@ namespace QPby64.TunnelGateway
         private void InitializeComponent()
         {
             this.Text = "QPby64 Internet Tunnel Gateway";
-            this.Size = new Size(820, 680);
-            this.MinimumSize = new Size(760, 600);
+            this.Size = new Size(880, 720);
+            this.MinimumSize = new Size(800, 640);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = clrBg;
             this.ForeColor = clrText;
@@ -73,9 +79,9 @@ namespace QPby64.TunnelGateway
             panelHeader = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 85,
+                Height = 80,
                 BackColor = Color.FromArgb(10, 15, 30),
-                Padding = new Padding(24, 16, 24, 16)
+                Padding = new Padding(24, 14, 24, 14)
             };
 
             Label lblTitle = new Label
@@ -100,20 +106,13 @@ namespace QPby64.TunnelGateway
             panelHeader.Controls.Add(lblSubtitle);
             this.Controls.Add(panelHeader);
 
-            // Main Layout Container
-            Panel panelContent = new Panel
+            // Card 1: Status & Device Card
+            cardStatus = new Panel
             {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(20),
-                AutoScroll = true
+                BackColor = clrCard,
+                Padding = new Padding(16)
             };
-            this.Controls.Add(panelContent);
 
-            int currentY = 10;
-
-            // Status & Device Card
-            Panel cardStatus = CreateCard(currentY, 110);
-            
             Label lblDevTitle = new Label
             {
                 Text = "CONNECTED ANDROID PHONE:",
@@ -134,12 +133,26 @@ namespace QPby64.TunnelGateway
             };
             cardStatus.Controls.Add(lblDevice);
 
+            btnRefreshDevice = new Button
+            {
+                Text = "🔄 Refresh",
+                Font = new Font("Segoe UI", 8f),
+                BackColor = Color.FromArgb(51, 65, 85),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(80, 24),
+                Cursor = Cursors.Hand
+            };
+            btnRefreshDevice.FlatAppearance.BorderSize = 0;
+            btnRefreshDevice.Click += (s, e) => CheckDevice();
+            cardStatus.Controls.Add(btnRefreshDevice);
+
             Label lblStatTitle = new Label
             {
                 Text = "GATEWAY STATUS:",
                 Font = new Font("Segoe UI", 8f, FontStyle.Bold),
                 ForeColor = clrSubtext,
-                Location = new Point(16, 64),
+                Location = new Point(16, 68),
                 AutoSize = true
             };
             cardStatus.Controls.Add(lblStatTitle);
@@ -147,38 +160,40 @@ namespace QPby64.TunnelGateway
             lblStatus = new Label
             {
                 Text = "🔴 Offline - Ready to Connect",
-                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
+                Font = new Font("Segoe UI", 11f, FontStyle.Bold),
                 ForeColor = clrError,
-                Location = new Point(16, 82),
+                Location = new Point(16, 86),
                 AutoSize = true
             };
             cardStatus.Controls.Add(lblStatus);
 
-            // Connect Button inside Card
+            // Large, unmissable START/STOP button
             btnToggle = new Button
             {
                 Text = "🚀 START TUNNEL",
-                Font = new Font("Segoe UI", 11f, FontStyle.Bold),
+                Font = new Font("Segoe UI", 11.5f, FontStyle.Bold),
                 BackColor = clrSuccess,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Size = new Size(200, 52),
-                Location = new Point(cardStatus.Width - 220, 28),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Size = new Size(220, 58),
                 Cursor = Cursors.Hand
             };
             btnToggle.FlatAppearance.BorderSize = 0;
             btnToggle.Click += BtnToggle_Click;
             cardStatus.Controls.Add(btnToggle);
 
-            panelContent.Controls.Add(cardStatus);
-            currentY += 122;
+            this.Controls.Add(cardStatus);
 
-            // Public Tunnel Active URL Card
-            Panel cardUrl = CreateCard(currentY, 70);
+            // Card 2: Public Tunnel Active URL Card
+            cardUrl = new Panel
+            {
+                BackColor = clrCard,
+                Padding = new Padding(16)
+            };
+
             Label lblUrlTitle = new Label
             {
-                Text = "PUBLIC TUNNEL BASE URL (COPIED TO CLIPBOARD):",
+                Text = "PUBLIC TUNNEL BASE URL (AUTO-SYNCED TO PHONE & CLIPBOARD):",
                 Font = new Font("Segoe UI", 8f, FontStyle.Bold),
                 ForeColor = clrSubtext,
                 Location = new Point(16, 12),
@@ -189,38 +204,44 @@ namespace QPby64.TunnelGateway
             lblPublicUrl = new Label
             {
                 Text = "Waiting for tunnel to start...",
-                Font = new Font("Consolas", 11.5f, FontStyle.Bold),
+                Font = new Font("Consolas", 12f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(203, 213, 225),
                 Location = new Point(16, 34),
                 AutoSize = true
             };
             cardUrl.Controls.Add(lblPublicUrl);
-            panelContent.Controls.Add(cardUrl);
-            currentY += 82;
+            this.Controls.Add(cardUrl);
 
-            // Portal Links Cards Panel
+            // Card 3: Portal Links Panel
             panelLinks = new Panel
             {
-                Location = new Point(20, currentY),
-                Width = this.ClientSize.Width - 40,
-                Height = 180,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+                BackColor = Color.Transparent
             };
-            BuildPortalLinks(panelLinks);
-            panelContent.Controls.Add(panelLinks);
-            currentY += 190;
+            this.Controls.Add(panelLinks);
 
-            // Log Label
-            Label lblLogTitle = new Label
+            // Card 4: Log Label & Clear Button
+            lblLogTitle = new Label
             {
                 Text = "LIVE GATEWAY ACTIVITY & EVENT LOG:",
                 Font = new Font("Segoe UI", 8f, FontStyle.Bold),
                 ForeColor = clrSubtext,
-                Location = new Point(20, currentY),
                 AutoSize = true
             };
-            panelContent.Controls.Add(lblLogTitle);
-            currentY += 22;
+            this.Controls.Add(lblLogTitle);
+
+            btnClearLog = new Button
+            {
+                Text = "Clear Log",
+                Font = new Font("Segoe UI", 7.5f),
+                BackColor = Color.FromArgb(51, 65, 85),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(70, 22),
+                Cursor = Cursors.Hand
+            };
+            btnClearLog.FlatAppearance.BorderSize = 0;
+            btnClearLog.Click += (s, e) => txtLog.Clear();
+            this.Controls.Add(btnClearLog);
 
             // Activity Log Box
             txtLog = new TextBox
@@ -231,12 +252,9 @@ namespace QPby64.TunnelGateway
                 BackColor = Color.FromArgb(8, 12, 24),
                 ForeColor = Color.FromArgb(226, 232, 240),
                 Font = new Font("Consolas", 9f),
-                Location = new Point(20, currentY),
-                Size = new Size(this.ClientSize.Width - 40, 130),
-                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
                 BorderStyle = BorderStyle.FixedSingle
             };
-            panelContent.Controls.Add(txtLog);
+            this.Controls.Add(txtLog);
 
             // System Tray Menu & Icon
             trayMenu = new ContextMenuStrip();
@@ -255,30 +273,56 @@ namespace QPby64.TunnelGateway
             notifyIcon.DoubleClick += (s, e) => RestoreWindow();
 
             this.FormClosing += MainForm_FormClosing;
+            this.Resize += (s, e) => UpdateLayout();
+
+            // Initial Layout Calculation
+            UpdateLayout();
         }
 
-        private Panel CreateCard(int top, int height)
+        private void UpdateLayout()
         {
-            return new Panel
-            {
-                Location = new Point(20, top),
-                Width = this.ClientSize.Width - 40,
-                Height = height,
-                BackColor = clrCard,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
-                Padding = new Padding(12)
-            };
+            int pad = 20;
+            int availableWidth = this.ClientSize.Width - (pad * 2);
+            if (availableWidth < 500) availableWidth = 500;
+
+            // 1. Status & Device Card
+            cardStatus.Location = new Point(pad, panelHeader.Bottom + 14);
+            cardStatus.Size = new Size(availableWidth, 122);
+
+            // Position Start/Stop Button on right side of cardStatus
+            btnToggle.Location = new Point(cardStatus.ClientSize.Width - btnToggle.Width - 18, 32);
+            btnRefreshDevice.Location = new Point(btnToggle.Left - 95, 32);
+
+            // 2. Public URL Card
+            cardUrl.Location = new Point(pad, cardStatus.Bottom + 12);
+            cardUrl.Size = new Size(availableWidth, 72);
+
+            // 3. Portal Links Panel
+            panelLinks.Location = new Point(pad, cardUrl.Bottom + 12);
+            panelLinks.Size = new Size(availableWidth, 190);
+            BuildPortalLinks(panelLinks);
+
+            // 4. Log Section
+            lblLogTitle.Location = new Point(pad, panelLinks.Bottom + 10);
+            btnClearLog.Location = new Point(pad + availableWidth - btnClearLog.Width, lblLogTitle.Top - 2);
+
+            txtLog.Location = new Point(pad, lblLogTitle.Bottom + 6);
+            int logHeight = this.ClientSize.Height - txtLog.Top - 20;
+            if (logHeight < 80) logHeight = 80;
+            txtLog.Size = new Size(availableWidth, logHeight);
         }
 
         private void BuildPortalLinks(Panel container)
         {
             container.Controls.Clear();
-            int colWidth = (container.Width - 30) / 2;
+            int spacing = 12;
+            int colWidth = (container.ClientSize.Width - spacing) / 2;
+            if (colWidth < 240) colWidth = 240;
 
-            AddLinkCard(container, 0, 0, colWidth, "🎓 Candidate Live Exam Portal", "/livetest", "Candidates open this in browser on any network");
-            AddLinkCard(container, colWidth + 15, 0, colWidth, "🏆 Candidate Marksheet & Result", "/results", "Official marksheet with supervisor digital signature");
-            AddLinkCard(container, 0, 88, colWidth, "🛡️ Supervisor Live Proctor Grid", "/admin", "Real-time WebRTC multi-camera supervision");
-            AddLinkCard(container, colWidth + 15, 88, colWidth, "📊 Analytics & Audit Dashboard", "/dashboard", "Performance graphs, logs, and score summaries");
+            AddLinkCard(container, 0, 0, colWidth, "🎓 Candidate Live Exam Portal", "/livetest", "Candidates open this on any mobile/desktop network");
+            AddLinkCard(container, colWidth + spacing, 0, colWidth, "🏆 Candidate Marksheet & Result", "/results", "Official marksheet with supervisor digital signature");
+            AddLinkCard(container, 0, 92, colWidth, "🛡️ Supervisor Live Proctor Grid", "/admin", "Real-time WebRTC multi-camera supervisor desk");
+            AddLinkCard(container, colWidth + spacing, 92, colWidth, "📊 Analytics & Audit Dashboard", "/dashboard", "Performance graphs, logs, and score summaries");
         }
 
         private void AddLinkCard(Panel parent, int x, int y, int width, string title, string subpath, string desc)
@@ -286,7 +330,7 @@ namespace QPby64.TunnelGateway
             Panel p = new Panel
             {
                 Location = new Point(x, y),
-                Size = new Size(width, 78),
+                Size = new Size(width, 82),
                 BackColor = clrCard,
                 BorderStyle = BorderStyle.None
             };
@@ -296,7 +340,7 @@ namespace QPby64.TunnelGateway
                 Text = title,
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
                 ForeColor = Color.White,
-                Location = new Point(10, 8),
+                Location = new Point(12, 8),
                 AutoSize = true
             };
             p.Controls.Add(lbl);
@@ -306,7 +350,7 @@ namespace QPby64.TunnelGateway
                 Text = desc,
                 Font = new Font("Segoe UI", 7.5f),
                 ForeColor = clrSubtext,
-                Location = new Point(10, 28),
+                Location = new Point(12, 28),
                 AutoSize = true
             };
             p.Controls.Add(lblDesc);
@@ -314,8 +358,8 @@ namespace QPby64.TunnelGateway
             Button btnCopy = new Button
             {
                 Text = "📋 Copy Link",
-                Size = new Size(88, 26),
-                Location = new Point(10, 46),
+                Size = new Size(95, 26),
+                Location = new Point(12, 48),
                 BackColor = Color.FromArgb(51, 65, 85),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -336,8 +380,8 @@ namespace QPby64.TunnelGateway
             Button btnOpen = new Button
             {
                 Text = "🌐 Open",
-                Size = new Size(72, 26),
-                Location = new Point(104, 46),
+                Size = new Size(76, 26),
+                Location = new Point(114, 48),
                 BackColor = clrAccent,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -359,7 +403,7 @@ namespace QPby64.TunnelGateway
                 return;
             }
             string full = activeTunnelUrl.TrimEnd('/') + subpath;
-            Clipboard.SetText(full);
+            try { Clipboard.SetText(full); } catch { }
             Log("Copied to clipboard: " + full);
         }
 
@@ -442,7 +486,7 @@ namespace QPby64.TunnelGateway
                     else
                     {
                         lblDevice.Text = "⚠️ No phone detected via USB. Make sure USB Debugging is ON.";
-                        lblDevice.ForeColor = Color.FromArgb(234, 179, 8); // Yellow 500
+                        lblDevice.ForeColor = clrWarning;
                     }
                 }
             }
@@ -468,22 +512,33 @@ namespace QPby64.TunnelGateway
         private void StartTunnel()
         {
             btnToggle.Enabled = false;
-            btnToggle.Text = "CONNECTING...";
-            btnToggle.BackColor = Color.FromArgb(202, 138, 4); // Yellow
+            btnToggle.Text = "⏳ CONNECTING...";
+            btnToggle.BackColor = clrWarning;
             lblStatus.Text = "🟡 Connecting to Cloudflare Edge...";
-            lblStatus.ForeColor = Color.FromArgb(234, 179, 8);
+            lblStatus.ForeColor = clrWarning;
             Log("Initializing Internet Tunnel Gateway...");
 
             new Thread(() =>
             {
                 try
                 {
-                    // 1. Setup ADB reverse port forwarding (8080)
-                    Log("Configuring ADB reverse port forwarding for 8080...");
+                    // 1. Setup ADB port forwarding (PC 8080 -> Phone 8080)
+                    Log("Configuring ADB port forwarding (PC:8080 -> Phone:8080)...");
+                    ProcessStartInfo adbRevPsi = new ProcessStartInfo
+                    {
+                        FileName = adbPath,
+                        Arguments = "reverse --remove-all",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using (Process adbRevProc = Process.Start(adbRevPsi)) { adbRevProc.WaitForExit(); }
+
                     ProcessStartInfo adbPsi = new ProcessStartInfo
                     {
                         FileName = adbPath,
-                        Arguments = "reverse tcp:8080 tcp:8080",
+                        Arguments = "forward tcp:8080 tcp:8080",
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
                         UseShellExecute = false,
@@ -492,7 +547,7 @@ namespace QPby64.TunnelGateway
                     using (Process adbProc = Process.Start(adbPsi))
                     {
                         adbProc.WaitForExit();
-                        Log("ADB reverse port 8080 configured successfully.");
+                        Log("ADB port 8080 (PC -> Phone) configured successfully.");
                     }
 
                     // 2. Launch cloudflared process
@@ -580,7 +635,7 @@ namespace QPby64.TunnelGateway
                         ProcessStartInfo bcPsi = new ProcessStartInfo
                         {
                             FileName = adbPath,
-                            Arguments = "shell am broadcast -a com.example.SET_PUBLIC_TUNNEL_URL --es url \"" + activeTunnelUrl + "\"",
+                            Arguments = "shell am broadcast -a com.example.SET_PUBLIC_TUNNEL_URL -n com.aistudio.questionbank.v1.agqpby64/com.example.service.TunnelUrlReceiver --es url \"" + activeTunnelUrl + "\"",
                             RedirectStandardOutput = true,
                             UseShellExecute = false,
                             CreateNoWindow = true

@@ -634,6 +634,81 @@ fun SettingsScreen(
             }
         }
 
+        // --- WEB SERVER & PORTAL SECURITY ---
+        item {
+            var webUser by remember { mutableStateOf(settingsManager.webAdminUser) }
+            var webPass by remember { mutableStateOf(settingsManager.webAdminPass) }
+            var tunnelUrl by remember { mutableStateOf(settingsManager.publicTunnelUrl) }
+            val webServerPublicUrl by com.example.util.WebServerState.publicUrl.collectAsState()
+
+            LaunchedEffect(webServerPublicUrl) {
+                if (!webServerPublicUrl.isNullOrBlank()) {
+                    tunnelUrl = webServerPublicUrl!!
+                }
+            }
+
+            SettingsCategory(
+                title = "Web Server & Internet Portal Security",
+                icon = { Icon(Icons.Default.VpnKey, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+            ) {
+                Text(
+                    text = "Configure authentication for web monitoring and administrative portals. Candidate portals (/livetest and /results) remain accessible via roll number without requiring admin credentials.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                OutlinedTextField(
+                    value = webUser,
+                    onValueChange = { 
+                        webUser = it
+                        settingsManager.webAdminUser = it
+                    },
+                    label = { Text("Supervisor / Admin Username") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = webPass,
+                    onValueChange = { 
+                        webPass = it
+                        settingsManager.webAdminPass = it
+                    },
+                    label = { Text("Supervisor / Admin Password") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                Text(
+                    text = "🔒 Protected Portals: /admin (Proctor Grid), /dashboard (Evaluation Desk), /expert (Audit Portal)",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "🌐 Public Portals: /livetest (Candidate Exam Desk), /results (Candidate Marksheet)",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontWeight = FontWeight.Bold
+                )
+
+                HorizontalDivider()
+
+                OutlinedTextField(
+                    value = tunnelUrl,
+                    onValueChange = {
+                        tunnelUrl = it
+                        settingsManager.publicTunnelUrl = it
+                        com.example.util.WebServerState.setPublicUrl(it)
+                    },
+                    label = { Text("Public Tunnel Gateway URL (Cloudflare)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+        }
+
         // --- 4. EXAM & PRINT DEFAULTS ---
         item {
             SettingsCategory(
@@ -1361,6 +1436,11 @@ fun SettingsScreen(
             val webServerPublicUrl by viewModel.webServerPublicUrl.collectAsState()
             val webServerHttpUrl by viewModel.webServerHttpUrl.collectAsState()
             var tunnelUrlInput by remember { mutableStateOf(viewModel.publicTunnelUrl) }
+            LaunchedEffect(webServerPublicUrl) {
+                if (!webServerPublicUrl.isNullOrBlank()) {
+                    tunnelUrlInput = webServerPublicUrl ?: ""
+                }
+            }
             
             SettingsCategory(
                 title = "Remote Web Servers & Internet Portals",

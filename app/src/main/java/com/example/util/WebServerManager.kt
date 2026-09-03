@@ -59,19 +59,38 @@ import kotlinx.serialization.encodeToString
 import java.net.NetworkInterface
 
 @Serializable
-data class BookDto(val id: String, val title: String, val chapterCount: Int)
+data class BookDto(
+    val id: String = "",
+    val title: String = "",
+    val chapterCount: Int = 1
+)
 
 @Serializable
 data class QuestionDto(
-    val id: String, val bookId: String, val bookTitle: String, val chapter: String,
-    val type: String, val difficulty: String, val question: String, val optionsJson: String,
-    val answer: String, val explanation: String, val marks: Int, val isBookmarked: Boolean, val createdAt: Long
+    val id: String = "",
+    val bookId: String = "",
+    val bookTitle: String = "",
+    val chapter: String = "",
+    val type: String = "mcq",
+    val difficulty: String = "medium",
+    val question: String = "",
+    val optionsJson: String = "[]",
+    val answer: String = "",
+    val explanation: String = "",
+    val marks: Int = 1,
+    val isBookmarked: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis()
 )
 
 @Serializable
 data class PaperDto(
-    val id: String, val title: String, val subject: String, val durationMinutes: Int,
-    val totalMarks: Int, val questionIdsJson: String, val createdAt: Long
+    val id: String = "",
+    val title: String = "",
+    val subject: String = "",
+    val durationMinutes: Int = 60,
+    val totalMarks: Int = 0,
+    val questionIdsJson: String = "[]",
+    val createdAt: Long = System.currentTimeMillis()
 )
 
 
@@ -113,8 +132,8 @@ class WebServerManager(private val appContext: Context, private val repository: 
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val preferredHttpPort = if (isPortAvailable(8080)) 8080 else 0
-                val preferredHttpsPort = if (isPortAvailable(8443)) 8443 else 0
+                val preferredHttpPort = 8080
+                val preferredHttpsPort = 8443
 
                 val env = applicationEngineEnvironment {
                     val ksFile = File(appContext.filesDir, "test.p12")
@@ -158,12 +177,29 @@ class WebServerManager(private val appContext: Context, private val repository: 
 
                         val checkAuth: suspend (io.ktor.server.application.ApplicationCall) -> Boolean = { call ->
                             val auth = call.request.headers["Authorization"]
-                            val expected = "Basic " + android.util.Base64.encodeToString("$adminUser:$adminPass".toByteArray(), android.util.Base64.NO_WRAP)
-                            if (auth == expected) {
+                            val sm = com.example.util.SettingsManager(appContext)
+                            val activeUser = if (adminUser.isNotBlank()) adminUser.trim() else sm.webAdminUser.trim()
+                            val activePass = if (adminPass.isNotBlank()) adminPass.trim() else sm.webAdminPass.trim()
+
+                            var authenticated = false
+                            if (auth != null && auth.startsWith("Basic ", ignoreCase = true)) {
+                                try {
+                                    val b64 = auth.substring(6).trim()
+                                    val decoded = String(android.util.Base64.decode(b64, android.util.Base64.DEFAULT), Charsets.UTF_8)
+                                    val parts = decoded.split(":", limit = 2)
+                                    if (parts.size == 2 && parts[0] == activeUser && parts[1] == activePass) {
+                                        authenticated = true
+                                    }
+                                } catch (e: Exception) {
+                                    authenticated = false
+                                }
+                            }
+
+                            if (authenticated) {
                                 true
                             } else {
-                                call.response.headers.append("WWW-Authenticate", "Basic realm=\"Admin Portal\"")
-                                call.respond(HttpStatusCode.Unauthorized, "Unauthorized")
+                                call.response.headers.append("WWW-Authenticate", "Basic realm=\"QPby64 Supervisor & Admin Portal\"")
+                                call.respond(HttpStatusCode.Unauthorized, "Unauthorized: Valid supervisor credentials required.")
                                 false
                             }
                         }
@@ -419,13 +455,26 @@ class WebServerManager(private val appContext: Context, private val repository: 
                             call.respond(papers)
                         }
                         post("/api/papers") {
-                            if (mode == "admin" || mode == "expert" || mode == "all") {
-                                if (!checkAuth(call)) return@post
+                            if (!checkAuth(call)) return@post
+                            try {
+                                val dto = call.receive<PaperDto>()
+                                val paperId = if (dto.id.isNotBlank()) dto.id else "paper_" + System.currentTimeMillis()
+                                val entity = PaperEntity(
+                                    id = paperId,
+                                    title = dto.title.ifBlank { "Untitled Paper" },
+                                    subject = dto.subject.ifBlank { "General" },
+                                    durationMinutes = if (dto.durationMinutes > 0) dto.durationMinutes else 60,
+                                    totalMarks = dto.totalMarks,
+                                    questionIdsJson = dto.questionIdsJson.ifBlank { "[]" },
+                                    createdAt = if (dto.createdAt > 0) dto.createdAt else System.currentTimeMillis()
+                                )
+                                repository.insertPaper(entity)
+                                Log.d("WebServerManager", "Successfully saved paper: ${entity.id} - ${entity.title}")
+                                call.respond(HttpStatusCode.OK, mapOf("status" to "success", "id" to entity.id))
+                            } catch (e: Exception) {
+                                Log.e("WebServerManager", "Error saving paper", e)
+                                call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Invalid paper payload")))
                             }
-                            val dto = call.receive<PaperDto>()
-                            val entity = PaperEntity(dto.id, dto.title, dto.subject, dto.durationMinutes, dto.totalMarks, dto.questionIdsJson, dto.createdAt)
-                            repository.insertPaper(entity)
-                            call.respond(HttpStatusCode.OK)
                         }
                         
                 get("/api/papers/{id}/pdf") {

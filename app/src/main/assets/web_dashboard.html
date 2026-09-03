@@ -448,8 +448,15 @@
                 document.getElementById('paperForm').reset();
                 document.getElementById('p_id').value = '';
                 document.getElementById('paperModalTitle').innerText = 'Create Paper';
-                populateQuestionSelector();
-                populateAutoSubjects();
+                if (globalQuestions.length === 0) {
+                    loadQuestions().then(() => {
+                        populateQuestionSelector();
+                        populateAutoSubjects();
+                    });
+                } else {
+                    populateQuestionSelector();
+                    populateAutoSubjects();
+                }
             }
         }
     }
@@ -1080,20 +1087,51 @@
         const checkboxes = document.querySelectorAll('.paper-q-cb:checked');
         const qIds = Array.from(checkboxes).map(cb => cb.value);
 
+        const title = document.getElementById('p_title').value.trim();
+        const subject = document.getElementById('p_subject').value.trim();
+        const duration = parseInt(document.getElementById('p_duration').value) || 60;
+        const marks = parseInt(document.getElementById('p_marks').value) || 0;
+
+        if (!title) {
+            alert("Please enter a paper title.");
+            return;
+        }
+
         const p = {
-            id,
-            title: document.getElementById('p_title').value,
-            subject: document.getElementById('p_subject').value,
-            durationMinutes: parseInt(document.getElementById('p_duration').value),
-            totalMarks: parseInt(document.getElementById('p_marks').value),
+            id: id,
+            title: title,
+            subject: subject || "General",
+            durationMinutes: duration,
+            totalMarks: marks,
             questionIdsJson: JSON.stringify(qIds),
             createdAt: Date.now()
         };
-        await fetch(`${API_BASE}/papers`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p)
-        });
-        closeModal('paperModal');
-        loadPapers();
+
+        const saveBtn = document.querySelector('#paperModal button[type="submit"]');
+        const originalText = saveBtn ? saveBtn.innerText : "Save Paper";
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = "Saving Paper..."; }
+
+        try {
+            const res = await fetch(`${API_BASE}/papers`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(p)
+            });
+
+            if (!res.ok) {
+                const errJson = await res.json().catch(() => ({ error: res.statusText }));
+                alert("Failed to save paper: " + (errJson.error || res.statusText));
+                return;
+            }
+
+            closeModal('paperModal');
+            await loadPapers();
+            alert("Paper created successfully!");
+        } catch (err) {
+            alert("Error saving paper to server: " + err.message);
+        } finally {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.innerText = originalText; }
+        }
     }
 
     async function deletePaper(id) {
@@ -1253,8 +1291,15 @@
         document.getElementById('quizSelectPaper').value = '';
     }
 
-    // Init
-    loadQuestions();
+    // Init - Preload all datasets
+    async function initDashboard() {
+        try {
+            await Promise.all([loadQuestions(), loadBooks(), loadPapers()]);
+        } catch(e) {
+            console.warn("Initial load:", e);
+        }
+    }
+    initDashboard();
 </script>
 </body>
 </html>

@@ -278,4 +278,12 @@ class SettingsManager(context: Context) {
     var publicTunnelUrl: String
         get() = prefs.getString("public_tunnel_url", "") ?: ""
         set(value) = prefs.edit().putString("public_tunnel_url", value.trim().trimEnd('/')).apply()
+
+    var webAdminUser: String
+        get() = prefs.getString("web_admin_user", "admin") ?: "admin"
+        set(value) = prefs.edit().putString("web_admin_user", value.trim()).apply()
+
+    var webAdminPass: String
+        get() = prefs.getString("web_admin_pass", "1234") ?: "1234"
+        set(value) = prefs.edit().putString("web_admin_pass", value.trim()).apply()
 }
