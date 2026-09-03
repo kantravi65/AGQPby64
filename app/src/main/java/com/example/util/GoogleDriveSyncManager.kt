@@ -172,7 +172,7 @@ object GoogleDriveSyncManager {
                     var readableMsg = "HTTP $responseCode"
                     if (errorStream.contains("insufficientFilePermissions")) readableMsg = "Permission Denied: Ensure you granted Google Drive access when signing in."
                     else if (errorStream.contains("rateLimitExceeded")) readableMsg = "Rate Limit Exceeded: Try again later."
-                    else if (errorStream.contains("Project") || errorStream.contains("disabled")) readableMsg = "Google Drive API is not enabled on this Client ID. Developer action required."
+                    else if (errorStream.contains("Project") || errorStream.contains("disabled") || errorStream.contains("has not been used")) readableMsg = "Google Drive API is not enabled for project 'agqpby64'. Please enable it in Google Cloud Console."
                     else readableMsg = "Code $responseCode: $errorStream"
                     
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {

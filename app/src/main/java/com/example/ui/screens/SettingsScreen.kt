@@ -402,9 +402,32 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Restore")
                         }
-                                    }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Requires Google Drive API enabled on Google Cloud project 'agqpby64'.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                            modifier = Modifier.weight(1f)
+                        )
+                        TextButton(
+                            onClick = {
+                                val intent = android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse("https://console.cloud.google.com/apis/library/drive.googleapis.com?project=agqpby64")
+                                )
+                                context.startActivity(intent)
+                            }
+                        ) {
+                            Text("Enable API", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
             }
-        }
 
         // --- 3.5. OWNER WHITELIST MANAGEMENT ---
         if (com.example.util.WhitelistManager.isOwner(settingsManager.googleAccountEmail)) {
