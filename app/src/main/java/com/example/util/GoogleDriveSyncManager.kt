@@ -161,6 +161,7 @@ object GoogleDriveSyncManager {
                     }
                 } else {
                     val errorStream = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                    android.util.Log.e("GoogleDriveSync", "Google Drive Upload Error: HTTP $responseCode - $errorStream")
                     if (responseCode == 401 || responseCode == 403) {
                         try {
                             com.google.android.gms.auth.GoogleAuthUtil.clearToken(context, token)
@@ -170,10 +171,18 @@ object GoogleDriveSyncManager {
                     }
                     
                     var readableMsg = "HTTP $responseCode"
-                    if (errorStream.contains("insufficientFilePermissions")) readableMsg = "Permission Denied: Ensure you granted Google Drive access when signing in."
-                    else if (errorStream.contains("rateLimitExceeded")) readableMsg = "Rate Limit Exceeded: Try again later."
-                    else if (errorStream.contains("Project") || errorStream.contains("disabled") || errorStream.contains("has not been used")) readableMsg = "Google Drive API is not enabled for project 'agqpby64'. Please enable it in Google Cloud Console."
-                    else readableMsg = "Code $responseCode: $errorStream"
+                    if (errorStream.contains("insufficientFilePermissions") || errorStream.contains("insufficientPermissions") || errorStream.contains("ACCESS_TOKEN_SCOPE_INSUFFICIENT")) {
+                        readableMsg = "Permission required: Please Sign Out and Sign In again with Google to approve Drive access."
+                    } else if (errorStream.contains("rateLimitExceeded")) {
+                        readableMsg = "Rate Limit Exceeded: Try again later."
+                    } else if (errorStream.contains("has not been used") || errorStream.contains("disabled")) {
+                        readableMsg = "Google Drive API was recently enabled! Google servers take 2-5 minutes to propagate. Please wait a moment and retry."
+                    } else if (errorStream.contains("access_denied")) {
+                        readableMsg = "Access Denied: In Google Cloud Console OAuth Consent Screen, ensure your email is added under 'Test users'."
+                    } else {
+                        val msgMatch = "\"message\":\\s*\"([^\"]+)\"".toRegex().find(errorStream)
+                        readableMsg = msgMatch?.groupValues?.get(1) ?: "Code $responseCode: $errorStream"
+                    }
                     
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                         onComplete(false, "Drive Sync Error: $readableMsg")
