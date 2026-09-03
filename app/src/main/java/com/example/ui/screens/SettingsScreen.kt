@@ -687,6 +687,7 @@ fun SettingsScreen(
                         settingsManager.webAdminUser = it
                     },
                     label = { Text("Supervisor / Admin Username") },
+                    supportingText = { Text("Saved automatically. Active for all protected portals.") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -698,6 +699,7 @@ fun SettingsScreen(
                         settingsManager.webAdminPass = it
                     },
                     label = { Text("Supervisor / Admin Password") },
+                    supportingText = { Text("Saved automatically. Active for all protected portals.") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )

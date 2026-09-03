@@ -104,8 +104,6 @@ fun ArchivesScreen(
                 }
             }
             val serverError by com.example.util.WebServerState.error.collectAsState()
-            var adminUser by remember { mutableStateOf(settingsManager.webAdminUser) }
-            var adminPass by remember { mutableStateOf(settingsManager.webAdminPass) }
             val serverMode by com.example.util.WebServerState.mode.collectAsState()
             val candidates by viewModel.liveCandidates.collectAsState()
             
@@ -1312,28 +1310,23 @@ fun ArchivesScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Web Monitor Credentials (For Browser)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            OutlinedTextField(
-                                value = adminUser,
-                                onValueChange = { 
-                                    adminUser = it
-                                    settingsManager.webAdminUser = it
-                                },
-                                label = { Text("Username") },
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.VpnKey, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Web Server Security", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Admin and dashboard portals require authentication. Username and password are centrally configured in Settings.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            OutlinedTextField(
-                                value = adminPass,
-                                onValueChange = { 
-                                    adminPass = it
-                                    settingsManager.webAdminPass = it
-                                },
-                                label = { Text("Password") },
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Active Supervisor: ${settingsManager.webAdminUser.ifBlank { "admin" }}",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
@@ -1368,7 +1361,7 @@ fun ArchivesScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Button(
-                        onClick = { viewModel.startWebServer("all", adminUser, adminPass) },
+                        onClick = { viewModel.startWebServer("all") },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
@@ -1382,7 +1375,7 @@ fun ArchivesScreen(
                     when (screenMode) {
                         "admin" -> {
                             OutlinedButton(
-                                onClick = { viewModel.startWebServer("admin", adminUser, adminPass) },
+                                onClick = { viewModel.startWebServer("admin") },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Icon(Icons.Default.PlayArrow, contentDescription = null)
@@ -1392,7 +1385,7 @@ fun ArchivesScreen(
                         }
                         "expert" -> {
                             OutlinedButton(
-                                onClick = { viewModel.startWebServer("expert", adminUser, adminPass) },
+                                onClick = { viewModel.startWebServer("expert") },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Icon(Icons.Default.PlayArrow, contentDescription = null)
@@ -1402,7 +1395,7 @@ fun ArchivesScreen(
                         }
                         else -> {
                             OutlinedButton(
-                                onClick = { viewModel.startWebServer("livetest", adminUser, adminPass) },
+                                onClick = { viewModel.startWebServer("livetest") },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Icon(Icons.Default.PlayArrow, contentDescription = null)

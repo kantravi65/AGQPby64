@@ -178,8 +178,8 @@ class WebServerManager(private val appContext: Context, private val repository: 
                         val checkAuth: suspend (io.ktor.server.application.ApplicationCall) -> Boolean = { call ->
                             val auth = call.request.headers["Authorization"]
                             val sm = com.example.util.SettingsManager(appContext)
-                            val activeUser = if (adminUser.isNotBlank()) adminUser.trim() else sm.webAdminUser.trim()
-                            val activePass = if (adminPass.isNotBlank()) adminPass.trim() else sm.webAdminPass.trim()
+                            val activeUser = sm.webAdminUser.trim().ifBlank { "admin" }
+                            val activePass = sm.webAdminPass.trim().ifBlank { "1234" }
 
                             var authenticated = false
                             if (auth != null && auth.startsWith("Basic ", ignoreCase = true)) {
